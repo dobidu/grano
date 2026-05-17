@@ -1,0 +1,40 @@
+# Build outputs (generated, no value to graph)
+build/
+build-*/
+cmake-build-*/
+out/
+Builds/
+JuceLibraryCode/
+
+# Compiled artifacts
+*.vst3/
+*.component/
+*.app/
+
+# OS / IDE
+.DS_Store
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Dependencies
+JUCE/
+
+# Graphify own outputs (avoid recursion)
+graphify-out/
+
+# PAUL state (text files, but PAUL manages them; no need for the graph)
+.paul/STATE.md
+.paul/phases/*/SUMMARY.md
+
+# CI artifacts
+.github/workflows/cache/
+
+# Test artifacts
+Tests/pluginval_*.log
+Tests/smoke_*.png
+
+# Caveman generated stats
+.caveman/
