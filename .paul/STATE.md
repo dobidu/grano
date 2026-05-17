@@ -5,18 +5,49 @@ This file is managed by PAUL. Do not edit manually.
 ## Current state
 
 ```yaml
-phase: pending-init
-loop_position: pre-init
-current_plan: null
+phase: F0-foundation
+loop_position: PLAN-complete
+current_plan: .paul/phases/00-foundation/00-01-PLAN.md
 last_unified: null
-session_start: null
+session_start: 2026-05-17
 ```
 
-## Instructions
+## Current position
 
-Run `/paul:init` inside Claude Code to populate this file. PAUL will read `PROJECT.md`, `ROADMAP.md`, and `SPECIAL-FLOWS.md` and set the initial state to F0.
+Milestone: v1.0 Initial Release
+Phase: F0 — Foundation (1 of 8)
+Plan: 00-01 (F0 plan 1 of 1)
+Status: Plan approved — ready to apply
+Last activity: 2026-05-17 — Project initialized, F0 plan created
 
-After init, this file is updated automatically at every PLAN, APPLY, and UNIFY transition. It is the source of truth for "where are we right now". When you resume work via `/paul:resume`, PAUL reads this file and tells you the single next action.
+Progress:
+- Milestone: [░░░░░░░░░░░░░░░░░░░░] 0%
+- Phase F0: [░░░░░░░░░░░░░░░░░░░░] 0%
+
+## Loop position
+
+```
+PLAN ──▶ APPLY ──▶ UNIFY
+  ✓        ○        ○     [Plan ready — awaiting apply]
+```
+
+## Accumulated context
+
+### Decisions
+None yet.
+
+### Deferred issues
+None yet.
+
+### Blockers/Concerns
+None yet.
+
+## Session continuity
+
+Last session: 2026-05-17
+Stopped at: Project init complete, F0 plan in place
+Next action: /paul:apply .paul/phases/00-foundation/00-01-PLAN.md
+Resume context: F0 plan creates CMakeLists.txt, PluginProcessor, PluginEditor, Tests, CI workflow.
 
 ## Phase history
 

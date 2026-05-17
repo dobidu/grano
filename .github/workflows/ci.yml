@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: ~/JUCE
+          key: juce-8-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
+
+      - name: Clone JUCE 8
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: git clone --depth 1 --branch master https://github.com/juce-framework/JUCE.git ~/JUCE
+
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: cmake-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'Tests/CMakeLists.txt') }}
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DJUCE_DIR="$env:USERPROFILE/JUCE"
+
+      - name: Configure (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cmake -B build -G Xcode \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DJUCE_DIR="$HOME/JUCE"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+      - name: Download pluginval (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          curl -L -o pluginval.zip \
+            https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_macOS.zip
+          unzip pluginval.zip
+          chmod +x pluginval.app/Contents/MacOS/pluginval
+
+      - name: Download pluginval (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Invoke-WebRequest -Uri `
+            "https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_Windows.zip" `
+            -OutFile pluginval.zip
+          Expand-Archive pluginval.zip -DestinationPath .
+
+      - name: Run pluginval (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          pluginval.app/Contents/MacOS/pluginval \
+            --strictness-level 5 \
+            --validate-in-process \
+            --timeout-ms 30000 \
+            build/Grano_artefacts/Release/VST3/Grano.vst3
+
+      - name: Run pluginval (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\pluginval.exe --strictness-level 5 --validate-in-process --timeout-ms 30000 `
+            "build\Grano_artefacts\Release\VST3\Grano.vst3"
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grano-VST3-${{ runner.os }}
+          path: |
+            build/Grano_artefacts/Release/VST3/
+
+      - name: Upload AU (macOS only)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grano-AU-macOS
+          path: build/Grano_artefacts/Release/AU/
+
+      - name: Upload Standalone
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grano-Standalone-${{ runner.os }}
+          path: |
+            build/Grano_artefacts/Release/Standalone/
+
+  linux-best-effort:
+    name: Build (ubuntu-22.04) [best-effort]
+    runs-on: ubuntu-22.04
+    continue-on-error: true  # Linux is secondary target; failures don't block CI
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config \
+            libasound2-dev libjack-jackd2-dev \
+            libcurl4-openssl-dev libfreetype-dev \
+            libx11-dev libxcomposite-dev libxcursor-dev \
+            libxinerama-dev libxrandr-dev \
+            libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libfontconfig1-dev libgl1-mesa-dev
+
+      - name: Clone JUCE 8
+        run: git clone --depth 1 --branch master https://github.com/juce-framework/JUCE.git ~/JUCE
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DJUCE_DIR="$HOME/JUCE"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
