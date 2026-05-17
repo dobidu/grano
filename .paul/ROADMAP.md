@@ -22,9 +22,19 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F1 — Granular Engine Core
+## ✅ F1 — Granular Engine Core — COMPLETE (2026-05-17)
 
 **Goal**: Working granular engine that produces audio from a hard-coded loaded sample. No UI controls yet — values are constants in code.
+
+**Plans**: 2 of 2 complete — see `.paul/phases/01-granular-engine/`
+
+**Exit criteria met**:
+- [x] `Grain` struct: trivially copyable, all fields stored, no heap members
+- [x] `GranularEngine`: SchedulerThread (SPSC producer), AbstractFifo (512), processBlock (RT-safe mixer)
+- [x] Hard-coded 440 Hz sine at 50 grains/sec, 100 ms, Hann envelope
+- [x] `GrainPool` lock-free acquire/release, 1024 slots
+- [x] 19/19 Catch2 tests pass (envelope, pool, pitch ratio, threading)
+- [x] TSAN CI job added
 
 **Entry**: F0 complete and unified.
 
