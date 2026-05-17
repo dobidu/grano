@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F1-granular-engine
-loop_position: IDLE
-current_plan: null
+loop_position: PLAN-complete
+current_plan: .paul/phases/01-granular-engine/01-01-PLAN.md
 last_unified: .paul/phases/00-foundation/00-01-SUMMARY.md
 session_start: 2026-05-17
 ```
@@ -15,10 +15,10 @@ session_start: 2026-05-17
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F1 — Granular Engine Core (2 of 8) — not yet started
-Plan: none yet
-Status: Ready for /paul:plan (F1)
-Last activity: 2026-05-17 — F0 complete and unified
+Phase: F1 — Granular Engine Core (2 of 8) — plan 01-01 created
+Plan: 01-01 (EnvelopeShapes, Grain, GrainPool, tests) — awaiting apply
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-17 — Created 01-01-PLAN.md
 
 Progress:
 - Milestone: [█░░░░░░░░░░░░░░░░░░░] ~5%
@@ -29,7 +29,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Loop complete — ready for next PLAN]
+  ✓        ○        ○     [Plan created, awaiting apply]
 ```
 
 ## Accumulated context
@@ -53,8 +53,8 @@ None.
 
 Last session: 2026-05-17
 Stopped at: F0 unified — all AC met, SUMMARY written, ROADMAP updated
-Next action: /paul:plan (F1 — Granular Engine Core)
-Resume context: F0 scaffold in place. CMakeLists.txt, PluginProcessor, PluginEditor, Tests, CI all committed (d2f457a). F1 adds Grain, GranularEngine, GrainPool, EnvelopeShapes.
+Next action: /paul:apply .paul/phases/01-granular-engine/01-01-PLAN.md
+Resume context: Plan 01-01 ready. F1 split into 2 plans: 01-01 = data structures + tests, 01-02 = engine + threading. Start with 01-01.
 
 ## Phase history
 
