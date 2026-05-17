@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F2-sample-io
-loop_position: UNIFY-complete
-current_plan: .paul/phases/01-granular-engine/01-02-PLAN.md
+loop_position: PLAN-created
+current_plan: .paul/phases/02-sample-io/02-01-PLAN.md
 last_unified: .paul/phases/01-granular-engine/01-02-SUMMARY.md
 session_start: 2026-05-17
 ```
@@ -15,22 +15,22 @@ session_start: 2026-05-17
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F1 — Granular Engine Core — COMPLETE ✅
-Next: F2 — Sample I/O and Waveform Display (3 of 8)
-Status: F1 unified, all exit criteria met. Ready to plan F2.
-Last activity: 2026-05-17 — Unified 01-02, F1 complete
+Phase: F2 — Sample I/O and Waveform Display (3 of 8) — plan 02-01 created
+Plan: 02-01 (SampleBuffer, AudioFormatManager, drag-drop, GranularEngine wiring)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-17 — Created 02-01-PLAN.md
 
 Progress:
 - Milestone: [████░░░░░░░░░░░░░░░░] ~20%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
-- F2: [░░░░░░░░░░░░░░░░░░░░] 0%
+- F2: [░░░░░░░░░░░░░░░░░░░░] 0% (1/2 plans pending)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [F1-02 loop closed, phase complete]
+  ✓        ○        ○     [02-01 plan created, awaiting apply]
 ```
 
 ## Accumulated context
@@ -55,9 +55,10 @@ None.
 ## Session continuity
 
 Last session: 2026-05-17
-Stopped at: F1 fully unified — both plans complete, 19/19 tests pass
-Next action: /paul:plan — F2 Sample I/O and Waveform Display
-Resume context: F2 = AudioFormatManager (WAV/AIFF/MP3), drag-drop loading, SampleBuffer atomic swap, WaveformDisplay with AudioThumbnail, grain particles. Touches Source/Engine/ + Source/UI/ (frontend-design skill required).
+Stopped at: 02-01-PLAN.md created (SampleBuffer + AudioFormatManager + drag-drop + GranularEngine wiring)
+Next action: /paul:apply .paul/phases/02-sample-io/02-01-PLAN.md
+Resume context: 3 tasks — SampleBuffer atomic swap, AudioFormatManager + PluginEditor drag-drop, GranularEngine integration + test_sample_io.cpp. frontend-design not blocking for 02-01 (minimal UI). Blocking for 02-02 (WaveformDisplay).
+F2 split: 02-01 = engine+IO, 02-02 = WaveformDisplay+particles (frontend-design required).
 
 ## Phase history
 
