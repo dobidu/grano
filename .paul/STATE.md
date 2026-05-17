@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F1-granular-engine
-loop_position: UNIFY-complete
-current_plan: .paul/phases/01-granular-engine/01-01-PLAN.md
+loop_position: PLAN-created
+current_plan: .paul/phases/01-granular-engine/01-02-PLAN.md
 last_unified: .paul/phases/01-granular-engine/01-01-SUMMARY.md
 session_start: 2026-05-17
 ```
@@ -15,10 +15,10 @@ session_start: 2026-05-17
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F1 — Granular Engine Core (2 of 8) — plan 01-01 unified
-Plan: 01-01 (EnvelopeShapes, Grain, GrainPool, tests) — COMPLETE
-Status: Loop closed. Next: plan 01-02 (GranularEngine, FIFO, ThreadPool, processBlock)
-Last activity: 2026-05-17 — Unified 01-01, all AC met
+Phase: F1 — Granular Engine Core (2 of 8) — plan 01-02 created
+Plan: 01-02 (GranularEngine, scheduler thread, FIFO, processBlock, pitch tests, TSAN CI)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-17 — Created 01-02-PLAN.md
 
 Progress:
 - Milestone: [██░░░░░░░░░░░░░░░░░░] ~10%
@@ -29,7 +29,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [01-01 loop closed]
+  ✓        ○        ○     [01-02 plan created, awaiting apply]
 ```
 
 ## Accumulated context
@@ -52,9 +52,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-17
-Stopped at: F1-01 unified — all AC met, SUMMARY written, 14 tests passing
-Next action: /paul:plan — F1 Granular Engine Core (plan 01-02)
-Resume context: Plan 01-01 done (data structures). Plan 01-02 covers GranularEngine class, juce::AbstractFifo, juce::ThreadPool, processBlock wiring, hard-coded test sample, TSAN CI addition.
+Stopped at: 01-02-PLAN.md created and ready
+Next action: /paul:apply .paul/phases/01-granular-engine/01-02-PLAN.md
+Resume context: Plan 01-02 = GranularEngine + SchedulerThread + AbstractFifo + processBlock mixer + hard-coded 440 Hz sine + pitch ratio tests + TSAN CI job. 3 tasks, all autonomous.
 
 ## Phase history
 
