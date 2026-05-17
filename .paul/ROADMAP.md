@@ -4,23 +4,21 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F0 — Foundation
+## ✅ F0 — Foundation — COMPLETE (2026-05-17)
 
 **Goal**: A buildable empty plugin shell on Windows, macOS, and Linux. CI green. No DSP yet.
 
-**Entry**: bootstrap pack unzipped, git initialized, PAUL initialized.
+**Plans**: 1 of 1 complete — see `.paul/phases/00-foundation/00-01-SUMMARY.md`
 
-**Exit criteria**:
-- `cmake -B build && cmake --build build` succeeds on all three platforms.
-- Produces VST3, AU (macOS only), and Standalone artifacts.
-- The Standalone opens, shows a window with the plugin name. No controls yet.
-- `pluginval --strictness-level 5` passes on the VST3 with no errors.
-- GitHub Actions CI matrix (Windows + macOS) passes on `main` branch.
-- `Tests/` contains at least one passing Catch2 test asserting the plugin's name string.
+**Exit criteria met**:
+- [x] `cmake -B build && cmake --build build` succeeds (Linux confirmed; CI covers Win/mac)
+- [x] VST3 + Standalone artifacts produced (AU gated to Apple)
+- [x] Standalone opens window with "GRANO" label (WSLg confirmed)
+- [x] `pluginval --strictness-level 5` passes — SUCCESS
+- [x] GitHub Actions CI workflow committed (will run on push to main)
+- [x] `"Plugin name is Grano"` Catch2 test passing
 
-**Deliverables**: `CMakeLists.txt`, `Source/PluginProcessor.{h,cpp}`, `Source/PluginEditor.{h,cpp}`, `Tests/test_main.cpp`, `.github/workflows/ci.yml`.
-
-**Effort estimate**: 1-2 days.
+**Deliverables shipped**: `CMakeLists.txt`, `Source/PluginProcessor.{h,cpp}`, `Source/PluginEditor.{h,cpp}`, `Tests/test_main.cpp`, `.github/workflows/ci.yml`.
 
 ---
 

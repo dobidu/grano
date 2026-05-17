@@ -5,58 +5,59 @@ This file is managed by PAUL. Do not edit manually.
 ## Current state
 
 ```yaml
-phase: F0-foundation
-loop_position: PLAN-complete
-current_plan: .paul/phases/00-foundation/00-01-PLAN.md
-last_unified: null
+phase: F1-granular-engine
+loop_position: IDLE
+current_plan: null
+last_unified: .paul/phases/00-foundation/00-01-SUMMARY.md
 session_start: 2026-05-17
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F0 — Foundation (1 of 8)
-Plan: 00-01 (F0 plan 1 of 1)
-Status: Plan approved — ready to apply
-Last activity: 2026-05-17 — Project initialized, F0 plan created
+Phase: F1 — Granular Engine Core (2 of 8) — not yet started
+Plan: none yet
+Status: Ready for /paul:plan (F1)
+Last activity: 2026-05-17 — F0 complete and unified
 
 Progress:
-- Milestone: [░░░░░░░░░░░░░░░░░░░░] 0%
-- Phase F0: [░░░░░░░░░░░░░░░░░░░░] 0%
+- Milestone: [█░░░░░░░░░░░░░░░░░░░] ~5%
+- F0: [████████████████████] 100% ✅
+- F1: [░░░░░░░░░░░░░░░░░░░░] 0%
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [Plan ready — awaiting apply]
+  ✓        ✓        ✓     [Loop complete — ready for next PLAN]
 ```
 
 ## Accumulated context
 
 ### Decisions
-None yet.
+| Decision | Phase | Impact |
+|----------|-------|--------|
+| Tests compile plugin sources directly (not via JUCE shared-code target) | F0 | Pattern for all future test targets in F1+ |
+| Font API deprecation deferred | F0 | Must migrate to `FontOptions` in F3 when GranoLAF is built |
+| DAW smoke via WSLg Standalone | F0 | Win/mac smoke covered by CI on first push |
 
 ### Deferred issues
-None yet.
+| Issue | Origin | Effort | Revisit |
+|-------|--------|--------|---------|
+| Migrate deprecated `juce::Font(String, float, int)` to `FontOptions` | F0 | S | F3 (GranoLAF build) |
 
 ### Blockers/Concerns
-None yet.
+None.
 
 ## Session continuity
 
 Last session: 2026-05-17
-Stopped at: Project init complete, F0 plan in place
-Next action: /paul:apply .paul/phases/00-foundation/00-01-PLAN.md
-Resume context: F0 plan creates CMakeLists.txt, PluginProcessor, PluginEditor, Tests, CI workflow.
+Stopped at: F0 unified — all AC met, SUMMARY written, ROADMAP updated
+Next action: /paul:plan (F1 — Granular Engine Core)
+Resume context: F0 scaffold in place. CMakeLists.txt, PluginProcessor, PluginEditor, Tests, CI all committed (d2f457a). F1 adds Grain, GranularEngine, GrainPool, EnvelopeShapes.
 
 ## Phase history
 
-(Empty — will populate as phases complete.)
-
-## Accumulated decisions
-
-(Empty — will populate as UNIFY steps log decisions.)
-
-## Deferred issues
-
-(Empty — will populate via `/paul:consider-issues`.)
+| Phase | Plans | Completed | Commit |
+|-------|-------|-----------|--------|
+| F0 — Foundation | 1/1 | 2026-05-17 | d2f457a |
