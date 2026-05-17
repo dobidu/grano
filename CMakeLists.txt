@@ -52,6 +52,9 @@ target_sources(Grano
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        # F1 — Engine data structures
+        Source/Engine/EnvelopeShapes.cpp
+        Source/Engine/GrainPool.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────

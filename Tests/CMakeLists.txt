@@ -12,8 +12,12 @@ FetchContent_MakeAvailable(Catch2)
 # symbols without depending on JUCE's internal plugin shared-code target.
 add_executable(GranoTests
     test_main.cpp
+    test_engine.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginProcessor.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginEditor.cpp
+    # F1 engine sources compiled directly (same pattern as plugin sources)
+    ${CMAKE_SOURCE_DIR}/Source/Engine/EnvelopeShapes.cpp
+    ${CMAKE_SOURCE_DIR}/Source/Engine/GrainPool.cpp
 )
 
 target_include_directories(GranoTests
