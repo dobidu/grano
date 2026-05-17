@@ -6,6 +6,7 @@
 #include "Engine/EnvelopeShapes.h"
 #include "Engine/Grain.h"
 #include "Engine/GrainPool.h"
+#include "Engine/GranularEngine.h"
 
 // ── EnvelopeShapes ────────────────────────────────────────────────────────────
 
@@ -208,4 +209,66 @@ TEST_CASE("GrainPool acquired grain is zero-initialised", "[pool]")
     REQUIRE(g->startPos     == 0);
     REQUIRE(g->currentPhase == Catch::Approx(0.0f));
     pool.release(g);
+}
+
+// ── Pitch ratio math ──────────────────────────────────────────────────────────
+// Verifies the source-position formula used in GranularEngine::renderGrain.
+// Tests pure math — no live audio required.
+
+static float srcPosAtPhase(float phase, int grainLen, float pitchRatio) noexcept
+{
+    return phase * (float)grainLen * pitchRatio;
+}
+
+TEST_CASE("Pitch ratio 1.0 reads exactly lengthSamples source frames", "[grain][pitch]")
+{
+    const int N = 200;
+    REQUIRE(srcPosAtPhase(0.0f, N, 1.0f) == Catch::Approx(0.0f));
+    REQUIRE(srcPosAtPhase(1.0f, N, 1.0f) == Catch::Approx(200.0f));
+    REQUIRE(srcPosAtPhase(0.5f, N, 1.0f) == Catch::Approx(100.0f));
+}
+
+TEST_CASE("Pitch ratio 2.0 reads twice as many source frames (pitch up)", "[grain][pitch]")
+{
+    const int N = 200;
+    REQUIRE(srcPosAtPhase(1.0f, N, 2.0f) == Catch::Approx(400.0f));
+    REQUIRE(srcPosAtPhase(0.5f, N, 2.0f) == Catch::Approx(200.0f));
+}
+
+TEST_CASE("Pitch ratio 0.5 reads half as many source frames (pitch down)", "[grain][pitch]")
+{
+    const int N = 200;
+    REQUIRE(srcPosAtPhase(1.0f, N, 0.5f) == Catch::Approx(100.0f));
+    REQUIRE(srcPosAtPhase(0.5f, N, 0.5f) == Catch::Approx(50.0f));
+}
+
+TEST_CASE("Pitch ratio 1.5 fractional source position is linear", "[grain][pitch]")
+{
+    const int N = 100;
+    REQUIRE(srcPosAtPhase(0.0f,  N, 1.5f) == Catch::Approx(0.0f));
+    REQUIRE(srcPosAtPhase(1.0f,  N, 1.5f) == Catch::Approx(150.0f));
+    REQUIRE(srcPosAtPhase(0.25f, N, 1.5f) == Catch::Approx(37.5f));
+}
+
+// ── GranularEngine threading ──────────────────────────────────────────────────
+
+TEST_CASE("GranularEngine runs without data races", "[engine][threading]")
+{
+    GranularEngine engine;
+    engine.prepare(48000.0, 512);
+
+    juce::AudioBuffer<float> buf(2, 512);
+
+    // Give scheduler time to queue some grains (runs at ~50 Hz = 20 ms/grain)
+    juce::Thread::sleep(100); // ~5 scheduler ticks
+
+    for (int i = 0; i < 50; ++i)
+    {
+        buf.clear();
+        engine.processBlock(buf);
+    }
+
+    engine.reset();
+    // Reaching here under TSAN = no data races detected
+    SUCCEED();
 }

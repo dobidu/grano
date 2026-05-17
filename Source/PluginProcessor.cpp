@@ -10,23 +10,22 @@ GranoAudioProcessor::GranoAudioProcessor()
 
 GranoAudioProcessor::~GranoAudioProcessor() = default;
 
-void GranoAudioProcessor::prepareToPlay(double /*sampleRate*/, int /*samplesPerBlock*/)
+void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // F1: initialise GranularEngine here.
+    engine_.prepare(sampleRate, samplesPerBlock);
 }
 
 void GranoAudioProcessor::releaseResources()
 {
-    // F1: tear down engine resources here.
+    engine_.reset();
 }
 
 // processBlock runs on the host audio thread — real-time safe.
-// F0: clear output and discard input. No DSP yet.
 void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                        juce::MidiBuffer& /*midiMessages*/)
 {
     juce::ScopedNoDenormals noDenormals;
-    buffer.clear();
+    engine_.processBlock(buffer);
 }
 
 juce::AudioProcessorEditor* GranoAudioProcessor::createEditor()

@@ -142,4 +142,43 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+  tsan:
+    name: TSAN — GranoTests (Linux)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config \
+            libasound2-dev libjack-jackd2-dev \
+            libcurl4-openssl-dev libfreetype-dev \
+            libx11-dev libxcomposite-dev libxcursor-dev \
+            libxinerama-dev libxrandr-dev \
+            libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libfontconfig1-dev libgl1-mesa-dev
+
+      - name: Clone JUCE 8
+        run: git clone --depth 1 --branch master https://github.com/juce-framework/JUCE.git ~/JUCE
+
+      - name: Configure (TSAN + tests only)
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DJUCE_DIR="$HOME/JUCE" \
+            -DGRANO_BUILD_TESTS=ON \
+            -DGRANO_ENABLE_TSAN=ON
+
+      - name: Build GranoTests
+        run: cmake --build build --target GranoTests -j$(nproc)
+
+      - name: Run tests under TSAN
         run: ctest --test-dir build --output-on-failure
+        env:
+          TSAN_OPTIONS: "halt_on_error=1 second_deadlock_stack=1"

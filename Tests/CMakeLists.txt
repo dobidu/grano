@@ -18,6 +18,7 @@ add_executable(GranoTests
     # F1 engine sources compiled directly (same pattern as plugin sources)
     ${CMAKE_SOURCE_DIR}/Source/Engine/EnvelopeShapes.cpp
     ${CMAKE_SOURCE_DIR}/Source/Engine/GrainPool.cpp
+    ${CMAKE_SOURCE_DIR}/Source/Engine/GranularEngine.cpp
 )
 
 target_include_directories(GranoTests
@@ -47,3 +48,9 @@ target_compile_definitions(GranoTests
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 catch_discover_tests(GranoTests)
+
+# Propagate TSAN flags to tests when the sanitizer option is enabled
+if(GRANO_ENABLE_TSAN AND NOT WIN32)
+    target_compile_options(GranoTests PRIVATE -fsanitize=thread)
+    target_link_options(GranoTests PRIVATE -fsanitize=thread)
+endif()
