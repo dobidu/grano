@@ -6,30 +6,30 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F1-granular-engine
-loop_position: PLAN-complete
+loop_position: UNIFY-complete
 current_plan: .paul/phases/01-granular-engine/01-01-PLAN.md
-last_unified: .paul/phases/00-foundation/00-01-SUMMARY.md
+last_unified: .paul/phases/01-granular-engine/01-01-SUMMARY.md
 session_start: 2026-05-17
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F1 — Granular Engine Core (2 of 8) — plan 01-01 created
-Plan: 01-01 (EnvelopeShapes, Grain, GrainPool, tests) — awaiting apply
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-17 — Created 01-01-PLAN.md
+Phase: F1 — Granular Engine Core (2 of 8) — plan 01-01 unified
+Plan: 01-01 (EnvelopeShapes, Grain, GrainPool, tests) — COMPLETE
+Status: Loop closed. Next: plan 01-02 (GranularEngine, FIFO, ThreadPool, processBlock)
+Last activity: 2026-05-17 — Unified 01-01, all AC met
 
 Progress:
-- Milestone: [█░░░░░░░░░░░░░░░░░░░] ~5%
+- Milestone: [██░░░░░░░░░░░░░░░░░░] ~10%
 - F0: [████████████████████] 100% ✅
-- F1: [░░░░░░░░░░░░░░░░░░░░] 0%
+- F1: [██████████░░░░░░░░░░] 50% (1/2 plans complete)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [Plan created, awaiting apply]
+  ✓        ✓        ✓     [01-01 loop closed]
 ```
 
 ## Accumulated context
@@ -52,12 +52,13 @@ None.
 ## Session continuity
 
 Last session: 2026-05-17
-Stopped at: F0 unified — all AC met, SUMMARY written, ROADMAP updated
-Next action: /paul:apply .paul/phases/01-granular-engine/01-01-PLAN.md
-Resume context: Plan 01-01 ready. F1 split into 2 plans: 01-01 = data structures + tests, 01-02 = engine + threading. Start with 01-01.
+Stopped at: F1-01 unified — all AC met, SUMMARY written, 14 tests passing
+Next action: /paul:plan — F1 Granular Engine Core (plan 01-02)
+Resume context: Plan 01-01 done (data structures). Plan 01-02 covers GranularEngine class, juce::AbstractFifo, juce::ThreadPool, processBlock wiring, hard-coded test sample, TSAN CI addition.
 
 ## Phase history
 
 | Phase | Plans | Completed | Commit |
 |-------|-------|-----------|--------|
 | F0 — Foundation | 1/1 | 2026-05-17 | d2f457a |
+| F1 — Granular Engine (01-01) | 1/2 | 2026-05-17 | 845013e |
