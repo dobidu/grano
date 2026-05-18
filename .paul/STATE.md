@@ -6,32 +6,33 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F3-core-controls
-loop_position: PLAN-created
+loop_position: UNIFY-complete
 current_plan: .paul/phases/03-core-controls/03-02-PLAN.md
-last_unified: .paul/phases/03-core-controls/03-01-SUMMARY.md
+last_unified: .paul/phases/03-core-controls/03-02-SUMMARY.md
 session_start: 2026-05-18
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F3 — Core Controls and APVTS (4 of 8) — plan 03-02 created
-Plan: 03-02 (GranoLAF + Knob + Slider + PluginEditor layout)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-18 — Created 03-02-PLAN.md
+Phase: F3 — Core Controls and APVTS (4 of 8) — COMPLETE ✅
+Plan: 03-02 (GranoLAF + Knob + Slider + PluginEditor layout) ✅
+Status: UNIFY complete — F3 done — 36/36 tests pass
+Last activity: 2026-05-18 — Unified 03-02 (commits 2bb5776, c728df5)
 
 Progress:
-- Milestone: [████████░░░░░░░░░░░░] ~40%
+- Milestone: [█████████░░░░░░░░░░░] ~45%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
-- F3: [██████████░░░░░░░░░░] 50% (03-01 done; 03-02 GranoLAF+UI next)
+- F3: [████████████████████] 100% ✅
+- F4: [░░░░░░░░░░░░░░░░░░░░] 0%  (next)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [03-02 plan created, awaiting apply]
+  ✓        ✓        ✓     [03-02 complete — F3 DONE]
 ```
 
 ## Accumulated context
@@ -51,6 +52,8 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | MessageManager guard on startTimerHz | F2 | GranoAudioProcessor compiled into GranoTests; MM guard prevents JUCE assertion in headless CI |
 | GrainSnapshot plain array + atomic count | F2 | seqlock overkill for visual data; aligned-float atomic on x86; TSAN-clean in CI |
 | WD:: namespace for design tokens | F2 | Colors co-located in .cpp; swap for GranoLAF constants in F3 |
+| GranoLAF scoped to editor (not global) | F3 | Avoids polluting other JUCE components; setLookAndFeel(nullptr) in destructor |
+| Grain size shadow added to WaveformDisplay | F3 | 10% mint fill + 25% right-edge; low opacity preserves waveform readability |
 | FileChooser as unique_ptr member on editor | F2 | Keeps async callback alive; same load/error flow as filesDropped |
 
 ### Deferred issues
@@ -61,7 +64,9 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | Error label 3-second auto-dismiss | F2 | XS | F3 (GranoLAF + timer infrastructure) |
 | Playhead wired to APVTS `position` parameter | F2 | S | F3 (position param added) |
 | Particle trail / fade-out animation (60 ms decay) | F2 | S | F6 polish |
-| GranoLAF styling for WaveformDisplay + Load button | F2 | M | F3 |
+| GranoLAF styling for WaveformDisplay + Load button | F2 | M | ✅ Done F3 |
+| Audio response verify (knobs → engine, volume → silence) | F3 | XS | First non-WSL2 session |
+| Embedded Inter + JetBrains Mono fonts via BinaryData | F3 | M | F6 |
 
 ### Blockers/Concerns
 None.
@@ -69,9 +74,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: 03-02 PLAN created
-Next action: /paul:apply .paul/phases/03-core-controls/03-02-PLAN.md
-Resume context: 03-02 = GranoLAF (Source/UI/LookAndFeel/), Knob.{h,cpp}, Slider.{h,cpp} (GranoSlider), PluginEditor layout with 5 knobs + 2 sliders + loop toggle + APVTS attachments. Has checkpoint:human-verify at task 4. Fix deprecated Font API. Wire WaveformDisplay to position param. frontend-design skill active for UI.
+Stopped at: F3 complete — both plans unified
+Next action: /paul:plan F4a — MOTION module (Wow, Flutter, Drift, Crackle)
+Resume context: F4 splits into 3 sub-plans (F4a MOTION, F4b COLOR, F4c PATTERN). Start with F4a. New source files go in Source/Modules/Motion.{h,cpp}. All modules independently bypassable, zero CPU when off. F4 adds APVTS params for each module control.
 
 ## Phase history
 
@@ -80,4 +85,4 @@ Resume context: 03-02 = GranoLAF (Source/UI/LookAndFeel/), Knob.{h,cpp}, Slider.
 | F0 — Foundation | 1/1 | 2026-05-17 | d2f457a |
 | F1 — Granular Engine | 2/2 | 2026-05-17 | 7645200 |
 | F2 — Sample I/O | 2/2 | 2026-05-18 | 4327ac1 |
-| F3 — Core Controls (partial) | 1/2 | 2026-05-18 | 3868644 |
+| F3 — Core Controls | 2/2 | 2026-05-18 | c728df5 |
