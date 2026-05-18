@@ -78,6 +78,7 @@ target_sources(Grano
         # F4 — Processing modules
         Source/Modules/Motion.cpp
         Source/Modules/Color.cpp
+        Source/Modules/Pattern.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────

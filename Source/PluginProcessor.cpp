@@ -18,6 +18,19 @@ GranoAudioProcessor::GranoAudioProcessor()
         apvts_.getRawParameterValue(ParamIDs::masterVolume),
         apvts_.getRawParameterValue(ParamIDs::loop));
     engine_.setPitchModSource(&motion_);
+    engine_.setPatternSource(&pattern_);
+    pattern_.setParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::patternEnabled),
+        apvts_.getRawParameterValue(ParamIDs::triggerMode),
+        apvts_.getRawParameterValue(ParamIDs::syncDivision),
+        apvts_.getRawParameterValue(ParamIDs::euclidPulses),
+        apvts_.getRawParameterValue(ParamIDs::euclidSteps),
+        apvts_.getRawParameterValue(ParamIDs::euclidRotation),
+        apvts_.getRawParameterValue(ParamIDs::transientSensitivity),
+        apvts_.getRawParameterValue(ParamIDs::probability),
+        apvts_.getRawParameterValue(ParamIDs::reverseProb),
+        apvts_.getRawParameterValue(ParamIDs::quantizeScale),
+        apvts_.getRawParameterValue(ParamIDs::spray));
     color_.setParamPointers(
         apvts_.getRawParameterValue(ParamIDs::colorEnabled),
         apvts_.getRawParameterValue(ParamIDs::saturate),
@@ -49,6 +62,7 @@ void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     engine_.prepare(sampleRate, samplesPerBlock);
     motion_.prepare(sampleRate);
     color_.prepare(sampleRate, samplesPerBlock);
+    pattern_.prepare(sampleRate);
 }
 
 void GranoAudioProcessor::releaseResources()
@@ -56,6 +70,7 @@ void GranoAudioProcessor::releaseResources()
     engine_.reset();
     motion_.reset();
     color_.reset();
+    pattern_.reset();
 }
 
 // processBlock runs on the host audio thread — real-time safe.
@@ -63,6 +78,15 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                        juce::MidiBuffer& /*midiMessages*/)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // Feed Pattern BPM for Sync mode + input buffer for Audio-driven transient detection.
+    double bpm = 120.0;
+    if (auto* ph = getPlayHead())
+        if (auto pos = ph->getPosition())
+            if (auto b = pos->getBpm())
+                bpm = *b;
+    pattern_.processBlock(buffer, bpm);
+
     engine_.processBlock(buffer);
     motion_.processBlock(buffer);
     color_.processBlock(buffer);

@@ -48,10 +48,28 @@ void GranularEngine::SchedulerThread::run()
 {
     while (!threadShouldExit())
     {
+        // Determine wait interval: Pattern override or density-based.
+        int waitMs;
+        if (engine_.pattern_ && engine_.pattern_->isSchedulerOverrideActive())
+        {
+            const float overrideSec = engine_.pattern_->getNextIntervalSec();
+            waitMs = (overrideSec >= 0.0f)
+                ? (int)(overrideSec * 1000.0f)
+                : 100;
+        }
+        else
+        {
+            const float density = engine_.pDensity_
+                ? engine_.pDensity_->load(std::memory_order_relaxed) : 10.0f;
+            waitMs = (int)(1000.0f / std::max(density, 0.1f));
+        }
+        wait(std::max(waitMs, 1));
+
+        // Pattern fire gate: probability, Euclidean step, or audio-driven transient.
+        if (engine_.pattern_ && !engine_.pattern_->shouldFireGrain())
+            continue;
+
         engine_.scheduleGrain();
-        const float density = engine_.pDensity_
-            ? engine_.pDensity_->load(std::memory_order_relaxed) : 10.0f;
-        wait((int)(1000.0f / std::max(density, 0.1f)));
     }
 }
 
@@ -98,18 +116,31 @@ void GranularEngine::scheduleGrain() noexcept
     const float posFrac = std::clamp(position + jitter * posJitter, 0.0f, 1.0f);
     const int startPos = (int)(posFrac * (float)(srcLen - 1));
 
-    const float pitchRatio = std::pow(2.0f, (pitchShiftSt + pitchModSt) / 12.0f);
+    // Pattern: quantize + spray pitch; bypass returns basePitch unchanged.
+    const float totalPitchSt = pattern_
+        ? pattern_->getPitchAdjustment(pitchShiftSt + pitchModSt)
+        : (pitchShiftSt + pitchModSt);
+    const float pitchRatio = std::pow(2.0f, totalPitchSt / 12.0f);
+
+    // Pattern: spray duration multiplier.
+    const float durMult = pattern_ ? pattern_->getDurMultiplier() : 1.0f;
+
+    // Pattern: reverse flag.
+    const bool reversed = pattern_ && pattern_->shouldReverseGrain();
 
     // Pan in [-1, 1]: centre at 0, spread widens L/R.
     const float pan = (stereoSpread * 2.0f - 1.0f) * (grainRng_.nextFloat() * 2.0f - 1.0f);
 
+    const int baseLen = std::min(grainLen, srcLen - startPos);
+
     g->source        = srcData;
     g->startPos      = startPos;
-    g->lengthSamples = std::min(grainLen, srcLen - startPos);
+    g->lengthSamples = std::min((int)((float)baseLen * durMult), srcLen - startPos);
     g->pitchRatio    = pitchRatio;
     g->pan           = std::clamp(pan, -1.0f, 1.0f);
     g->shape         = EnvelopeShape::Hann;
     g->currentPhase  = 0.0f;
+    g->reversed      = reversed;
 
     int s1, n1, s2, n2;
     fifo_.prepareToWrite(1, s1, n1, s2, n2);
@@ -226,9 +257,11 @@ bool GranularEngine::renderGrain(Grain* g, float* L, float* R, int numSamples) n
         if (g->currentPhase >= 1.0f)
             return true;
 
-        const float phase   = g->currentPhase;
-        const float srcPosF = (float)g->startPos
-                            + phase * (float)g->lengthSamples * g->pitchRatio;
+        const float phase     = g->currentPhase;
+        // Reversed: read from end of grain region back to start.
+        const float readPhase = g->reversed ? (1.0f - phase) : phase;
+        const float srcPosF   = (float)g->startPos
+                              + readPhase * (float)g->lengthSamples * g->pitchRatio;
         const int   srcInt  = (int)srcPosF;
         const float frac    = srcPosF - (float)srcInt;
 

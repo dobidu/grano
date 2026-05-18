@@ -36,6 +36,8 @@ add_executable(GranoTests
     test_motion.cpp
     ${CMAKE_SOURCE_DIR}/Source/Modules/Color.cpp
     test_color.cpp
+    ${CMAKE_SOURCE_DIR}/Source/Modules/Pattern.cpp
+    test_pattern.cpp
 )
 
 target_include_directories(GranoTests

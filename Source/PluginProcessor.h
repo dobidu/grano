@@ -6,6 +6,7 @@
 #include "Engine/SampleBuffer.h"
 #include "Modules/Motion.h"
 #include "Modules/Color.h"
+#include "Modules/Pattern.h"
 #include "Parameters.h"
 
 // GranoAudioProcessor is the AudioProcessor entry point for the Grano plugin.
@@ -83,6 +84,7 @@ private:
     GranularEngine             engine_;
     Motion                     motion_;        // must be declared after engine_
     Color                      color_;         // driven after motion_ in processBlock
+    Pattern                    pattern_;       // consulted by engine scheduler; processed before engine
     juce::AudioFormatManager   formatManager_;
     juce::AudioProcessorValueTreeState apvts_{
         *this, nullptr, "GranoState", createParameterLayout()};

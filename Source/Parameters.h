@@ -27,6 +27,19 @@ namespace ParamIDs {
     inline constexpr const char* decimate     = "decimate";
     inline constexpr const char* tiltEq       = "tiltEq";
     inline constexpr const char* verbMix      = "verbMix";
+
+    // F4c — PATTERN module
+    inline constexpr const char* patternEnabled       = "patternEnabled";
+    inline constexpr const char* triggerMode          = "triggerMode";
+    inline constexpr const char* syncDivision         = "syncDivision";
+    inline constexpr const char* euclidPulses         = "euclidPulses";
+    inline constexpr const char* euclidSteps          = "euclidSteps";
+    inline constexpr const char* euclidRotation       = "euclidRotation";
+    inline constexpr const char* transientSensitivity = "transientSensitivity";
+    inline constexpr const char* probability          = "probability";
+    inline constexpr const char* reverseProb          = "reverseProb";
+    inline constexpr const char* quantizeScale        = "quantizeScale";
+    inline constexpr const char* spray                = "spray";
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

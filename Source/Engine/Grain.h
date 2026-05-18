@@ -18,6 +18,7 @@ struct Grain
     float         pan           = 0.0f;              // -1 (L) .. 0 (centre) .. +1 (R)
     EnvelopeShape shape         = EnvelopeShape::Hann;
     float         currentPhase  = 0.0f;              // 0..1 normalised playback position
+    bool          reversed      = false;             // true: reads end→start (F4c Pattern)
 };
 
 static_assert(std::is_trivially_copyable_v<Grain>,

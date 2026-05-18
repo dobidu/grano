@@ -97,5 +97,48 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::verbMix, 1 }, "Verb Mix",
         juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
 
+    // F4c — PATTERN module
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ ParamIDs::patternEnabled, 1 }, "Pattern", false));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::triggerMode, 1 }, "Trigger Mode",
+        juce::StringArray{ "Free", "Sync", "Euclidean", "Audio" }, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::syncDivision, 1 }, "Sync Division",
+        juce::StringArray{ "1/4", "1/8", "1/16", "1/32", "1/64",
+                           "1/4T", "1/8T", "1/16T",
+                           "1/4D", "1/8D" }, 1));
+
+    layout.add(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID{ ParamIDs::euclidPulses, 1 }, "Eucl Pulses", 1, 32, 4));
+    layout.add(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID{ ParamIDs::euclidSteps, 1 }, "Eucl Steps", 2, 32, 8));
+    layout.add(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID{ ParamIDs::euclidRotation, 1 }, "Eucl Rotation", 0, 31, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::transientSensitivity, 1 }, "Transient Sensitivity",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::probability, 1 }, "Probability",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 1.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::reverseProb, 1 }, "Reverse Prob",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::quantizeScale, 1 }, "Quantize Scale",
+        juce::StringArray{ "Chromatic", "Major", "Minor", "Dorian", "Phrygian",
+                           "Lydian", "Mixolydian", "Pent Maj", "Pent Min",
+                           "Whole Tone", "Octatonic" }, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::spray, 1 }, "Spray",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
     return layout;
 }
