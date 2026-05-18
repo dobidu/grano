@@ -31,7 +31,8 @@ jobs:
 
       - name: Clone JUCE 8
         if: steps.cache-juce.outputs.cache-hit != 'true'
-        run: git clone --depth 1 --branch ${{ env.JUCE_VERSION }} https://github.com/juce-framework/JUCE.git ~/JUCE
+        shell: bash
+        run: git clone --depth 1 --branch ${{ env.JUCE_VERSION }} https://github.com/juce-framework/JUCE.git "$HOME/JUCE"
 
       - name: Cache CMake build
         uses: actions/cache@v4
@@ -41,10 +42,11 @@ jobs:
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
+        shell: bash
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A x64 `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DJUCE_DIR="$env:USERPROFILE/JUCE"
+          cmake -B build -G "Visual Studio 17 2022" -A x64 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DJUCE_DIR="$HOME/JUCE"
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
