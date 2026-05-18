@@ -1,0 +1,11 @@
+# JUCE 8 internal TSAN false positives.
+#
+# juce::SharedResourcePointer<TimerThread> destructor holds its static
+# sharedObjectMutex while destroying the TimerThread, which calls
+# stopThread() -> notify() -> WaitableEvent::signal(). TSAN sees the
+# WaitableEvent's internal mutex as a "double lock" because it was first
+# observed in the construction path on the same mutex address. All frames
+# are in JUCE internals; no user code is involved.
+mutex:juce::WaitableEvent::signal
+mutex:juce::Timer::TimerThread
+mutex:juce::SharedResourcePointer
