@@ -32,7 +32,7 @@ The design target is experimental sound design — drones, evolving textures, br
 | Component | Technology |
 |-----------|------------|
 | Language | C++20 |
-| Framework | JUCE 8 |
+| Framework | JUCE 8.0.12 (pinned) |
 | Build | CMake 3.22+ |
 | Process orchestration | [PAUL](https://github.com/ChristopherKahler/paul) |
 | Token compression | [Caveman](https://github.com/JuliusBrussee/caveman) |
@@ -42,7 +42,22 @@ The design target is experimental sound design — drones, evolving textures, br
 
 ## Status
 
-In active development. See `.paul/ROADMAP.md` for the current phase and `.paul/STATE.md` for the current loop position.
+In active development — F4 (Processing Modules) in progress.
+
+| Phase | Status |
+|-------|--------|
+| F0 Foundation | ✅ Complete |
+| F1 Granular Engine | ✅ Complete |
+| F2 Sample I/O + Waveform | ✅ Complete |
+| F3 Core Controls + APVTS | ✅ Complete |
+| F4a Motion (Wow/Flutter/Drift/Crackle) | ✅ Complete |
+| F4b Color (Saturate/Decimate/Tilt/Verb) | ✅ Complete |
+| F4c Pattern | Pending |
+| F5 Modulation Matrix | Pending |
+| F6 UI Polish + Advanced Engine | Pending |
+| F7 Release | Pending |
+
+See `.paul/ROADMAP.md` for exit criteria and `.paul/STATE.md` for current loop position.
 
 ## Getting started
 
