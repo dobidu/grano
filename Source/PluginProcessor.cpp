@@ -18,6 +18,12 @@ GranoAudioProcessor::GranoAudioProcessor()
         apvts_.getRawParameterValue(ParamIDs::masterVolume),
         apvts_.getRawParameterValue(ParamIDs::loop));
     engine_.setPitchModSource(&motion_);
+    color_.setParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::colorEnabled),
+        apvts_.getRawParameterValue(ParamIDs::saturate),
+        apvts_.getRawParameterValue(ParamIDs::decimate),
+        apvts_.getRawParameterValue(ParamIDs::tiltEq),
+        apvts_.getRawParameterValue(ParamIDs::verbMix));
     motion_.setParamPointers(
         apvts_.getRawParameterValue(ParamIDs::motionEnabled),
         apvts_.getRawParameterValue(ParamIDs::wowDepth),
@@ -42,12 +48,14 @@ void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     engine_.prepare(sampleRate, samplesPerBlock);
     motion_.prepare(sampleRate);
+    color_.prepare(sampleRate, samplesPerBlock);
 }
 
 void GranoAudioProcessor::releaseResources()
 {
     engine_.reset();
     motion_.reset();
+    color_.reset();
 }
 
 // processBlock runs on the host audio thread — real-time safe.
@@ -57,6 +65,7 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::ScopedNoDenormals noDenormals;
     engine_.processBlock(buffer);
     motion_.processBlock(buffer);
+    color_.processBlock(buffer);
 }
 
 juce::AudioProcessorEditor* GranoAudioProcessor::createEditor()

@@ -20,6 +20,13 @@ namespace ParamIDs {
     inline constexpr const char* driftAmount    = "driftAmount";
     inline constexpr const char* crackleLevel   = "crackleLevel";
     inline constexpr const char* crackleColor   = "crackleColor";
+
+    // F4b — COLOR module
+    inline constexpr const char* colorEnabled = "colorEnabled";
+    inline constexpr const char* saturate     = "saturate";
+    inline constexpr const char* decimate     = "decimate";
+    inline constexpr const char* tiltEq       = "tiltEq";
+    inline constexpr const char* verbMix      = "verbMix";
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

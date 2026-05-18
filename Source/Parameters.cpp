@@ -77,5 +77,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::crackleColor, 1 }, "Crackle Color",
         juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
 
+    // F4b — COLOR module
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ ParamIDs::colorEnabled, 1 }, "Color", false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::saturate, 1 }, "Saturate",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::decimate, 1 }, "Decimate",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::tiltEq, 1 }, "Tilt EQ",
+        juce::NormalisableRange<float>{ -1.0f, 1.0f }, 0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::verbMix, 1 }, "Verb Mix",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
     return layout;
 }
