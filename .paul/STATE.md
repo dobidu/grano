@@ -7,33 +7,33 @@ This file is managed by PAUL. Do not edit manually.
 ```yaml
 phase: F5-modulation-matrix
 loop_position: IDLE
-current_plan: (none — ready to plan F5)
-last_unified: .paul/phases/04-processing-modules/04-04-SUMMARY.md
+current_plan: (none — 05-01 complete, ready to plan 05-02)
+last_unified: .paul/phases/05-modulation-matrix/05-01-SUMMARY.md
 session_start: 2026-05-18
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F5 — Modulation Matrix (6 of 8) — Pending
-Plan: (none — F4 complete, ready to plan F5)
-Status: PHASE TRANSITION — F4 ✅ COMPLETE
-Last activity: 2026-05-18 — Unified 04-04 (F4c PATTERN); F4 phase complete
+Phase: F5 — Modulation Matrix (6 of 8) — In Progress
+Plan: 05-01 ✅ COMPLETE — ready for 05-02 ModMatrix
+Status: PLAN 1 of 3 unified
+Last activity: 2026-05-18 — Unified 05-01 (F5a: LFO core); 85/85 tests
 
 Progress:
-- Milestone: [████████████░░░░░░░░] ~65%
+- Milestone: [█████████████░░░░░░░] ~70%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
-- F4: [████████████████████] 100% ✅ (Motion + Color + Pattern + CI hardening)
-- F5: [░░░░░░░░░░░░░░░░░░░░] 0% — next
+- F4: [████████████████████] 100% ✅
+- F5: [███████░░░░░░░░░░░░░] 33% — 05-01 done, 05-02 next
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [F4 complete — ready for F5 /paul:plan]
+  ✓        ✓        ✓     [05-01 complete — ready for /paul:plan 05-02]
 ```
 
 ## Accumulated context
@@ -75,9 +75,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: F4 phase complete — all 4 plans unified (Motion, Color, Pattern, CI hardening)
-Next action: /paul:plan F5 — Modulation Matrix (LFOs, ModMatrix, Snapshots)
-Resume context: 74/74 tests pass. 32 APVTS params. processBlock chain: engine → motion → color → (no pattern UI yet). All F4 modules bypass-safe, ready for F5 mod sources.
+Stopped at: 05-01 unified — Lfo class, 10 APVTS params, 85/85 tests, commit bb7d921
+Next action: /paul:plan 05-02 — ModMatrix + engine integration (LFO wiring, 8-slot routing)
+Resume context: 85/85 tests. 42 APVTS params. Lfo::advanceSample() API ready. Two LFO instances go on PluginProcessor in 05-02.
 
 ## Phase history
 
