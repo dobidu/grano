@@ -4,6 +4,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "Engine/GranularEngine.h"
 #include "Engine/SampleBuffer.h"
+#include "Parameters.h"
 
 // GranoAudioProcessor is the AudioProcessor entry point for the Grano plugin.
 //
@@ -54,9 +55,10 @@ public:
     void changeProgramName(int, const juce::String&)             override {}
 
     // ── State ─────────────────────────────────────────────────────────────────
-    // APVTS serialisation added in F3. Stubs here keep the plugin valid in F0.
-    void getStateInformation(juce::MemoryBlock&) override {}
-    void setStateInformation(const void*, int)   override {}
+    void getStateInformation(juce::MemoryBlock& destData) override;
+    void setStateInformation(const void* data, int sizeInBytes) override;
+
+    juce::AudioProcessorValueTreeState& getAPVTS() noexcept { return apvts_; }
 
     // ── Sample loading (message thread) ───────────────────────────────────────
     // Called by the editor's FileDragAndDropTarget handler.
@@ -78,6 +80,8 @@ private:
     SampleBuffer               sampleBuffer_;  // must be declared before engine_
     GranularEngine             engine_;
     juce::AudioFormatManager   formatManager_;
+    juce::AudioProcessorValueTreeState apvts_{
+        *this, nullptr, "GranoState", createParameterLayout()};
     juce::String               lastLoadError_;
     double                     lastLoadedSampleRate_{ 0.0 };
     int                        lastLoadedNumFrames_ { 0 };

@@ -8,6 +8,15 @@ GranoAudioProcessor::GranoAudioProcessor()
 {
     formatManager_.registerBasicFormats(); // WAV, AIFF, FLAC, OGG, MP3 (if enabled)
     engine_.setSource(&sampleBuffer_);
+    engine_.setParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::grainSize),
+        apvts_.getRawParameterValue(ParamIDs::density),
+        apvts_.getRawParameterValue(ParamIDs::position),
+        apvts_.getRawParameterValue(ParamIDs::positionJitter),
+        apvts_.getRawParameterValue(ParamIDs::pitchShift),
+        apvts_.getRawParameterValue(ParamIDs::stereoSpread),
+        apvts_.getRawParameterValue(ParamIDs::masterVolume),
+        apvts_.getRawParameterValue(ParamIDs::loop));
     // Timer requires MessageManager; skip in headless test contexts.
     if (juce::MessageManager::getInstanceWithoutCreating() != nullptr)
         startTimerHz(30);
@@ -70,6 +79,19 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file)
     lastLoadedSampleRate_ = reader->sampleRate;
     lastLoadedNumFrames_  = numFrames;
     sampleBuffer_.setPending(std::move(buf), numFrames);
+}
+
+void GranoAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+{
+    if (auto xml = apvts_.copyState().createXml())
+        copyXmlToBinary(*xml, destData);
+}
+
+void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+{
+    if (auto xml = getXmlFromBinary(data, sizeInBytes))
+        if (xml->hasTagName(apvts_.state.getType()))
+            apvts_.replaceState(juce::ValueTree::fromXml(*xml));
 }
 
 // Required factory function — JUCE calls this to instantiate the plugin.

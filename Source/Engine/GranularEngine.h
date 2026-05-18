@@ -47,6 +47,26 @@ public:
     // Pass nullptr to revert to the 440 Hz sine fallback.
     void setSource(SampleBuffer* sb) noexcept { sampleSource_ = sb; }
 
+    // Wire APVTS parameter atomics. Call once from PluginProcessor constructor.
+    void setParamPointers(std::atomic<float>* grainSize,
+                          std::atomic<float>* density,
+                          std::atomic<float>* position,
+                          std::atomic<float>* positionJitter,
+                          std::atomic<float>* pitchShift,
+                          std::atomic<float>* stereoSpread,
+                          std::atomic<float>* masterVolume,
+                          std::atomic<float>* loop) noexcept
+    {
+        pGrainSize_      = grainSize;
+        pDensity_        = density;
+        pPosition_       = position;
+        pPositionJitter_ = positionJitter;
+        pPitchShift_     = pitchShift;
+        pStereoSpread_   = stereoSpread;
+        pMasterVolume_   = masterVolume;
+        pLoop_           = loop;
+    }
+
     struct GrainSnapshot
     {
         float srcFraction;  // grain start position as [0..1] of loaded sample length
@@ -99,6 +119,19 @@ private:
     SampleBuffer* sampleSource_{ nullptr };
 
     double sampleRate_{ 48000.0 };
+
+    // APVTS param pointers — set once before audio starts, read only in scheduler/audio threads.
+    std::atomic<float>* pGrainSize_     { nullptr };
+    std::atomic<float>* pDensity_       { nullptr };
+    std::atomic<float>* pPosition_      { nullptr };
+    std::atomic<float>* pPositionJitter_{ nullptr };
+    std::atomic<float>* pPitchShift_    { nullptr };
+    std::atomic<float>* pStereoSpread_  { nullptr };
+    std::atomic<float>* pMasterVolume_  { nullptr };
+    std::atomic<float>* pLoop_          { nullptr };
+
+    // Used only from SchedulerThread — no synchronization needed.
+    juce::Random grainRng_;
 
     std::array<GrainSnapshot, MaxActiveGrains> grainSnapshots_{};
     std::atomic<int>                           grainSnapshotCount_{ 0 };

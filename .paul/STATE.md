@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F3-core-controls
-loop_position: IDLE
-current_plan: null
+loop_position: PLAN-created
+current_plan: .paul/phases/03-core-controls/03-01-PLAN.md
 last_unified: .paul/phases/02-sample-io/02-02-SUMMARY.md
 session_start: 2026-05-18
 ```
@@ -15,23 +15,23 @@ session_start: 2026-05-18
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F3 — Core Controls and APVTS (4 of 8) — ready to plan
-Plan: none (awaiting /paul:plan)
-Status: F2 complete and unified — ready for F3
-Last activity: 2026-05-18 — Unified 02-02 (WaveformDisplay + grain particles + Load button)
+Phase: F3 — Core Controls and APVTS (4 of 8) — plan 03-01 created
+Plan: 03-01 (Parameters + APVTS + engine wiring)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-18 — Created 03-01-PLAN.md
 
 Progress:
 - Milestone: [██████░░░░░░░░░░░░░░] ~33%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
-- F3: [░░░░░░░░░░░░░░░░░░░░] 0% (awaiting plan)
+- F3: [░░░░░░░░░░░░░░░░░░░░] 0% (plan created, awaiting apply)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [F2 complete — start F3 with /paul:plan]
+  ✓        ○        ○     [03-01 plan created, awaiting apply]
 ```
 
 ## Accumulated context
@@ -70,8 +70,8 @@ None.
 
 Last session: 2026-05-18
 Stopped at: F2 unified — both plans complete
-Next action: /paul:plan (F3 — Core Controls and APVTS)
-Resume context: F3 adds APVTS with 8 parameters, GranoLAF skeleton, custom Knob/Slider components. See ROADMAP.md §F3 for exit criteria. Key prior context: Parameters.{h,cpp} is F3's central deliverable; all future phases read from it. WaveformDisplay playhead needs APVTS `position` param wired in F3.
+Next action: /paul:apply .paul/phases/03-core-controls/03-01-PLAN.md
+Resume context: 03-01 = Parameters.{h,cpp} + APVTS on processor + engine reads 8 param atomics + test_parameters.cpp. autonomous: true (no checkpoints). No UI changes. 03-02 (GranoLAF + Knob + Slider + PluginEditor layout) follows after unify. frontend-design required for 03-02.
 
 ## Phase history
 

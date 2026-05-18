@@ -49,7 +49,9 @@ void GranularEngine::SchedulerThread::run()
     while (!threadShouldExit())
     {
         engine_.scheduleGrain();
-        wait(20); // ~50 grains/sec; wait() returns early on signalThreadShouldExit
+        const float density = engine_.pDensity_
+            ? engine_.pDensity_->load(std::memory_order_relaxed) : 10.0f;
+        wait((int)(1000.0f / std::max(density, 0.1f)));
     }
 }
 
@@ -77,12 +79,34 @@ void GranularEngine::scheduleGrain() noexcept
     if (g == nullptr)
         return; // pool exhausted — drop
 
-    const int grainLen = (int)(0.1 * sampleRate_); // 100 ms
+    const float grainSizeMs = pGrainSize_
+        ? pGrainSize_->load(std::memory_order_relaxed) : 100.0f;
+    const float position = pPosition_
+        ? pPosition_->load(std::memory_order_relaxed) : 0.0f;
+    const float posJitter = pPositionJitter_
+        ? pPositionJitter_->load(std::memory_order_relaxed) : 0.0f;
+    const float pitchShiftSt = pPitchShift_
+        ? pPitchShift_->load(std::memory_order_relaxed) : 0.0f;
+    const float stereoSpread = pStereoSpread_
+        ? pStereoSpread_->load(std::memory_order_relaxed) : 0.5f;
+
+    const int grainLen = std::max(1, (int)(grainSizeMs * 0.001 * sampleRate_));
+
+    // Position with jitter — clamped to valid source range.
+    const float jitter = posJitter * (grainRng_.nextFloat() - 0.5f) * 2.0f;
+    const float posFrac = std::clamp(position + jitter * posJitter, 0.0f, 1.0f);
+    const int startPos = (int)(posFrac * (float)(srcLen - 1));
+
+    const float pitchRatio = std::pow(2.0f, pitchShiftSt / 12.0f);
+
+    // Pan in [-1, 1]: centre at 0, spread widens L/R.
+    const float pan = (stereoSpread * 2.0f - 1.0f) * (grainRng_.nextFloat() * 2.0f - 1.0f);
+
     g->source        = srcData;
-    g->startPos      = 0;
-    g->lengthSamples = std::min(grainLen, srcLen);
-    g->pitchRatio    = 1.0f;
-    g->pan           = 0.0f;
+    g->startPos      = startPos;
+    g->lengthSamples = std::min(grainLen, srcLen - startPos);
+    g->pitchRatio    = pitchRatio;
+    g->pan           = std::clamp(pan, -1.0f, 1.0f);
     g->shape         = EnvelopeShape::Hann;
     g->currentPhase  = 0.0f;
 
@@ -162,6 +186,12 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
             ++gi;
         }
     }
+
+    // Apply master volume.
+    const float volDb  = pMasterVolume_
+        ? pMasterVolume_->load(std::memory_order_relaxed) : 0.0f;
+    const float volGain = juce::Decibels::decibelsToGain(volDb, -60.0f);
+    for (int n = 0; n < N; ++n) { L[n] *= volGain; R[n] *= volGain; }
 
     // Write snapshot for UI particle rendering (read by getGrainSnapshots on UI thread).
     const int snapLen   = sampleSource_ != nullptr ? sampleSource_->getNumSamples() : 0;
