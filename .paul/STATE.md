@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F4-processing-modules
-loop_position: UNIFY-complete
-current_plan: .paul/phases/04-processing-modules/04-01-PLAN.md
+loop_position: PLAN-created
+current_plan: .paul/phases/04-processing-modules/04-03-PLAN.md
 last_unified: .paul/phases/04-processing-modules/04-01-SUMMARY.md
 session_start: 2026-05-18
 ```
@@ -16,9 +16,9 @@ session_start: 2026-05-18
 
 Milestone: v1.0 Initial Release
 Phase: F4 — Processing Modules (5 of 8) — In Progress
-Plan: 04-01 (MOTION module — Wow, Flutter, Drift, Crackle) — COMPLETE
-Status: Loop closed — ready for 04-02
-Last activity: 2026-05-18 — Unified 04-01
+Plan: 04-03 (Multi-platform CI & build hardening) — created, awaiting approval
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-18 — Created 04-03-PLAN.md (pivoted from 04-02 COLOR apply; F4b code already committed)
 
 Progress:
 - Milestone: [██████████░░░░░░░░░░] ~50%
@@ -32,7 +32,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [04-01 complete — ready for next PLAN]
+  ✓        ○        ○     [04-02 created, awaiting approval]
 ```
 
 ## Accumulated context
@@ -74,9 +74,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: 04-01 loop closed (PLAN ✓ APPLY ✓ UNIFY ✓)
-Next action: /paul:plan F4b — COLOR module (Saturate, Decimate, Tilt, Verb)
-Resume context: F4a Motion complete. 43/43 tests pass. Motion wired into GranularEngine + PluginProcessor. Pattern for F4b: same prepare/reset/processBlock/setParamPointers structure. No UI panels until F5.
+Stopped at: 04-03-PLAN.md created — awaiting approval
+Next action: Review plan, then /paul:apply .paul/phases/04-processing-modules/04-03-PLAN.md
+Resume context: CI hardening plan. 5 auto tasks + human-verify checkpoint. Changes: CMakeLists.txt (macOS target, MSVC /utf-8) + ci.yml (pin JUCE 8.0.7, macOS deployment target, Linux JUCE cache, Linux -j$(nproc)). F4b COLOR code already committed (1e2e5b9); still needs unify after CI verify.
 
 ## Phase history
 

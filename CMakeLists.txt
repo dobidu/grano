@@ -6,6 +6,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ── Platform compile flags ────────────────────────────────────────────────────
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS deployment target")
+endif()
+
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 # ── JUCE location ─────────────────────────────────────────────────────────────
 # Default to ~/JUCE (Linux/macOS) or %USERPROFILE%/JUCE (Windows).
 # Override with -DJUCE_DIR=/path/to/JUCE at configure time.
