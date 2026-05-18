@@ -6,32 +6,32 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F3-core-controls
-loop_position: PLAN-created
+loop_position: UNIFY-complete
 current_plan: .paul/phases/03-core-controls/03-01-PLAN.md
-last_unified: .paul/phases/02-sample-io/02-02-SUMMARY.md
+last_unified: .paul/phases/03-core-controls/03-01-SUMMARY.md
 session_start: 2026-05-18
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F3 — Core Controls and APVTS (4 of 8) — plan 03-01 created
-Plan: 03-01 (Parameters + APVTS + engine wiring)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-18 — Created 03-01-PLAN.md
+Phase: F3 — Core Controls and APVTS (4 of 8) — plan 03-01 complete
+Plan: 03-01 (Parameters + APVTS + engine wiring) ✅
+Status: UNIFY complete — 36/36 tests pass
+Last activity: 2026-05-18 — Unified 03-01 (commit 3868644)
 
 Progress:
-- Milestone: [██████░░░░░░░░░░░░░░] ~33%
+- Milestone: [████████░░░░░░░░░░░░] ~40%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
-- F3: [░░░░░░░░░░░░░░░░░░░░] 0% (plan created, awaiting apply)
+- F3: [██████████░░░░░░░░░░] 50% (03-01 done; 03-02 GranoLAF+UI next)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [03-01 plan created, awaiting apply]
+  ✓        ✓        ✓     [03-01 complete]
 ```
 
 ## Accumulated context
@@ -69,9 +69,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: F2 unified — both plans complete
-Next action: /paul:apply .paul/phases/03-core-controls/03-01-PLAN.md
-Resume context: 03-01 = Parameters.{h,cpp} + APVTS on processor + engine reads 8 param atomics + test_parameters.cpp. autonomous: true (no checkpoints). No UI changes. 03-02 (GranoLAF + Knob + Slider + PluginEditor layout) follows after unify. frontend-design required for 03-02.
+Stopped at: 03-01 unified — APVTS + engine param wiring complete
+Next action: /paul:plan F3-02 (GranoLAF + Knob + Slider + PluginEditor layout)
+Resume context: 03-02 needs `frontend-design` skill. Builds on APVTS from 03-01 — SliderAttachment/ButtonAttachment can now bind controls. WaveformDisplay playhead should wire to `position` param. Deprecated Font API must be fixed in GranoLAF build.
 
 ## Phase history
 
@@ -80,3 +80,4 @@ Resume context: 03-01 = Parameters.{h,cpp} + APVTS on processor + engine reads 8
 | F0 — Foundation | 1/1 | 2026-05-17 | d2f457a |
 | F1 — Granular Engine | 2/2 | 2026-05-17 | 7645200 |
 | F2 — Sample I/O | 2/2 | 2026-05-18 | 4327ac1 |
+| F3 — Core Controls (partial) | 1/2 | 2026-05-18 | 3868644 |
