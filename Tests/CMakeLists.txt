@@ -13,12 +13,15 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(GranoTests
     test_main.cpp
     test_engine.cpp
+    test_sample_io.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginProcessor.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginEditor.cpp
     # F1 engine sources compiled directly (same pattern as plugin sources)
     ${CMAKE_SOURCE_DIR}/Source/Engine/EnvelopeShapes.cpp
     ${CMAKE_SOURCE_DIR}/Source/Engine/GrainPool.cpp
     ${CMAKE_SOURCE_DIR}/Source/Engine/GranularEngine.cpp
+    # F2 — Sample I/O
+    ${CMAKE_SOURCE_DIR}/Source/Engine/SampleBuffer.cpp
 )
 
 target_include_directories(GranoTests
@@ -29,6 +32,7 @@ target_include_directories(GranoTests
 target_link_libraries(GranoTests
     PRIVATE
         Catch2::Catch2WithMain
+        juce::juce_audio_formats
         juce::juce_audio_utils
         juce::juce_audio_processors
         juce::juce_dsp

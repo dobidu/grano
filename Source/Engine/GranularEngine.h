@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GrainPool.h"
+#include "SampleBuffer.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_core/juce_core.h>
 #include <array>
@@ -10,7 +11,7 @@
 // GranularEngine — owns the grain pool, scheduler thread, lock-free FIFO,
 // and audio-thread mixer.
 //
-// Threading model (F1):
+// Threading model:
 //   SchedulerThread (single producer) — acquires grain slots, fills them,
 //     pushes pointers into the AbstractFifo. Runs at ~50 grains/sec.
 //   Audio thread (consumer) — drains the FIFO in processBlock(), mixes
@@ -19,8 +20,10 @@
 // RT contract: processBlock() performs no heap allocation, no locks,
 //   no blocking calls. All storage is pre-allocated.
 //
-// Source data: hard-coded 440 Hz sine wave generated in prepare().
-//   Replaced by SampleBuffer in F2.
+// Source data: SampleBuffer set via setSource() provides live audio data.
+//   Falls back to internal 440 Hz sine tone if no SampleBuffer is loaded.
+//
+// setSource() must be called before prepareToPlay() (before audio thread starts).
 class GranularEngine
 {
 public:
@@ -39,6 +42,10 @@ public:
 
     // Stops scheduler, releases all active grains, drains FIFO.
     void reset();
+
+    // Set the live sample source. Call before prepareToPlay (before audio starts).
+    // Pass nullptr to revert to the 440 Hz sine fallback.
+    void setSource(SampleBuffer* sb) noexcept { sampleSource_ = sb; }
 
 private:
     // --- scheduler thread (sole FIFO producer) ---
@@ -75,6 +82,9 @@ private:
     // +2 guard samples prevent srcInt+1 OOB at pitchRatio ≤ 2.
     std::vector<float> testSample_;
     std::atomic<bool>  sampleReady_{ false };
+
+    // Live sample source — set once before audio starts, never changed while running.
+    SampleBuffer* sampleSource_{ nullptr };
 
     double sampleRate_{ 48000.0 };
 

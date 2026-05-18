@@ -56,6 +56,8 @@ target_sources(Grano
         Source/Engine/EnvelopeShapes.cpp
         Source/Engine/GrainPool.cpp
         Source/Engine/GranularEngine.cpp
+        # F2 — Sample I/O
+        Source/Engine/SampleBuffer.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────
@@ -70,6 +72,7 @@ target_compile_definitions(Grano
 # ── Link libraries ────────────────────────────────────────────────────────────
 target_link_libraries(Grano
     PRIVATE
+        juce::juce_audio_formats
         juce::juce_audio_utils
         juce::juce_audio_processors
         juce::juce_dsp

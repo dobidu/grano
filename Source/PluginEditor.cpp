@@ -29,6 +29,11 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     setSize(kDefaultWidth, kDefaultHeight);
     setResizable(true, true);
     setResizeLimits(kMinWidth, kMinHeight, kMaxWidth, kMaxHeight);
+
+    errorLabel_.setJustificationType(juce::Justification::centred);
+    errorLabel_.setColour(juce::Label::textColourId, juce::Colour{ 0xffff6b6b });
+    errorLabel_.setVisible(false);
+    addAndMakeVisible(errorLabel_);
 }
 
 void GranoAudioProcessorEditor::paint(juce::Graphics& g)
@@ -85,5 +90,45 @@ void GranoAudioProcessorEditor::paint(juce::Graphics& g)
 
 void GranoAudioProcessorEditor::resized()
 {
-    // No child components in F0.
+    // Error label docked to bottom, full width, 24 px height.
+    errorLabel_.setBounds(0, getHeight() - 24, getWidth(), 24);
+}
+
+bool GranoAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
+{
+    for (const auto& path : files)
+    {
+        const juce::String ext = juce::File(path).getFileExtension().toLowerCase();
+        if (ext == ".wav" || ext == ".aif" || ext == ".aiff" ||
+            ext == ".flac" || ext == ".ogg" || ext == ".mp3")
+            return true;
+    }
+    return false;
+}
+
+void GranoAudioProcessorEditor::filesDropped(const juce::StringArray& files, int /*x*/, int /*y*/)
+{
+    if (files.isEmpty())
+        return;
+
+    processorRef.loadSampleFile(juce::File(files[0]));
+
+    const auto& err = processorRef.getLastLoadError();
+    if (err.isEmpty())
+        clearError();
+    else
+        showError(err);
+}
+
+void GranoAudioProcessorEditor::showError(const juce::String& message)
+{
+    errorLabel_.setText(message, juce::dontSendNotification);
+    errorLabel_.setVisible(true);
+    repaint();
+}
+
+void GranoAudioProcessorEditor::clearError()
+{
+    errorLabel_.setVisible(false);
+    repaint();
 }

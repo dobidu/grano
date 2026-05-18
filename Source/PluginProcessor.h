@@ -1,7 +1,9 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_formats/juce_audio_formats.h>
 #include "Engine/GranularEngine.h"
+#include "Engine/SampleBuffer.h"
 
 // GranoAudioProcessor is the AudioProcessor entry point for the Grano plugin.
 //
@@ -16,7 +18,8 @@
 // processBlock runs on the host audio thread — it must remain real-time safe.
 // Never allocate, lock, throw, or make syscalls inside processBlock.
 
-class GranoAudioProcessor : public juce::AudioProcessor
+class GranoAudioProcessor : public juce::AudioProcessor,
+                             private juce::Timer
 {
 public:
     GranoAudioProcessor();
@@ -55,8 +58,22 @@ public:
     void getStateInformation(juce::MemoryBlock&) override {}
     void setStateInformation(const void*, int)   override {}
 
+    // ── Sample loading (message thread) ───────────────────────────────────────
+    // Called by the editor's FileDragAndDropTarget handler.
+    // On success, clears lastLoadError_. On failure, sets it.
+    void loadSampleFile(const juce::File& file);
+
+    const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
+
+    SampleBuffer& getSampleBuffer() noexcept { return sampleBuffer_; }
+
 private:
-    GranularEngine engine_;
+    void timerCallback() override { sampleBuffer_.processRetired(); }
+
+    SampleBuffer               sampleBuffer_;  // must be declared before engine_
+    GranularEngine             engine_;
+    juce::AudioFormatManager   formatManager_;
+    juce::String               lastLoadError_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessor)
 };

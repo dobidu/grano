@@ -55,17 +55,32 @@ void GranularEngine::SchedulerThread::run()
 
 void GranularEngine::scheduleGrain() noexcept
 {
-    if (!sampleReady_.load(std::memory_order_acquire))
-        return;
+    // Prefer live SampleBuffer; fall back to 440 Hz test tone.
+    const float* srcData = nullptr;
+    int          srcLen  = 0;
+
+    if (sampleSource_ != nullptr)
+    {
+        srcData = sampleSource_->getReadPointer();
+        srcLen  = sampleSource_->getNumSamples();
+    }
+
+    if (srcData == nullptr || srcLen <= 0)
+    {
+        if (!sampleReady_.load(std::memory_order_acquire))
+            return;
+        srcData = testSample_.data();
+        srcLen  = static_cast<int>(sampleRate_); // 1 second of 440 Hz sine
+    }
 
     Grain* g = pool_.acquire();
     if (g == nullptr)
         return; // pool exhausted — drop
 
     const int grainLen = (int)(0.1 * sampleRate_); // 100 ms
-    g->source        = testSample_.data();
+    g->source        = srcData;
     g->startPos      = 0;
-    g->lengthSamples = grainLen;
+    g->lengthSamples = std::min(grainLen, srcLen);
     g->pitchRatio    = 1.0f;
     g->pan           = 0.0f;
     g->shape         = EnvelopeShape::Hann;
@@ -98,6 +113,21 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
     const int numCh = buffer.getNumChannels();
     if (numCh < 1)
         return;
+
+    // If a new sample buffer was swapped in, all active grains carry stale source
+    // pointers. Drain them before the new buffer's grains arrive.
+    if (sampleSource_ != nullptr && sampleSource_->trySwap())
+    {
+        for (int i = 0; i < activeGrainCount_; ++i)
+            pool_.release(activeGrains_[i]);
+        activeGrainCount_ = 0;
+
+        int s1, n1, s2, n2;
+        fifo_.prepareToRead(fifo_.getNumReady(), s1, n1, s2, n2);
+        for (int i = 0; i < n1; ++i) pool_.release(fifoSlots_[s1 + i]);
+        for (int i = 0; i < n2; ++i) pool_.release(fifoSlots_[s2 + i]);
+        fifo_.finishedRead(n1 + n2);
+    }
 
     // Drain FIFO into active list
     {
