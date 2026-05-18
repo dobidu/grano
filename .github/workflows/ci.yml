@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  JUCE_VERSION: "8.0.7"
+  JUCE_VERSION: "8.0.12"
 
 jobs:
   build:
