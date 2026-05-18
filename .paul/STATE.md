@@ -6,19 +6,19 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F2-sample-io
-loop_position: IDLE
-current_plan: null
+loop_position: PLAN-created
+current_plan: .paul/phases/02-sample-io/02-02-PLAN.md
 last_unified: .paul/phases/02-sample-io/02-01-SUMMARY.md
-session_start: 2026-05-17
+session_start: 2026-05-18
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F2 — Sample I/O and Waveform Display (3 of 8) — 1 of 2 plans complete
-Plan: 02-01 unified ✓ — 02-02 (WaveformDisplay + particles) pending
-Status: Ready for 02-02 PLAN (requires frontend-design skill)
-Last activity: 2026-05-17 — Unified 02-01 (SampleBuffer + AudioFormatManager + drag-drop + GranularEngine wiring)
+Phase: F2 — Sample I/O and Waveform Display (3 of 8) — plan 02-02 created
+Plan: 02-02 (WaveformDisplay + AudioThumbnail + grain particles)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-18 — Created 02-02-PLAN.md
 
 Progress:
 - Milestone: [████░░░░░░░░░░░░░░░░] ~22%
@@ -30,7 +30,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [02-01 complete — ready for 02-02 PLAN]
+  ✓        ○        ○     [02-02 plan created, awaiting apply]
 ```
 
 ## Accumulated context
@@ -61,10 +61,10 @@ None — F2-02 requires frontend-design skill for WaveformDisplay spec.
 
 ## Session continuity
 
-Last session: 2026-05-17
-Stopped at: 02-01 unified (SampleBuffer + AudioFormatManager + drag-drop + GranularEngine wiring), commit 09786f1
-Next action: /paul:plan F2 plan 02-02 (WaveformDisplay + AudioThumbnail + grain particles)
-Resume context: frontend-design skill required for 02-02 (WaveformDisplay DESIGN_SPEC.md waveform colours, particle spec). Plan 02-02 covers: WaveformDisplay component, juce::AudioThumbnail, playhead cursor (1.5 px, #7CF5C4), grain particle overlay (#C77CFF), 60 fps cap.
+Last session: 2026-05-18
+Stopped at: 02-02 PLAN created (WaveformDisplay + AudioThumbnail + grain particles)
+Next action: /paul:apply .paul/phases/02-sample-io/02-02-PLAN.md
+Resume context: frontend-design skill REQUIRED before Task 2 (WaveformDisplay paint). Plan has 3 tasks + 1 human-verify checkpoint. autonomous: false. Task 1 = GrainSnapshot in GranularEngine (engine-only, no UI skill needed). Task 2 = WaveformDisplay.h+cpp (needs frontend-design). Task 3 = PluginEditor wiring + CMakeLists.
 
 ## Phase history
 
