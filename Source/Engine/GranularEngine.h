@@ -2,6 +2,7 @@
 
 #include "GrainPool.h"
 #include "SampleBuffer.h"
+#include "../Modules/Motion.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_core/juce_core.h>
 #include <array>
@@ -46,6 +47,9 @@ public:
     // Set the live sample source. Call before prepareToPlay (before audio starts).
     // Pass nullptr to revert to the 440 Hz sine fallback.
     void setSource(SampleBuffer* sb) noexcept { sampleSource_ = sb; }
+
+    // Provide Motion module for per-grain pitch modulation. Call before audio starts.
+    void setPitchModSource(Motion* m) noexcept { pitchMod_ = m; }
 
     // Wire APVTS parameter atomics. Call once from PluginProcessor constructor.
     void setParamPointers(std::atomic<float>* grainSize,
@@ -129,6 +133,9 @@ private:
     std::atomic<float>* pStereoSpread_  { nullptr };
     std::atomic<float>* pMasterVolume_  { nullptr };
     std::atomic<float>* pLoop_          { nullptr };
+
+    // Pitch modulation source — set once before audio starts, read in scheduler thread.
+    Motion* pitchMod_ { nullptr };
 
     // Used only from SchedulerThread — no synchronization needed.
     juce::Random grainRng_;

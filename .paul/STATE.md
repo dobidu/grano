@@ -5,9 +5,9 @@ This file is managed by PAUL. Do not edit manually.
 ## Current state
 
 ```yaml
-phase: F3-core-controls
-loop_position: UNIFY-complete
-current_plan: .paul/phases/03-core-controls/03-02-PLAN.md
+phase: F4-processing-modules
+loop_position: PLAN-created
+current_plan: .paul/phases/04-processing-modules/04-01-PLAN.md
 last_unified: .paul/phases/03-core-controls/03-02-SUMMARY.md
 session_start: 2026-05-18
 ```
@@ -15,10 +15,10 @@ session_start: 2026-05-18
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F3 — Core Controls and APVTS (4 of 8) — COMPLETE ✅
-Plan: 03-02 (GranoLAF + Knob + Slider + PluginEditor layout) ✅
-Status: UNIFY complete — F3 done — 36/36 tests pass
-Last activity: 2026-05-18 — Unified 03-02 (commits 2bb5776, c728df5)
+Phase: F4 — Processing Modules (5 of 8) — In Progress
+Plan: 04-01 (MOTION module — Wow, Flutter, Drift, Crackle) — created, awaiting approval
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-18 — Created 04-01-PLAN.md
 
 Progress:
 - Milestone: [█████████░░░░░░░░░░░] ~45%
@@ -26,13 +26,13 @@ Progress:
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
-- F4: [░░░░░░░░░░░░░░░░░░░░] 0%  (next)
+- F4: [░░░░░░░░░░░░░░░░░░░░] 0%  (in progress — F4a planning)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [03-02 complete — F3 DONE]
+  ✓        ○        ○     [04-01 created, awaiting approval]
 ```
 
 ## Accumulated context
@@ -74,9 +74,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: F3 complete — both plans unified
-Next action: /paul:plan F4a — MOTION module (Wow, Flutter, Drift, Crackle)
-Resume context: F4 splits into 3 sub-plans (F4a MOTION, F4b COLOR, F4c PATTERN). Start with F4a. New source files go in Source/Modules/Motion.{h,cpp}. All modules independently bypassable, zero CPU when off. F4 adds APVTS params for each module control.
+Stopped at: 04-01-PLAN.md created — awaiting approval
+Next action: Review plan, then /paul:apply .paul/phases/04-processing-modules/04-01-PLAN.md
+Resume context: F4a plan ready. 3 auto tasks + human-verify checkpoint. Creates Source/Modules/Motion.{h,cpp}, adds 8 APVTS params, wires pitch offset into GranularEngine::scheduleGrain, adds crackle post-engine in processBlock. No UI in F4a.
 
 ## Phase history
 

@@ -87,6 +87,7 @@ void GranularEngine::scheduleGrain() noexcept
         ? pPositionJitter_->load(std::memory_order_relaxed) : 0.0f;
     const float pitchShiftSt = pPitchShift_
         ? pPitchShift_->load(std::memory_order_relaxed) : 0.0f;
+    const float pitchModSt   = pitchMod_ ? pitchMod_->getPitchModSemitones() : 0.0f;
     const float stereoSpread = pStereoSpread_
         ? pStereoSpread_->load(std::memory_order_relaxed) : 0.5f;
 
@@ -97,7 +98,7 @@ void GranularEngine::scheduleGrain() noexcept
     const float posFrac = std::clamp(position + jitter * posJitter, 0.0f, 1.0f);
     const int startPos = (int)(posFrac * (float)(srcLen - 1));
 
-    const float pitchRatio = std::pow(2.0f, pitchShiftSt / 12.0f);
+    const float pitchRatio = std::pow(2.0f, (pitchShiftSt + pitchModSt) / 12.0f);
 
     // Pan in [-1, 1]: centre at 0, spread widens L/R.
     const float pan = (stereoSpread * 2.0f - 1.0f) * (grainRng_.nextFloat() * 2.0f - 1.0f);

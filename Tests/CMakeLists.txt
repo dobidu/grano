@@ -31,6 +31,9 @@ add_executable(GranoTests
     # F3 — Parameters
     ${CMAKE_SOURCE_DIR}/Source/Parameters.cpp
     test_parameters.cpp
+    # F4 — Processing modules
+    ${CMAKE_SOURCE_DIR}/Source/Modules/Motion.cpp
+    test_motion.cpp
 )
 
 target_include_directories(GranoTests

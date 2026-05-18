@@ -66,6 +66,8 @@ target_sources(Grano
         Source/UI/Slider.cpp
         # F3 — Parameters
         Source/Parameters.cpp
+        # F4 — Processing modules
+        Source/Modules/Motion.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────

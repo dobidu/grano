@@ -17,6 +17,16 @@ GranoAudioProcessor::GranoAudioProcessor()
         apvts_.getRawParameterValue(ParamIDs::stereoSpread),
         apvts_.getRawParameterValue(ParamIDs::masterVolume),
         apvts_.getRawParameterValue(ParamIDs::loop));
+    engine_.setPitchModSource(&motion_);
+    motion_.setParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::motionEnabled),
+        apvts_.getRawParameterValue(ParamIDs::wowDepth),
+        apvts_.getRawParameterValue(ParamIDs::wowRate),
+        apvts_.getRawParameterValue(ParamIDs::flutterDepth),
+        apvts_.getRawParameterValue(ParamIDs::flutterRate),
+        apvts_.getRawParameterValue(ParamIDs::driftAmount),
+        apvts_.getRawParameterValue(ParamIDs::crackleLevel),
+        apvts_.getRawParameterValue(ParamIDs::crackleColor));
     // Timer requires MessageManager; skip in headless test contexts.
     if (juce::MessageManager::getInstanceWithoutCreating() != nullptr)
         startTimerHz(30);
@@ -31,11 +41,13 @@ GranoAudioProcessor::~GranoAudioProcessor()
 void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     engine_.prepare(sampleRate, samplesPerBlock);
+    motion_.prepare(sampleRate);
 }
 
 void GranoAudioProcessor::releaseResources()
 {
     engine_.reset();
+    motion_.reset();
 }
 
 // processBlock runs on the host audio thread — real-time safe.
@@ -44,6 +56,7 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 {
     juce::ScopedNoDenormals noDenormals;
     engine_.processBlock(buffer);
+    motion_.processBlock(buffer);
 }
 
 juce::AudioProcessorEditor* GranoAudioProcessor::createEditor()

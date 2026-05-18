@@ -42,5 +42,40 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<juce::AudioParameterBool>(
         juce::ParameterID{ ParamIDs::loop, 1 }, "Loop", false));
 
+    // F4a — MOTION module
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ ParamIDs::motionEnabled, 1 }, "Motion", false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::wowDepth, 1 }, "Wow Depth",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::wowRate, 1 }, "Wow Rate",
+        juce::NormalisableRange<float>{ 0.1f, 2.0f, 0.0f, 0.5f }, 0.5f,
+        juce::AudioParameterFloatAttributes{}.withLabel("Hz")));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::flutterDepth, 1 }, "Flutter Depth",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::flutterRate, 1 }, "Flutter Rate",
+        juce::NormalisableRange<float>{ 3.0f, 20.0f, 0.0f, 0.5f }, 8.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel("Hz")));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::driftAmount, 1 }, "Drift",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::crackleLevel, 1 }, "Crackle Level",
+        juce::NormalisableRange<float>{ -60.0f, 0.0f }, -60.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel("dB")));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::crackleColor, 1 }, "Crackle Color",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
+
     return layout;
 }

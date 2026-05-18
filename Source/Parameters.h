@@ -10,6 +10,16 @@ namespace ParamIDs {
     inline constexpr const char* stereoSpread   = "stereoSpread";
     inline constexpr const char* masterVolume   = "masterVolume";
     inline constexpr const char* loop           = "loop";
+
+    // F4a — MOTION module
+    inline constexpr const char* motionEnabled  = "motionEnabled";
+    inline constexpr const char* wowDepth       = "wowDepth";
+    inline constexpr const char* wowRate        = "wowRate";
+    inline constexpr const char* flutterDepth   = "flutterDepth";
+    inline constexpr const char* flutterRate    = "flutterRate";
+    inline constexpr const char* driftAmount    = "driftAmount";
+    inline constexpr const char* crackleLevel   = "crackleLevel";
+    inline constexpr const char* crackleColor   = "crackleColor";
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
