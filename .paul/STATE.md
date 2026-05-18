@@ -5,32 +5,33 @@ This file is managed by PAUL. Do not edit manually.
 ## Current state
 
 ```yaml
-phase: F2-sample-io
-loop_position: PLAN-created
-current_plan: .paul/phases/02-sample-io/02-02-PLAN.md
-last_unified: .paul/phases/02-sample-io/02-01-SUMMARY.md
+phase: F3-core-controls
+loop_position: IDLE
+current_plan: null
+last_unified: .paul/phases/02-sample-io/02-02-SUMMARY.md
 session_start: 2026-05-18
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F2 — Sample I/O and Waveform Display (3 of 8) — plan 02-02 created
-Plan: 02-02 (WaveformDisplay + AudioThumbnail + grain particles)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-18 — Created 02-02-PLAN.md
+Phase: F3 — Core Controls and APVTS (4 of 8) — ready to plan
+Plan: none (awaiting /paul:plan)
+Status: F2 complete and unified — ready for F3
+Last activity: 2026-05-18 — Unified 02-02 (WaveformDisplay + grain particles + Load button)
 
 Progress:
-- Milestone: [████░░░░░░░░░░░░░░░░] ~22%
+- Milestone: [██████░░░░░░░░░░░░░░] ~33%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
-- F2: [██████████░░░░░░░░░░] 50% (1/2 plans complete)
+- F2: [████████████████████] 100% ✅
+- F3: [░░░░░░░░░░░░░░░░░░░░] 0% (awaiting plan)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [02-02 plan created, awaiting apply]
+  ✓        ✓        ✓     [F2 complete — start F3 with /paul:plan]
 ```
 
 ## Accumulated context
@@ -48,6 +49,9 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | trySwap() called unconditionally per processBlock (no flag) | F2 | Simpler than newSourcePending_ atomic — trySwap short-circuits when nothing pending |
 | Left-channel-only read for stereo files | F2 | Avoids amplitude doubling; proper stereo downmix deferred to F4+ |
 | MessageManager guard on startTimerHz | F2 | GranoAudioProcessor compiled into GranoTests; MM guard prevents JUCE assertion in headless CI |
+| GrainSnapshot plain array + atomic count | F2 | seqlock overkill for visual data; aligned-float atomic on x86; TSAN-clean in CI |
+| WD:: namespace for design tokens | F2 | Colors co-located in .cpp; swap for GranoLAF constants in F3 |
+| FileChooser as unique_ptr member on editor | F2 | Keeps async callback alive; same load/error flow as filesDropped |
 
 ### Deferred issues
 | Issue | Origin | Effort | Revisit |
@@ -55,16 +59,19 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | Migrate deprecated `juce::Font(String, float, int)` to `FontOptions` | F0 | S | F3 (GranoLAF build) |
 | Stereo file downmix (proper L+R average) | F2 | S | F4 (when multi-channel engine work begins) |
 | Error label 3-second auto-dismiss | F2 | XS | F3 (GranoLAF + timer infrastructure) |
+| Playhead wired to APVTS `position` parameter | F2 | S | F3 (position param added) |
+| Particle trail / fade-out animation (60 ms decay) | F2 | S | F6 polish |
+| GranoLAF styling for WaveformDisplay + Load button | F2 | M | F3 |
 
 ### Blockers/Concerns
-None — F2-02 requires frontend-design skill for WaveformDisplay spec.
+None.
 
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: 02-02 PLAN created (WaveformDisplay + AudioThumbnail + grain particles)
-Next action: /paul:apply .paul/phases/02-sample-io/02-02-PLAN.md
-Resume context: frontend-design skill REQUIRED before Task 2 (WaveformDisplay paint). Plan has 3 tasks + 1 human-verify checkpoint. autonomous: false. Task 1 = GrainSnapshot in GranularEngine (engine-only, no UI skill needed). Task 2 = WaveformDisplay.h+cpp (needs frontend-design). Task 3 = PluginEditor wiring + CMakeLists.
+Stopped at: F2 unified — both plans complete
+Next action: /paul:plan (F3 — Core Controls and APVTS)
+Resume context: F3 adds APVTS with 8 parameters, GranoLAF skeleton, custom Knob/Slider components. See ROADMAP.md §F3 for exit criteria. Key prior context: Parameters.{h,cpp} is F3's central deliverable; all future phases read from it. WaveformDisplay playhead needs APVTS `position` param wired in F3.
 
 ## Phase history
 
@@ -72,4 +79,4 @@ Resume context: frontend-design skill REQUIRED before Task 2 (WaveformDisplay pa
 |-------|-------|-----------|--------|
 | F0 — Foundation | 1/1 | 2026-05-17 | d2f457a |
 | F1 — Granular Engine | 2/2 | 2026-05-17 | 7645200 |
-| F2 — Sample I/O | 1/2 | — | 09786f1 (partial) |
+| F2 — Sample I/O | 2/2 | 2026-05-18 | 4327ac1 |

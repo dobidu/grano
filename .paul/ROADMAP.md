@@ -52,9 +52,19 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F2 — Sample I/O and Waveform Display
+## ✅ F2 — Sample I/O and Waveform Display — COMPLETE (2026-05-18)
 
 **Goal**: User can drag a sample file onto the plugin, it loads, and the waveform appears. Playhead cursor follows the grain position. Particles for active grains appear on the waveform.
+
+**Plans**: 2 of 2 complete — see `.paul/phases/02-sample-io/`
+
+**Exit criteria met**:
+- [x] `juce::AudioFormatManager` registered with WAV/AIFF/FLAC/OGG/MP3
+- [x] Drag & drop + Load button load sample atomically via SampleBuffer
+- [x] Malformed files rejected with visible error message; no crash
+- [x] `WaveformDisplay` renders AudioThumbnail waveform with playhead cursor (`#7CF5C4`)
+- [x] Active grain particles overlaid: violet dots (`#C77CFF`), opacity = envelope amplitude, X = source position
+- [x] 32/32 Catch2 tests pass
 
 **Entry**: F1 complete and unified.
 
