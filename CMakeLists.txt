@@ -79,6 +79,8 @@ target_sources(Grano
         Source/Modules/Motion.cpp
         Source/Modules/Color.cpp
         Source/Modules/Pattern.cpp
+        # F5 — Modulation
+        Source/Modulation/Lfo.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────

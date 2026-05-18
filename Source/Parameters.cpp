@@ -140,5 +140,49 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::spray, 1 }, "Spray",
         juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
 
+    // F5 — LFO 1
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::lfo1Rate, 1 }, "LFO1 Rate",
+        juce::NormalisableRange<float>{ 0.01f, 8000.0f, 0.0f, 0.2f }, 1.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel("Hz")));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::lfo1Waveform, 1 }, "LFO1 Waveform",
+        juce::StringArray{ "Sine", "Triangle", "Saw", "Square", "Random", "S&H", "Drawable" }, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ ParamIDs::lfo1Sync, 1 }, "LFO1 Sync", false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::lfo1Phase, 1 }, "LFO1 Phase",
+        juce::NormalisableRange<float>{ 0.0f, 360.0f }, 0.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel("deg")));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::lfo1Depth, 1 }, "LFO1 Depth",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
+
+    // F5 — LFO 2
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::lfo2Rate, 1 }, "LFO2 Rate",
+        juce::NormalisableRange<float>{ 0.01f, 8000.0f, 0.0f, 0.2f }, 1.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel("Hz")));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::lfo2Waveform, 1 }, "LFO2 Waveform",
+        juce::StringArray{ "Sine", "Triangle", "Saw", "Square", "Random", "S&H", "Drawable" }, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ ParamIDs::lfo2Sync, 1 }, "LFO2 Sync", false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::lfo2Phase, 1 }, "LFO2 Phase",
+        juce::NormalisableRange<float>{ 0.0f, 360.0f }, 0.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel("deg")));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::lfo2Depth, 1 }, "LFO2 Depth",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
+
     return layout;
 }

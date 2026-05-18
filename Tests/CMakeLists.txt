@@ -38,6 +38,9 @@ add_executable(GranoTests
     test_color.cpp
     ${CMAKE_SOURCE_DIR}/Source/Modules/Pattern.cpp
     test_pattern.cpp
+    # F5 — Modulation
+    ${CMAKE_SOURCE_DIR}/Source/Modulation/Lfo.cpp
+    test_modulation.cpp
 )
 
 target_include_directories(GranoTests

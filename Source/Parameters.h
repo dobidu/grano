@@ -40,6 +40,20 @@ namespace ParamIDs {
     inline constexpr const char* reverseProb          = "reverseProb";
     inline constexpr const char* quantizeScale        = "quantizeScale";
     inline constexpr const char* spray                = "spray";
+
+    // F5 — LFO 1
+    inline constexpr const char* lfo1Rate     = "lfo1Rate";
+    inline constexpr const char* lfo1Waveform = "lfo1Waveform";
+    inline constexpr const char* lfo1Sync     = "lfo1Sync";
+    inline constexpr const char* lfo1Phase    = "lfo1Phase";
+    inline constexpr const char* lfo1Depth    = "lfo1Depth";
+
+    // F5 — LFO 2
+    inline constexpr const char* lfo2Rate     = "lfo2Rate";
+    inline constexpr const char* lfo2Waveform = "lfo2Waveform";
+    inline constexpr const char* lfo2Sync     = "lfo2Sync";
+    inline constexpr const char* lfo2Phase    = "lfo2Phase";
+    inline constexpr const char* lfo2Depth    = "lfo2Depth";
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
