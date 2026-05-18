@@ -24,6 +24,10 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/Engine/SampleBuffer.cpp
     # F2 — UI
     ${CMAKE_SOURCE_DIR}/Source/UI/WaveformDisplay.cpp
+    # F3 — UI components and LookAndFeel
+    ${CMAKE_SOURCE_DIR}/Source/UI/LookAndFeel/GranoLAF.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/Knob.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/Slider.cpp
     # F3 — Parameters
     ${CMAKE_SOURCE_DIR}/Source/Parameters.cpp
     test_parameters.cpp

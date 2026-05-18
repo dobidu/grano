@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "Parameters.h"
 
 // Design constants from DESIGN_SPEC.md
 namespace
@@ -30,8 +31,11 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     setSize(kDefaultWidth, kDefaultHeight);
     setResizable(true, true);
     setResizeLimits(kMinWidth, kMinHeight, kMaxWidth, kMaxHeight);
+    setLookAndFeel(&laf_);
 
     waveformDisplay_.setEngine(&p.getEngine());
+    waveformDisplay_.setPositionParam(
+        p.getAPVTS().getRawParameterValue(ParamIDs::position));
     addAndMakeVisible(waveformDisplay_);
 
     loadButton_.setButtonText("Load");
@@ -42,6 +46,41 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     errorLabel_.setColour(juce::Label::textColourId, juce::Colour{ 0xffff6b6b });
     errorLabel_.setVisible(false);
     addAndMakeVisible(errorLabel_);
+
+    // Core controls
+    addAndMakeVisible(positionSlider_);
+    addAndMakeVisible(grainSizeKnob_);
+    addAndMakeVisible(densityKnob_);
+    addAndMakeVisible(posJitterKnob_);
+    addAndMakeVisible(pitchShiftKnob_);
+    addAndMakeVisible(spreadSlider_);
+    addAndMakeVisible(masterVolKnob_);
+    loopButton_.setButtonText("LOOP");
+    loopButton_.setClickingTogglesState(true);
+    addAndMakeVisible(loopButton_);
+
+    // APVTS attachments
+    auto& apvts = p.getAPVTS();
+    positionAttach_  = std::make_unique<SliderAttachment>(apvts, ParamIDs::position,
+                                                           positionSlider_.getSlider());
+    grainSizeAttach_ = std::make_unique<SliderAttachment>(apvts, ParamIDs::grainSize,
+                                                           grainSizeKnob_.getSlider());
+    densityAttach_   = std::make_unique<SliderAttachment>(apvts, ParamIDs::density,
+                                                           densityKnob_.getSlider());
+    posJitterAttach_ = std::make_unique<SliderAttachment>(apvts, ParamIDs::positionJitter,
+                                                           posJitterKnob_.getSlider());
+    pitchShiftAttach_= std::make_unique<SliderAttachment>(apvts, ParamIDs::pitchShift,
+                                                           pitchShiftKnob_.getSlider());
+    spreadAttach_    = std::make_unique<SliderAttachment>(apvts, ParamIDs::stereoSpread,
+                                                           spreadSlider_.getSlider());
+    masterVolAttach_ = std::make_unique<SliderAttachment>(apvts, ParamIDs::masterVolume,
+                                                           masterVolKnob_.getSlider());
+    loopAttach_      = std::make_unique<ButtonAttachment>(apvts, ParamIDs::loop, loopButton_);
+}
+
+GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
+{
+    setLookAndFeel(nullptr);
 }
 
 void GranoAudioProcessorEditor::paint(juce::Graphics& g)
@@ -67,8 +106,10 @@ void GranoAudioProcessorEditor::paint(juce::Graphics& g)
     // Fall back to the system monospaced font for F0.
     {
         const juce::String logoText = "GRANO";
-        juce::Font logoFont(juce::Font::getDefaultMonospacedFontName(),
-                            kLogoFontSize, juce::Font::bold);
+        juce::Font logoFont(juce::FontOptions{}
+            .withName(juce::Font::getDefaultMonospacedFontName())
+            .withHeight(kLogoFontSize)
+            .withStyle("Bold"));
 
         // Approximate the letter-spacing by distributing glyphs manually.
         juce::GlyphArrangement glyphs;
@@ -98,19 +139,56 @@ void GranoAudioProcessorEditor::paint(juce::Graphics& g)
 
 void GranoAudioProcessorEditor::resized()
 {
-    constexpr int margin    = 40;
-    constexpr int topMargin = 80;
-    waveformDisplay_.setBounds(margin, topMargin,
-                               getWidth()  - 2 * margin,
-                               getHeight() - topMargin - 24 - margin / 2);
+    constexpr int kMargin    = 40;
+    constexpr int kHeaderH   = 48;
+    constexpr int kPosStripH = 44;   // position slider strip (label + slider)
+    constexpr int kKnobH     = 100;  // knob area (rotary + label)
+    constexpr int kSpreadH   = 44;   // spread slider strip
+    constexpr int kFooterH   = 24;   // error label
+    constexpr int kLoadBtnW  = 72;
+    constexpr int kLoadBtnH  = 24;
+    constexpr int kLoopBtnW  = 56;
+    constexpr int kLoopBtnH  = 24;
+    constexpr int kGap       = 4;
 
-    // Load button: top-right, above waveform
-    constexpr int btnW = 72;
-    constexpr int btnH = 24;
-    loadButton_.setBounds(getWidth() - margin - btnW, (topMargin - btnH) / 2, btnW, btnH);
+    const int w          = getWidth();
+    const int h          = getHeight();
+    const int contentX   = kMargin;
+    const int contentW   = w - 2 * kMargin;
 
-    // Error label docked to bottom, full width, 24 px height.
-    errorLabel_.setBounds(0, getHeight() - 24, getWidth(), 24);
+    // Load button — header top-right
+    loadButton_.setBounds(w - kMargin - kLoadBtnW,
+                          (kHeaderH - kLoadBtnH) / 2,
+                          kLoadBtnW, kLoadBtnH);
+
+    // Waveform — fills space between header and controls section
+    const int controlsH  = kPosStripH + kGap + kKnobH + kGap + kSpreadH;
+    const int waveformH  = h - kHeaderH - kGap - controlsH - kGap - kFooterH;
+    waveformDisplay_.setBounds(contentX, kHeaderH, contentW, waveformH);
+
+    // Position slider — directly below waveform
+    int y = kHeaderH + waveformH + kGap;
+    positionSlider_.setBounds(contentX, y, contentW, kPosStripH);
+    y += kPosStripH + kGap;
+
+    // Knob row — 5 knobs + loop button
+    const int knobZoneW = contentW - kLoopBtnW - kGap;
+    const int knobW     = knobZoneW / 5;
+    grainSizeKnob_ .setBounds(contentX,                 y, knobW, kKnobH);
+    densityKnob_   .setBounds(contentX + knobW,         y, knobW, kKnobH);
+    posJitterKnob_ .setBounds(contentX + knobW * 2,     y, knobW, kKnobH);
+    pitchShiftKnob_.setBounds(contentX + knobW * 3,     y, knobW, kKnobH);
+    masterVolKnob_ .setBounds(contentX + knobW * 4,     y, knobW, kKnobH);
+    loopButton_    .setBounds(contentX + knobZoneW + kGap,
+                              y + (kKnobH - kLoopBtnH) / 2,
+                              kLoopBtnW, kLoopBtnH);
+    y += kKnobH + kGap;
+
+    // Spread slider — below knob row
+    spreadSlider_.setBounds(contentX, y, contentW, kSpreadH);
+
+    // Error label — docked to bottom
+    errorLabel_.setBounds(0, h - kFooterH, w, kFooterH);
 }
 
 bool GranoAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)

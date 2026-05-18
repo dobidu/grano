@@ -83,7 +83,7 @@ void WaveformDisplay::paintWaveform(juce::Graphics& g, juce::Rectangle<float> bo
     else
     {
         g.setColour(WD::kTextTert);
-        g.setFont(juce::Font(juce::Font::getDefaultSansSerifFontName(), 13.0f, juce::Font::plain));
+        g.setFont(juce::Font(juce::FontOptions{}.withName(juce::Font::getDefaultSansSerifFontName()).withHeight(13.0f)));
         g.drawText("Drop audio file", bounds, juce::Justification::centred, false);
     }
 }
@@ -109,13 +109,24 @@ void WaveformDisplay::paintParticles(juce::Graphics& g, juce::Rectangle<float> b
 void WaveformDisplay::paintPlayhead(juce::Graphics& g, juce::Rectangle<float> bounds,
                                     const GranularEngine::GrainSnapshot* snaps, int count)
 {
-    if (count <= 0 || fileNumFrames_ <= 0)
+    if (fileNumFrames_ <= 0)
         return;
 
     float meanFrac = 0.0f;
-    for (int i = 0; i < count; ++i)
-        meanFrac += snaps[i].srcFraction;
-    meanFrac /= static_cast<float>(count);
+    if (positionParam_ != nullptr)
+    {
+        meanFrac = positionParam_->load(std::memory_order_relaxed);
+    }
+    else if (count > 0)
+    {
+        for (int i = 0; i < count; ++i)
+            meanFrac += snaps[i].srcFraction;
+        meanFrac /= static_cast<float>(count);
+    }
+    else
+    {
+        return;
+    }
 
     const float x     = bounds.getX() + meanFrac * bounds.getWidth();
     const float top   = bounds.getY();
@@ -131,8 +142,8 @@ void WaveformDisplay::paintLabels(juce::Graphics& g, juce::Rectangle<float> boun
 {
     const float inset   = 4.0f;
     const float labelH  = 14.0f;
-    const auto  sansFont = juce::Font(juce::Font::getDefaultSansSerifFontName(),  10.0f, juce::Font::plain);
-    const auto  monoFont = juce::Font(juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::Font::plain);
+    const auto sansFont = juce::Font(juce::FontOptions{}.withName(juce::Font::getDefaultSansSerifFontName()).withHeight(10.0f));
+    const auto monoFont = juce::Font(juce::FontOptions{}.withName(juce::Font::getDefaultMonospacedFontName()).withHeight(11.0f));
 
     const float innerL = bounds.getX()      + inset;
     const float innerR = bounds.getRight()  - inset;

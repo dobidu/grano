@@ -60,6 +60,10 @@ target_sources(Grano
         Source/Engine/SampleBuffer.cpp
         # F2 — UI
         Source/UI/WaveformDisplay.cpp
+        # F3 — UI components and LookAndFeel
+        Source/UI/LookAndFeel/GranoLAF.cpp
+        Source/UI/Knob.cpp
+        Source/UI/Slider.cpp
         # F3 — Parameters
         Source/Parameters.cpp
 )

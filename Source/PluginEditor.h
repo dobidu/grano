@@ -3,6 +3,9 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
 #include "UI/WaveformDisplay.h"
+#include "UI/LookAndFeel/GranoLAF.h"
+#include "UI/Knob.h"
+#include "UI/Slider.h"
 
 // GranoAudioProcessorEditor is the AudioProcessorEditor entry point.
 //
@@ -18,7 +21,7 @@ class GranoAudioProcessorEditor : public juce::AudioProcessorEditor,
 {
 public:
     explicit GranoAudioProcessorEditor(GranoAudioProcessor&);
-    ~GranoAudioProcessorEditor() override = default;
+    ~GranoAudioProcessorEditor() override;
 
     void paint(juce::Graphics&) override;
     void resized()              override;
@@ -30,16 +33,41 @@ public:
     void fileDragExit (const juce::StringArray& files)               override;
 
 private:
+    using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+
     void showError(const juce::String& message);
     void clearError();
     void openFileChooser();
 
     GranoAudioProcessor& processorRef;
 
-    WaveformDisplay              waveformDisplay_;
-    juce::TextButton             loadButton_;
+    GranoLAF laf_;
+
+    WaveformDisplay                    waveformDisplay_;
+    juce::TextButton                   loadButton_;
     std::unique_ptr<juce::FileChooser> fileChooser_;
-    juce::Label                  errorLabel_;
+    juce::Label                        errorLabel_;
+
+    // ── Core controls ─────────────────────────────────────────────────────────
+    GranoSlider        positionSlider_  { "POSITION" };
+    Knob               grainSizeKnob_   { "SIZE"     };
+    Knob               densityKnob_     { "DENS"     };
+    Knob               posJitterKnob_   { "JITTER"   };
+    Knob               pitchShiftKnob_  { "PITCH"    };
+    GranoSlider        spreadSlider_    { "SPREAD"   };
+    Knob               masterVolKnob_   { "VOLUME"   };
+    juce::ToggleButton loopButton_;
+
+    // ── APVTS attachments (must outlive controls) ──────────────────────────────
+    std::unique_ptr<SliderAttachment> positionAttach_;
+    std::unique_ptr<SliderAttachment> grainSizeAttach_;
+    std::unique_ptr<SliderAttachment> densityAttach_;
+    std::unique_ptr<SliderAttachment> posJitterAttach_;
+    std::unique_ptr<SliderAttachment> pitchShiftAttach_;
+    std::unique_ptr<SliderAttachment> spreadAttach_;
+    std::unique_ptr<SliderAttachment> masterVolAttach_;
+    std::unique_ptr<ButtonAttachment> loopAttach_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessorEditor)
 };
