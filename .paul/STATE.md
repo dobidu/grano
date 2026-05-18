@@ -6,9 +6,9 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F4-processing-modules
-loop_position: PLAN-created
+loop_position: UNIFY-complete
 current_plan: .paul/phases/04-processing-modules/04-01-PLAN.md
-last_unified: .paul/phases/03-core-controls/03-02-SUMMARY.md
+last_unified: .paul/phases/04-processing-modules/04-01-SUMMARY.md
 session_start: 2026-05-18
 ```
 
@@ -16,23 +16,23 @@ session_start: 2026-05-18
 
 Milestone: v1.0 Initial Release
 Phase: F4 — Processing Modules (5 of 8) — In Progress
-Plan: 04-01 (MOTION module — Wow, Flutter, Drift, Crackle) — created, awaiting approval
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-18 — Created 04-01-PLAN.md
+Plan: 04-01 (MOTION module — Wow, Flutter, Drift, Crackle) — COMPLETE
+Status: Loop closed — ready for 04-02
+Last activity: 2026-05-18 — Unified 04-01
 
 Progress:
-- Milestone: [█████████░░░░░░░░░░░] ~45%
+- Milestone: [██████████░░░░░░░░░░] ~50%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
-- F4: [░░░░░░░░░░░░░░░░░░░░] 0%  (in progress — F4a planning)
+- F4: [███░░░░░░░░░░░░░░░░░] ~15% (F4a done — F4b Color, F4c Pattern remain)
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [04-01 created, awaiting approval]
+  ✓        ✓        ✓     [04-01 complete — ready for next PLAN]
 ```
 
 ## Accumulated context
@@ -74,9 +74,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: 04-01-PLAN.md created — awaiting approval
-Next action: Review plan, then /paul:apply .paul/phases/04-processing-modules/04-01-PLAN.md
-Resume context: F4a plan ready. 3 auto tasks + human-verify checkpoint. Creates Source/Modules/Motion.{h,cpp}, adds 8 APVTS params, wires pitch offset into GranularEngine::scheduleGrain, adds crackle post-engine in processBlock. No UI in F4a.
+Stopped at: 04-01 loop closed (PLAN ✓ APPLY ✓ UNIFY ✓)
+Next action: /paul:plan F4b — COLOR module (Saturate, Decimate, Tilt, Verb)
+Resume context: F4a Motion complete. 43/43 tests pass. Motion wired into GranularEngine + PluginProcessor. Pattern for F4b: same prepare/reset/processBlock/setParamPointers structure. No UI panels until F5.
 
 ## Phase history
 
@@ -86,3 +86,4 @@ Resume context: F4a plan ready. 3 auto tasks + human-verify checkpoint. Creates 
 | F1 — Granular Engine | 2/2 | 2026-05-17 | 7645200 |
 | F2 — Sample I/O | 2/2 | 2026-05-18 | 4327ac1 |
 | F3 — Core Controls | 2/2 | 2026-05-18 | c728df5 |
+| F4a — Motion (in F4) | 1/? | 2026-05-18 | d9cd358 |
