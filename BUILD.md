@@ -81,6 +81,8 @@ cmake -B build -G Xcode -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --config Debug
 ```
 
+`CMAKE_OSX_DEPLOYMENT_TARGET=11.0` is set automatically by `CMakeLists.txt`. Override with `-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0` if you need a newer minimum.
+
 For a universal binary (Apple Silicon + Intel):
 
 ```bash
@@ -186,13 +188,14 @@ CMakeLists.txt                  Top-level configuration
 The top-level file:
 
 1. Sets project info and C++20 standard.
-2. Adds JUCE 8 as a subdirectory.
-3. Calls `juce_add_plugin(Grano ...)` with formats VST3, AU (gated by `APPLE`), Standalone.
-4. Lists sources via `target_sources(Grano PRIVATE ...)` — explicit, no globbing.
-5. Sets compile definitions: `JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_USE_MP3AUDIOFORMAT=${GRANO_USE_MP3}`.
-6. Links JUCE modules: `juce_audio_utils`, `juce_audio_processors`, `juce_dsp`, `juce_gui_extra`, plus the recommended flags helpers.
-7. If `GRANO_BUILD_TESTS`: `enable_testing()`, `add_subdirectory(Tests)`.
-8. Sanitizer flags applied via `target_compile_options` and `target_link_options` per option.
+2. Sets platform flags: `CMAKE_OSX_DEPLOYMENT_TARGET=11.0` on Apple (Big Sur minimum), `/utf-8` on MSVC (Windows source encoding).
+3. Adds JUCE 8 as a subdirectory.
+4. Calls `juce_add_plugin(Grano ...)` with formats VST3, AU (gated by `APPLE`), Standalone.
+5. Lists sources via `target_sources(Grano PRIVATE ...)` — explicit, no globbing.
+6. Sets compile definitions: `JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_USE_MP3AUDIOFORMAT=${GRANO_USE_MP3}`.
+7. Links JUCE modules: `juce_audio_utils`, `juce_audio_processors`, `juce_dsp`, `juce_gui_extra`, plus the recommended flags helpers.
+8. If `GRANO_BUILD_TESTS`: `enable_testing()`, `add_subdirectory(Tests)`.
+9. Sanitizer flags applied via `target_compile_options` and `target_link_options` per option.
 
 The Tests CMakeLists fetches Catch2 v3 via `FetchContent` and creates `add_executable(GranoTests ...)`. `catch_discover_tests` registers them with CTest.
 
@@ -356,12 +359,13 @@ Document install instructions in the README.
 See `.github/workflows/ci.yml`. The workflow:
 
 1. Runs on push to `main` and on pull_request to `main`.
-2. Matrix: `windows-latest`, `macos-latest`.
-3. Per OS: checkout, clone JUCE 8, CMake configure with Release, build, run ctest, run pluginval at strictness 5, upload artifacts.
-4. Has a separate `linux-best-effort` job on `ubuntu-22.04` with `continue-on-error: true`.
-5. On release tags (`v*.*.*`), an additional `release` job creates installers and uploads to the GitHub release.
+2. Gating matrix: `windows-latest`, `macos-latest`.
+3. Per OS: checkout, clone JUCE `8.0.12` (pinned via `JUCE_VERSION` env var), CMake configure with Release (macOS adds `-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0`), build, run ctest, run pluginval at strictness 5, upload artifacts.
+4. Separate `linux-best-effort` job on `ubuntu-22.04` with `continue-on-error: true`.
+5. Separate `tsan` job on `ubuntu-22.04`: Debug build + `GRANO_ENABLE_TSAN=ON`, runs GranoTests under ThreadSanitizer.
+6. On release tags (`v*.*.*`), an additional `release` job creates installers and uploads to the GitHub release.
 
-CI cache: JUCE clone is cached by commit SHA. CMake build dir cached by config hash. Saves ~5 minutes per run.
+CI cache: JUCE clone cached by version tag + OS. CMake build dir cached by config hash. Saves ~5 minutes per run. To upgrade JUCE, change `JUCE_VERSION` in `.github/workflows/ci.yml`.
 
 ---
 

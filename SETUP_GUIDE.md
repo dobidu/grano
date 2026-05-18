@@ -41,7 +41,7 @@ Pick one approach.
 From your `~/dev` or wherever you keep code:
 
 ```bash
-git clone --branch master --depth 1 https://github.com/juce-framework/JUCE.git ~/JUCE
+git clone --branch 8.0.12 --depth 1 https://github.com/juce-framework/JUCE.git ~/JUCE
 ```
 
 You will reference `~/JUCE` from the project's `CMakeLists.txt`. No global install needed.

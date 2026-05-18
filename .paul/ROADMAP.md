@@ -82,49 +82,53 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F3 — Core Controls and APVTS
+## ✅ F3 — Core Controls and APVTS — COMPLETE (2026-05-18)
 
 **Goal**: All 6 core controls (4 knobs + 2 sliders) plus Master Volume and Loop toggle are wired to the engine via APVTS. State persists across plugin instances (preset save/load works).
 
-**Entry**: F2 complete and unified.
+**Plans**: 2 of 2 complete — see `.paul/phases/03-core-controls/`
 
-**Exit criteria**:
-- Single `juce::AudioProcessorValueTreeState` instance owns all parameters.
-- Parameters defined: `grainSize` (5-500 ms, log-skewed), `density` (1-100 grains/s, log-skewed), `position` (0-100%), `positionJitter` (0-100%), `pitchShift` (-24 to +24 semitones, linear), `stereoSpread` (0-100%), `masterVolume` (-inf to +6 dB), `loop` (bool).
-- UI binds via `SliderAttachment`, `ButtonAttachment`. Custom `LookAndFeel` applied (per `DESIGN_SPEC.md`).
-- Engine reads parameters via `APVTS::getRawParameterValue` (atomic load on audio thread, no locks).
-- Host automation works: tested in Reaper and Ableton, both sweep all parameters.
-- Preset save/load via `juce::AudioProcessor::getStateInformation` / `setStateInformation` round-trips correctly.
+**Exit criteria met**:
+- [x] Single `juce::AudioProcessorValueTreeState` instance owns all parameters
+- [x] Parameters defined: `grainSize`, `density`, `position`, `positionJitter`, `pitchShift`, `stereoSpread`, `masterVolume`, `loop`
+- [x] UI binds via `SliderAttachment`, `ButtonAttachment`. Custom `LookAndFeel` applied
+- [x] Engine reads parameters via `APVTS::getRawParameterValue` (atomic load on audio thread, no locks)
+- [x] Preset save/load via `getStateInformation` / `setStateInformation` round-trips correctly
+- [x] Grain size shadow overlaid on WaveformDisplay (mint fill, 10% opacity)
 
-**Deliverables**: `Source/Parameters.{h,cpp}` (parameter layout and IDs), updated `PluginProcessor` and `PluginEditor`, `Source/UI/LookAndFeel/GranoLAF.{h,cpp}` (skeleton), `Source/UI/Knob.{h,cpp}`, `Source/UI/Slider.{h,cpp}`, `Tests/test_parameters.cpp`.
-
-**Effort estimate**: 3-4 days.
+**Deliverables**: `Source/Parameters.{h,cpp}`, `Source/UI/LookAndFeel/GranoLAF.{h,cpp}`, `Source/UI/Knob.{h,cpp}`, `Source/UI/Slider.{h,cpp}`, `Tests/test_parameters.cpp`.
 
 ---
 
-## F4 — Processing Modules
+## F4 — Processing Modules — IN PROGRESS
 
 **Goal**: Three optional processing modules (MOTION, COLOR, PATTERN) each independently bypassable. UI sections per `DESIGN_SPEC.md`.
 
 This phase is split into three sub-plans, executed sequentially.
 
-### F4a — MOTION
+### ✅ F4a — MOTION — COMPLETE (2026-05-18)
 
-**Exit criteria**:
-- Wow LFO (0.1-2 Hz, sine) modulating grain pitch.
-- Flutter LFO (3-20 Hz, sine + small noise) modulating grain pitch.
-- Drift: very slow random walk on master pitch, ±20 cents over minutes.
-- Crackle: filtered pink noise overlay, -60 to 0 dB, with color (HPF/LPF) control.
-- Module bypass toggle: zero CPU when off.
+**Exit criteria met**:
+- [x] Wow LFO (0.1-2 Hz, sine) modulating grain pitch
+- [x] Flutter LFO (3-20 Hz, sine + noise) modulating grain pitch
+- [x] Drift: very slow random walk on master pitch, ±20 cents
+- [x] Crackle: filtered pink noise overlay with color (HPF/LPF) control
+- [x] Module bypass toggle: zero CPU when off
+- [x] 7/7 Catch2 tests pass
 
-### F4b — COLOR
+**Deliverables**: `Source/Modules/Motion.{h,cpp}`, 8 APVTS params, `Tests/test_motion.cpp`.
 
-**Exit criteria**:
-- Saturate: continuous knob from soft tape sat through harmonic exciter into bitcrush. Internal modeled as a single waveshaper with curve interpolation.
-- Decimate: bit depth (4-24 bits) and sample rate reduction (8 kHz to host SR) combined under a single control.
-- Tilt EQ: ±12 dB tilt around 1 kHz.
-- Verb: short plate/spring reverb, mix 0-100%. Built on `juce::dsp::Convolution` or a simple FDN.
-- Module bypass toggle: zero CPU when off.
+### ✅ F4b — COLOR — COMPLETE (2026-05-18)
+
+**Exit criteria met**:
+- [x] Saturate: tanh waveshaper, drive 1x–16x, normalized (unity in → unity out at max)
+- [x] Decimate: bit depth (4-24 bits) + sample rate reduction (8 kHz–host SR), single control
+- [x] Tilt EQ: ±12 dB tilt via 1-pole LPF split at 1 kHz
+- [x] Verb: `juce::Reverb` plate, mix 0–100%
+- [x] Module bypass toggle: zero CPU when off
+- [x] 8/8 Catch2 tests pass (51 total)
+
+**Deliverables**: `Source/Modules/Color.{h,cpp}`, 5 APVTS params, `Tests/test_color.cpp`.
 
 ### F4c — PATTERN
 
