@@ -100,15 +100,16 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F4 — Processing Modules — IN PROGRESS
+## ✅ F4 — Processing Modules — COMPLETE (2026-05-18)
 
-**Goal**: Three optional processing modules (MOTION, COLOR, PATTERN) each independently bypassable. UI sections per `DESIGN_SPEC.md`.
+**Goal**: Three optional processing modules (MOTION, COLOR, PATTERN) each independently bypassable.
 
-This phase is split into three sub-plans, executed sequentially.
+**Plans**: 4 of 4 complete — see `.paul/phases/04-processing-modules/`
+
+**Exit criteria met**:
 
 ### ✅ F4a — MOTION — COMPLETE (2026-05-18)
 
-**Exit criteria met**:
 - [x] Wow LFO (0.1-2 Hz, sine) modulating grain pitch
 - [x] Flutter LFO (3-20 Hz, sine + noise) modulating grain pitch
 - [x] Drift: very slow random walk on master pitch, ±20 cents
@@ -120,9 +121,8 @@ This phase is split into three sub-plans, executed sequentially.
 
 ### ✅ F4b — COLOR — COMPLETE (2026-05-18)
 
-**Exit criteria met**:
-- [x] Saturate: tanh waveshaper, drive 1x–16x, normalized (unity in → unity out at max)
-- [x] Decimate: bit depth (4-24 bits) + sample rate reduction (8 kHz–host SR), single control
+- [x] Saturate: tanh waveshaper, drive 1x–16x, normalized
+- [x] Decimate: bit depth (4-24 bits) + sample rate reduction (8 kHz–host SR)
 - [x] Tilt EQ: ±12 dB tilt via 1-pole LPF split at 1 kHz
 - [x] Verb: `juce::Reverb` plate, mix 0–100%
 - [x] Module bypass toggle: zero CPU when off
@@ -130,20 +130,20 @@ This phase is split into three sub-plans, executed sequentially.
 
 **Deliverables**: `Source/Modules/Color.{h,cpp}`, 5 APVTS params, `Tests/test_color.cpp`.
 
-### F4c — PATTERN
+### ✅ F4c — PATTERN — COMPLETE (2026-05-18)
 
-**Exit criteria**:
-- Trigger Mode selector: `Free`, `Sync`, `Euclidean`, `Audio-driven`.
-- Free mode uses density knob in Hz.
-- Sync mode uses host BPM and divisions: 1/4 .. 1/64, T (triplet) and D (dotted) modifiers.
-- Euclidean: pulses (1-32), steps (1-32), rotation (0 to steps-1).
-- Audio-driven: input transient detector with sensitivity and minimum-interval controls.
-- Probability: 0-100% chance per scheduled grain to actually fire.
-- Reverse Probability: 0-100% chance per fired grain to play reversed.
-- Quantize: pitch shift snapped to selected scale (Chromatic, Major, Minor, Dorian, Phrygian, Lydian, Mixolydian, Pentatonic Major, Pentatonic Minor, Whole Tone, Octatonic, Custom-Scala).
-- Spray: macro knob increasing randomness on per-grain pitch, duration, and envelope.
+- [x] Trigger Mode: Free / Sync (host BPM + 10 divisions) / Euclidean / Audio-driven
+- [x] Probability: 0-100% per-grain fire chance
+- [x] Reverse Probability: 0-100% per-grain reverse playback
+- [x] Quantize: 11 scales (Chromatic, Major, Minor, Dorian, Phrygian, Lydian, Mixolydian, Pent Maj/Min, Whole Tone, Octatonic)
+- [x] Spray: randomness macro (pitch ±12st + duration ×1-3)
+- [x] Module bypass toggle: zero effect when off
+- [x] `Grain.reversed` field; renderGrain handles end→start playback
+- [x] 23/23 Catch2 tests pass (74 total)
 
-**Effort estimate**: 7-9 days for the full F4 (3 sub-plans).
+**Deliverables**: `Source/Modules/Pattern.{h,cpp}`, 11 APVTS params (32 total), `Tests/test_pattern.cpp`.
+
+**Effort actual**: 2026-05-18 (all sub-plans same day).
 
 ---
 
