@@ -36,6 +36,8 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     waveformDisplay_.setEngine(&p.getEngine());
     waveformDisplay_.setPositionParam(
         p.getAPVTS().getRawParameterValue(ParamIDs::position));
+    waveformDisplay_.setGrainSizeParam(
+        p.getAPVTS().getRawParameterValue(ParamIDs::grainSize));
     addAndMakeVisible(waveformDisplay_);
 
     loadButton_.setButtonText("Load");

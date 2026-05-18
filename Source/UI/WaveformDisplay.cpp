@@ -133,6 +133,22 @@ void WaveformDisplay::paintPlayhead(juce::Graphics& g, juce::Rectangle<float> bo
     const float bot   = bounds.getBottom();
     const float midY  = (top + bot) * 0.5f;
 
+    // Grain size shadow — shaded region showing grain extent from playhead.
+    if (grainSizeParam_ != nullptr && fileSampleRate_ > 0.0 && fileNumFrames_ > 0)
+    {
+        const float grainSizeMs  = grainSizeParam_->load(std::memory_order_relaxed);
+        const float totalMs      = (float)fileNumFrames_ / (float)fileSampleRate_ * 1000.0f;
+        const float grainFrac    = std::min(grainSizeMs / totalMs, 1.0f - meanFrac);
+        const float shadowW      = grainFrac * bounds.getWidth();
+        if (shadowW > 0.5f)
+        {
+            g.setColour(WD::kVital.withAlpha(0.10f));
+            g.fillRect(x, top, shadowW, bot - top);
+            g.setColour(WD::kVital.withAlpha(0.25f));
+            g.drawLine(x + shadowW, top, x + shadowW, bot, 1.0f);
+        }
+    }
+
     g.setColour(WD::kVital);
     g.drawLine(x, top, x, bot, 1.5f);
     g.fillEllipse(x - 1.5f, midY - 1.5f, 3.0f, 3.0f);
