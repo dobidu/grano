@@ -78,6 +78,9 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     masterVolAttach_ = std::make_unique<SliderAttachment>(apvts, ParamIDs::masterVolume,
                                                            masterVolKnob_.getSlider());
     loopAttach_      = std::make_unique<ButtonAttachment>(apvts, ParamIDs::loop, loopButton_);
+
+    positionSlider_.setGrainExtent(
+        apvts.getRawParameterValue(ParamIDs::grainSize), 0.0f);
 }
 
 GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
@@ -215,9 +218,10 @@ void GranoAudioProcessorEditor::filesDropped(const juce::StringArray& files, int
     const auto& err = processorRef.getLastLoadError();
     if (err.isEmpty())
     {
-        waveformDisplay_.setFile(juce::File(files[0]),
-                                 processorRef.getLastLoadedSampleRate(),
-                                 processorRef.getLastLoadedNumFrames());
+        const double sr  = processorRef.getLastLoadedSampleRate();
+        const int    nf  = processorRef.getLastLoadedNumFrames();
+        waveformDisplay_.setFile(juce::File(files[0]), sr, nf);
+        positionSlider_.setFileDurationMs((float)(nf / sr * 1000.0));
         clearError();
     }
     else
@@ -257,9 +261,10 @@ void GranoAudioProcessorEditor::openFileChooser()
             processorRef.loadSampleFile(file);
             if (processorRef.getLastLoadError().isEmpty())
             {
-                waveformDisplay_.setFile(file,
-                                         processorRef.getLastLoadedSampleRate(),
-                                         processorRef.getLastLoadedNumFrames());
+                const double sr = processorRef.getLastLoadedSampleRate();
+                const int    nf = processorRef.getLastLoadedNumFrames();
+                waveformDisplay_.setFile(file, sr, nf);
+                positionSlider_.setFileDurationMs((float)(nf / sr * 1000.0));
                 clearError();
             }
             else
