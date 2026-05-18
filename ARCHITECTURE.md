@@ -352,7 +352,7 @@ Code review and PAUL guardrails enforce these.
 |---|---|---|
 | Pure utilities (DSPMath, EnvelopeShapes) | Catch2 unit tests | Numerical correctness, edge cases. |
 | Engine classes (Grain, GrainPool, GranularEngine) | Catch2 + manual harness | Correctness of grain accumulation, pool overflow handling, FIFO behavior. |
-| Real-time safety | TSAN + custom static analysis | Race conditions, allocation in audio thread. |
+| Real-time safety | TSAN + custom static analysis | Race conditions, allocation in audio thread. Known JUCE 8 false positives suppressed via `Tests/tsan_suppressions.txt`. |
 | Plugin integration | pluginval, auval | Host compliance. |
 | Sound output | Manual listening + RMS regression | Subjective quality + automated detection of catastrophic regressions. |
 | UI | Visual inspection on Mac + Windows + Linux | Look-and-feel parity. |

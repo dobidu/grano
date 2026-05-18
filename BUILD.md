@@ -161,6 +161,7 @@ The top-level `CMakeLists.txt` exposes these options. Override with `-D<NAME>=<V
 | `GRANO_ENABLE_ASAN` | `OFF` | Build with AddressSanitizer. Similar matrix. |
 | `GRANO_USE_MP3` | `ON` | Enable `JUCE_USE_MP3AUDIOFORMAT`. Set OFF for distributions where MP3 patent licensing is a concern. |
 | `CMAKE_OSX_ARCHITECTURES` | (host) | macOS only. Set `"arm64;x86_64"` for a universal binary. |
+| `CMAKE_OSX_DEPLOYMENT_TARGET` | `11.0` | macOS only. Set in `CMakeLists.txt`; override here if you need a newer minimum. |
 
 Example with options:
 
@@ -384,7 +385,7 @@ CI cache: JUCE clone cached by version tag + OS. CMake build dir cached by confi
 - Install `libgtk-3-dev`. Some JUCE features require GTK.
 
 **TSAN reports false positives near JUCE internals**
-- File via TSAN's suppression list at `Tests/tsan_suppressions.txt`. Verify with the JUCE issue tracker before suppressing.
+- `Tests/tsan_suppressions.txt` already suppresses known JUCE 8 false positives (`WaitableEvent::signal`, `SharedResourcePointer<TimerThread>`). Add new entries only after verifying the race is in JUCE internals — check `juce::` frames in the TSAN report and cross-reference the JUCE issue tracker.
 
 **CMake reconfigures from scratch every build**
 - Delete `build/CMakeCache.txt` and reconfigure. Sometimes IDE-generated cache fights with command-line CMake.

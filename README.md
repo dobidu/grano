@@ -1,5 +1,7 @@
 # Grano
 
+[![CI](https://github.com/dobidu/grano/actions/workflows/ci.yml/badge.svg)](https://github.com/dobidu/grano/actions/workflows/ci.yml)
+
 A granular instrument plugin for experimental sound design.
 
 `VST3` · `AU` · `Standalone` · Windows · macOS · Linux
