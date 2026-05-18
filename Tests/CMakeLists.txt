@@ -22,6 +22,8 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/Engine/GranularEngine.cpp
     # F2 — Sample I/O
     ${CMAKE_SOURCE_DIR}/Source/Engine/SampleBuffer.cpp
+    # F2 — UI
+    ${CMAKE_SOURCE_DIR}/Source/UI/WaveformDisplay.cpp
 )
 
 target_include_directories(GranoTests

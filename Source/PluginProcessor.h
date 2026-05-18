@@ -65,7 +65,12 @@ public:
 
     const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
 
-    SampleBuffer& getSampleBuffer() noexcept { return sampleBuffer_; }
+    SampleBuffer&              getSampleBuffer()  noexcept { return sampleBuffer_; }
+    GranularEngine&            getEngine()        noexcept { return engine_; }
+    juce::AudioFormatManager&  getFormatManager() noexcept { return formatManager_; }
+
+    double getLastLoadedSampleRate() const noexcept { return lastLoadedSampleRate_; }
+    int    getLastLoadedNumFrames()  const noexcept { return lastLoadedNumFrames_; }
 
 private:
     void timerCallback() override { sampleBuffer_.processRetired(); }
@@ -74,6 +79,8 @@ private:
     GranularEngine             engine_;
     juce::AudioFormatManager   formatManager_;
     juce::String               lastLoadError_;
+    double                     lastLoadedSampleRate_{ 0.0 };
+    int                        lastLoadedNumFrames_ { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessor)
 };

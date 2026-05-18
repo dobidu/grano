@@ -272,3 +272,27 @@ TEST_CASE("GranularEngine runs without data races", "[engine][threading]")
     // Reaching here under TSAN = no data races detected
     SUCCEED();
 }
+
+TEST_CASE("GranularEngine getGrainSnapshots returns plausible data", "[GranularEngine]")
+{
+    GranularEngine engine;
+    engine.prepare(48000.0, 512);
+    juce::Thread::sleep(100); // let scheduler fill grains from testSample_
+
+    juce::AudioBuffer<float> out(2, 512);
+    engine.processBlock(out); // writes snapshots
+
+    std::array<GranularEngine::GrainSnapshot, GranularEngine::MaxActiveGrains> snaps;
+    const int count = engine.getGrainSnapshots(snaps.data(), GranularEngine::MaxActiveGrains);
+
+    REQUIRE(count >= 0);
+    REQUIRE(count <= GranularEngine::MaxActiveGrains);
+    for (int i = 0; i < count; ++i)
+    {
+        REQUIRE(snaps[i].srcFraction >= 0.0f);
+        REQUIRE(snaps[i].srcFraction <= 1.0f);
+        REQUIRE(snaps[i].envelopeAmp >= 0.0f);
+        REQUIRE(snaps[i].envelopeAmp <= 1.0f);
+    }
+    engine.reset();
+}

@@ -2,6 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
+#include "UI/WaveformDisplay.h"
 
 // GranoAudioProcessorEditor is the AudioProcessorEditor entry point.
 //
@@ -25,14 +26,20 @@ public:
     // ── FileDragAndDropTarget ─────────────────────────────────────────────────
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
+    void fileDragEnter(const juce::StringArray& files, int x, int y) override;
+    void fileDragExit (const juce::StringArray& files)               override;
 
 private:
     void showError(const juce::String& message);
     void clearError();
+    void openFileChooser();
 
     GranoAudioProcessor& processorRef;
 
-    juce::Label errorLabel_;
+    WaveformDisplay              waveformDisplay_;
+    juce::TextButton             loadButton_;
+    std::unique_ptr<juce::FileChooser> fileChooser_;
+    juce::Label                  errorLabel_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessorEditor)
 };

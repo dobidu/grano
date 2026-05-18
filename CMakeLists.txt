@@ -58,6 +58,8 @@ target_sources(Grano
         Source/Engine/GranularEngine.cpp
         # F2 — Sample I/O
         Source/Engine/SampleBuffer.cpp
+        # F2 — UI
+        Source/UI/WaveformDisplay.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────

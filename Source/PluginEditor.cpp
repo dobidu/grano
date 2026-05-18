@@ -24,11 +24,19 @@ namespace
 }
 
 GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
-    : AudioProcessorEditor(&p), processorRef(p)
+    : AudioProcessorEditor(&p), processorRef(p),
+      waveformDisplay_(p.getFormatManager())
 {
     setSize(kDefaultWidth, kDefaultHeight);
     setResizable(true, true);
     setResizeLimits(kMinWidth, kMinHeight, kMaxWidth, kMaxHeight);
+
+    waveformDisplay_.setEngine(&p.getEngine());
+    addAndMakeVisible(waveformDisplay_);
+
+    loadButton_.setButtonText("Load");
+    loadButton_.onClick = [this] { openFileChooser(); };
+    addAndMakeVisible(loadButton_);
 
     errorLabel_.setJustificationType(juce::Justification::centred);
     errorLabel_.setColour(juce::Label::textColourId, juce::Colour{ 0xffff6b6b });
@@ -90,6 +98,17 @@ void GranoAudioProcessorEditor::paint(juce::Graphics& g)
 
 void GranoAudioProcessorEditor::resized()
 {
+    constexpr int margin    = 40;
+    constexpr int topMargin = 80;
+    waveformDisplay_.setBounds(margin, topMargin,
+                               getWidth()  - 2 * margin,
+                               getHeight() - topMargin - 24 - margin / 2);
+
+    // Load button: top-right, above waveform
+    constexpr int btnW = 72;
+    constexpr int btnH = 24;
+    loadButton_.setBounds(getWidth() - margin - btnW, (topMargin - btnH) / 2, btnW, btnH);
+
     // Error label docked to bottom, full width, 24 px height.
     errorLabel_.setBounds(0, getHeight() - 24, getWidth(), 24);
 }
@@ -115,9 +134,16 @@ void GranoAudioProcessorEditor::filesDropped(const juce::StringArray& files, int
 
     const auto& err = processorRef.getLastLoadError();
     if (err.isEmpty())
+    {
+        waveformDisplay_.setFile(juce::File(files[0]),
+                                 processorRef.getLastLoadedSampleRate(),
+                                 processorRef.getLastLoadedNumFrames());
         clearError();
+    }
     else
+    {
         showError(err);
+    }
 }
 
 void GranoAudioProcessorEditor::showError(const juce::String& message)
@@ -131,4 +157,45 @@ void GranoAudioProcessorEditor::clearError()
 {
     errorLabel_.setVisible(false);
     repaint();
+}
+
+void GranoAudioProcessorEditor::openFileChooser()
+{
+    fileChooser_ = std::make_unique<juce::FileChooser>(
+        "Select audio file",
+        juce::File::getSpecialLocation(juce::File::userHomeDirectory),
+        "*.wav;*.aif;*.aiff;*.flac;*.ogg;*.mp3");
+
+    fileChooser_->launchAsync(juce::FileBrowserComponent::openMode |
+                              juce::FileBrowserComponent::canSelectFiles,
+        [this](const juce::FileChooser& fc)
+        {
+            const auto results = fc.getResults();
+            if (results.isEmpty())
+                return;
+            const auto file = results[0];
+            processorRef.loadSampleFile(file);
+            if (processorRef.getLastLoadError().isEmpty())
+            {
+                waveformDisplay_.setFile(file,
+                                         processorRef.getLastLoadedSampleRate(),
+                                         processorRef.getLastLoadedNumFrames());
+                clearError();
+            }
+            else
+            {
+                showError(processorRef.getLastLoadError());
+            }
+        });
+}
+
+void GranoAudioProcessorEditor::fileDragEnter(const juce::StringArray& files, int /*x*/, int /*y*/)
+{
+    if (isInterestedInFileDrag(files))
+        waveformDisplay_.setDragHighlightActive(true);
+}
+
+void GranoAudioProcessorEditor::fileDragExit(const juce::StringArray& /*files*/)
+{
+    waveformDisplay_.setDragHighlightActive(false);
 }

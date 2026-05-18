@@ -66,7 +66,9 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file)
     // Read left channel only into channel 0 (stereo files: left taken, right ignored).
     reader->read(buf.get(), 0, numFrames, 0, true, false);
 
-    lastLoadError_ = {};
+    lastLoadError_        = {};
+    lastLoadedSampleRate_ = reader->sampleRate;
+    lastLoadedNumFrames_  = numFrames;
     sampleBuffer_.setPending(std::move(buf), numFrames);
 }
 

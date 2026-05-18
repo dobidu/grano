@@ -162,6 +162,27 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
             ++gi;
         }
     }
+
+    // Write snapshot for UI particle rendering (read by getGrainSnapshots on UI thread).
+    const int snapLen   = sampleSource_ != nullptr ? sampleSource_->getNumSamples() : 0;
+    const int snapCount = std::min(activeGrainCount_, MaxActiveGrains);
+    for (int i = 0; i < snapCount; ++i)
+    {
+        const auto* g = activeGrains_[i];
+        const float srcFrac = snapLen > 0
+            ? std::clamp((float)g->startPos / (float)snapLen, 0.0f, 1.0f)
+            : 0.0f;
+        grainSnapshots_[static_cast<std::size_t>(i)] = { srcFrac, applyEnvelope(g->shape, g->currentPhase) };
+    }
+    grainSnapshotCount_.store(snapCount, std::memory_order_release);
+}
+
+int GranularEngine::getGrainSnapshots(GrainSnapshot* out, int maxCount) const noexcept
+{
+    const int count = std::min(grainSnapshotCount_.load(std::memory_order_acquire), maxCount);
+    for (int i = 0; i < count; ++i)
+        out[i] = grainSnapshots_[static_cast<std::size_t>(i)];
+    return count;
 }
 
 bool GranularEngine::renderGrain(Grain* g, float* L, float* R, int numSamples) noexcept

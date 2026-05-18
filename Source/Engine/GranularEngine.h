@@ -47,6 +47,18 @@ public:
     // Pass nullptr to revert to the 440 Hz sine fallback.
     void setSource(SampleBuffer* sb) noexcept { sampleSource_ = sb; }
 
+    struct GrainSnapshot
+    {
+        float srcFraction;  // grain start position as [0..1] of loaded sample length
+        float envelopeAmp;  // current envelope amplitude [0..1] for particle opacity
+    };
+
+    // UI thread (30 Hz Timer): copy current active grain snapshot data.
+    // Returns the number of grains written into `out` (≤ maxCount).
+    // Technically racy on the snapshot array (audio writes, UI reads) but
+    // aligned-float writes are atomic on x86 and visual tearing is acceptable.
+    int getGrainSnapshots(GrainSnapshot* out, int maxCount) const noexcept;
+
 private:
     // --- scheduler thread (sole FIFO producer) ---
     class SchedulerThread : public juce::Thread
@@ -87,6 +99,9 @@ private:
     SampleBuffer* sampleSource_{ nullptr };
 
     double sampleRate_{ 48000.0 };
+
+    std::array<GrainSnapshot, MaxActiveGrains> grainSnapshots_{};
+    std::atomic<int>                           grainSnapshotCount_{ 0 };
 
     SchedulerThread schedulerThread_{ *this };
 };
