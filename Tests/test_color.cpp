@@ -201,7 +201,7 @@ TEST_CASE("Color handles null param pointers without crash")
 
 // ── Test 8: reset clears filter state ────────────────────────────────────────
 
-TEST_CASE("Color reset clears tilt state — zero input gives zero output")
+TEST_CASE("Color reset clears tilt state - zero input gives zero output")
 {
     Color c;
     c.prepare(44100.0, 512);
