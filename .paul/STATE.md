@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F7-release
-loop_position: UNIFY
-current_plan: .paul/phases/07-release/07-02-PLAN.md
+loop_position: PLAN
+current_plan: .paul/phases/07-release/07-03-PLAN.md
 last_unified: .paul/phases/07-release/07-02-SUMMARY.md
 session_start: 2026-05-19
 ```
@@ -16,9 +16,9 @@ session_start: 2026-05-19
 
 Milestone: v1.0 Initial Release
 Phase: F7 — Release (8 of 8) — In Progress
-Plan: 07-02 — RELEASE_NOTES + factory presets + README download section ✅
-Status: UNIFY complete — 07-02 loop closed
-Last activity: 2026-05-19 — 07-02 unified; RELEASE_NOTES.md + 5 presets + README all committed (e6724ad)
+Plan: 07-03 — BUILD.md fixes + v1.0.0-beta.1 git tag (created, awaiting approval)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-19 — 07-03-PLAN.md created; 2 tasks + 1 checkpoint (git push)
 
 Progress:
 - Milestone: [████████████████████] ~97%
@@ -35,7 +35,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [07-02 loop closed]
+  ✓        ○        ○     [07-03 plan created, awaiting approval]
 ```
 
 ## Accumulated context
@@ -91,9 +91,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-19
-Stopped at: 07-02 unified — RELEASE_NOTES.md + 5 presets + README all done (e6724ad)
-Next action: /paul:plan F7
-Resume context: F7 plan 3 of 3. 07-03 is the final release plan: v1.0.0-beta.1 git tag + signing documentation (README BUILD.md notes on Developer ID + SmartScreen). After 07-03: F7 complete, milestone ~100%.
+Stopped at: 07-03-PLAN.md created — awaiting approval
+Next action: /paul:apply .paul/phases/07-release/07-03-PLAN.md
+Resume context: F7 plan 3 of 3. Two auto tasks (BUILD.md edits + git tag creation) then checkpoint for git push origin v1.0.0-beta.1. After push: /paul:unify to close F7.
 
 ## Phase history
 
