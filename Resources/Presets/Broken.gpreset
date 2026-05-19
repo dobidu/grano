@@ -1,0 +1,23 @@
+# Grano Preset: Broken
+# Pareto distribution produces heavy-tail burst timing — long silences
+# punctuated by sudden avalanches of grains. High position jitter scatters
+# reads across the whole source. Saturation and Flutter add analogue grit.
+# Short grains with Rectangle envelope gives each burst a percussive edge.
+# Any source works; broken rhythmic material sounds most dramatic.
+#
+# Parameters not listed use their defaults.
+
+grainSize = 30.0
+density = 25.0
+position = 0.5
+positionJitter = 0.9
+stereoSpread = 0.8
+envelopeShape = 4
+stochasticDist = 4
+subGrainDepth = 1
+motionEnabled = 1
+wowAmount = 0.2
+flutterAmount = 0.4
+colorEnabled = 1
+saturateAmount = 0.6
+masterVolume = -3.0

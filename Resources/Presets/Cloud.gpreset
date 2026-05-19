@@ -1,0 +1,16 @@
+# Grano Preset: Cloud
+# Dense particle cloud with wide stereo spread and position jitter.
+# Load any sustained source (strings, pad, drone, ambient texture).
+# Works best with samples longer than 5 seconds.
+#
+# Parameters not listed use their defaults.
+
+grainSize = 200.0
+density = 45.0
+position = 0.3
+positionJitter = 0.6
+stereoSpread = 0.9
+envelopeShape = 0
+subGrainDepth = 0
+stochasticDist = 1
+masterVolume = -3.0

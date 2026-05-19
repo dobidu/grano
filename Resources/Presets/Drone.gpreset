@@ -1,0 +1,19 @@
+# Grano Preset: Drone
+# Very slow density with feedback loop engaged.
+# Source audio accumulates and self-granulates over time, building into a
+# sustained mass. Feedback gain at 0.7 produces instability without divergence.
+# Best with 5–30s samples (voice, bowed strings, long tones).
+#
+# Parameters not listed use their defaults.
+
+grainSize = 400.0
+density = 3.0
+position = 0.1
+positionJitter = 0.1
+stereoSpread = 0.5
+envelopeShape = 2
+feedbackEnabled = 1
+feedbackGain = 0.7
+feedbackDamp = 0.3
+stochasticDist = 0
+masterVolume = -6.0

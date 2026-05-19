@@ -58,6 +58,21 @@ The design goes beyond a standard granular engine with:
 
 ---
 
+## Download
+
+Pre-built binaries are available on the [GitHub Releases page](https://github.com/dobidu/grano/releases).
+
+Each release ships two zips:
+
+| File | Contents |
+|------|----------|
+| `Grano-vX.Y.Z-Windows.zip` | `Grano.vst3/` (VST3 bundle) + `Grano.exe` (Standalone) |
+| `Grano-vX.Y.Z-macOS.zip` | `Grano.vst3/` + `Grano.component` (AU) + `Grano.app` (Standalone) |
+
+Download the zip for your OS, extract, and follow the **Installing Grano** steps below.
+
+---
+
 ## Installing Grano
 
 ### Windows
@@ -81,11 +96,14 @@ Copy `Grano.vst3` to `~/Library/Audio/Plug-Ins/VST3/` (per-user) or `/Library/Au
 
 Copy `Grano.component` to `~/Library/Audio/Plug-Ins/Components/`.
 
-After copying, run:
+After copying, you can verify registration:
 ```bash
 auval -v aumu Gran Bidu
 ```
-A passing result (exit 0) means the AU is registered correctly.
+> **Note (macOS 14+ Sonoma/Sequoia):** `auval` requires the component to be code-signed with an
+> Apple Developer certificate. Unsigned builds will report a load error. The AU loads correctly
+> in compatible DAWs (Logic Pro, GarageBand, Reaper) regardless. Code signing is planned for
+> v1.0.0 stable.
 
 **Gatekeeper:**
 
@@ -868,7 +886,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: 29 desti
 
 ## Status
 
-In active development — F6 (UI Polish + Advanced Engine) in progress.
+All core features complete. Release (F7) in progress.
 
 | Phase | Status |
 |-------|--------|
@@ -878,12 +896,9 @@ In active development — F6 (UI Polish + Advanced Engine) in progress.
 | F3 Core Controls + APVTS | ✅ Complete |
 | F4 MOTION + COLOR + PATTERN | ✅ Complete |
 | F5 LFOs + Modulation Matrix + Snapshots | ✅ Complete |
-| F6a UI Polish | ✅ Complete |
-| F6b Sub-grain + Stochastic Timing | ✅ Complete |
-| F6c Feedback + Spectral | ✅ Complete |
-| F6d Multi-sample bank | Pending |
-| F6e CurveEditor + Spectrogram + integration | Pending |
-| F7 Release | Pending |
+| F6 UI Polish + Advanced Engine | ✅ Complete |
+| F7 Release | 🔄 In progress |
+| F8 QA + Manual Acceptance | Pending |
 
 ---
 

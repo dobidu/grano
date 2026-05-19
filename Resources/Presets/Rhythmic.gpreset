@@ -1,0 +1,19 @@
+# Grano Preset: Rhythmic
+# Euclidean 3-in-8 trigger pattern at moderate density with tight position.
+# Use the Pattern module's Sync mode and set your DAW BPM for locked groove.
+# Short transient-rich sources work best (percussion, plucked strings, voice
+# consonants). Probability at 0.85 adds occasional ghost hits.
+#
+# Parameters not listed use their defaults.
+
+grainSize = 60.0
+density = 12.0
+position = 0.0
+positionJitter = 0.05
+stereoSpread = 0.3
+envelopeShape = 3
+patternEnabled = 1
+triggerMode = 2
+probability = 0.85
+stochasticDist = 0
+masterVolume = -2.0

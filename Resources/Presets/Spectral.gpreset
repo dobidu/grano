@@ -1,0 +1,20 @@
+# Grano Preset: Spectral
+# Spectral Freeze crystallises the source spectrum into a static harmonic frame;
+# sub-grain depth 2 then pulverises that frame into micro-particle clouds.
+# Load a complex harmonic source (choir, dense chord, pitched noise).
+# Toggle spectralMode off/on mid-performance for a dramatic freeze moment.
+# Gaussian distribution softens the inter-grain timing.
+#
+# Parameters not listed use their defaults.
+
+grainSize = 150.0
+density = 20.0
+position = 0.5
+positionJitter = 0.2
+stereoSpread = 0.7
+envelopeShape = 0
+spectralMode = 1
+spectralAmount = 0.8
+subGrainDepth = 2
+stochasticDist = 1
+masterVolume = -4.0
