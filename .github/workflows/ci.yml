@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -204,3 +205,76 @@ jobs:
         run: ctest --test-dir build --output-on-failure
         env:
           TSAN_OPTIONS: "suppressions=${{ github.workspace }}/Tests/tsan_suppressions.txt halt_on_error=1 second_deadlock_stack=1"
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows VST3
+        uses: actions/download-artifact@v4
+        with:
+          name: Grano-VST3-Windows
+          path: release/Windows/VST3
+
+      - name: Download Windows Standalone
+        uses: actions/download-artifact@v4
+        with:
+          name: Grano-Standalone-Windows
+          path: release/Windows/Standalone
+
+      - name: Download macOS VST3
+        uses: actions/download-artifact@v4
+        with:
+          name: Grano-VST3-macOS
+          path: release/macOS/VST3
+
+      - name: Download macOS AU
+        uses: actions/download-artifact@v4
+        with:
+          name: Grano-AU-macOS
+          path: release/macOS/AU
+
+      - name: Download macOS Standalone
+        uses: actions/download-artifact@v4
+        with:
+          name: Grano-Standalone-macOS
+          path: release/macOS/Standalone
+
+      - name: Package Windows zip
+        run: |
+          cd release/Windows
+          zip -r ../../Grano-${{ github.ref_name }}-Windows.zip VST3/ Standalone/
+          echo "Windows zip contents:"
+          zipinfo ../../Grano-${{ github.ref_name }}-Windows.zip
+
+      - name: Package macOS zip
+        run: |
+          cd release/macOS
+          zip -r ../../Grano-${{ github.ref_name }}-macOS.zip VST3/ AU/ Standalone/
+          echo "macOS zip contents:"
+          zipinfo ../../Grano-${{ github.ref_name }}-macOS.zip
+
+      - name: Create GitHub release
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "Grano ${{ github.ref_name }}" \
+            --prerelease \
+            --notes "## Installation
+
+          **Windows:** Extract zip, copy \`Grano.vst3\` to \`C:\\Program Files\\Common Files\\VST3\\\`, run \`Grano.exe\` standalone.
+
+          **macOS:** Extract zip, copy \`Grano.vst3\` to \`~/Library/Audio/Plug-Ins/VST3/\`, copy \`Grano.component\` to \`~/Library/Audio/Plug-Ins/Components/\`. If Gatekeeper blocks: \`sudo xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Grano.vst3\`
+
+          See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for full instructions." \
+            Grano-${{ github.ref_name }}-Windows.zip \
+            Grano-${{ github.ref_name }}-macOS.zip
+        env:
+          GH_TOKEN: ${{ github.token }}
