@@ -110,7 +110,7 @@ void GranularEngine::scheduleGrain() noexcept
         for (int s = 0; s < MultiSampleBank::kNumSlots; ++s)
             weights[s] = pSlotWeight_[s]
                 ? pSlotWeight_[s]->load(std::memory_order_relaxed)
-                : 0.f;
+                : 1.0f;
         auto [ptr, len] = bankSource_->pickSlot(grainRng_, weights);
         srcData = ptr;
         srcLen  = len;
