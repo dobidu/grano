@@ -147,13 +147,23 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F5 — Modulation Matrix and Snapshots
+## ✅ F5 — Modulation Matrix and Snapshots — COMPLETE (2026-05-19)
 
 **Goal**: Two LFOs assignable to any parameter. Four parameter snapshots A/B/C/D with instant switching.
 
+**Plans**: 3 of 3 complete — see `.paul/phases/05-modulation-matrix/`
+
+**Exit criteria met**:
+- [x] Two LFO instances: rate 0.01–8kHz, 7 waveforms (Sine/Triangle/Saw/Square/Random/S&H/Drawable), free or DAW-sync, phase offset, depth
+- [x] Modulation matrix: 8 slots, LFO1/LFO2 → 29 destinations, amount ±100%, cross-mod LFO1→LFO2Rate
+- [x] LFO advances at block rate in ModMatrix::processBlock() (audio-rate capable via advanceSample())
+- [x] UI: LfoPanel (LFO1/LFO2 tabs, all controls), ModulationMatrixView (8 rows), A/B/C/D snapshot buttons
+- [x] Snapshots A/B/C/D: instant recall, serialized in getStateInformation
+- [x] 93/93 Catch2 tests pass
+
 **Entry**: F4 complete and unified (all three sub-phases).
 
-**Exit criteria**:
+**Exit criteria (original)**:
 - Two LFO instances: rate (0.01 Hz - 8 kHz, log-skewed), waveform (Sine, Triangle, Saw, Square, Random, S&H, Drawable), free or DAW-sync, phase offset, depth.
 - Drawable waveform: stored as 64-point breakpoint envelope, edited via click-and-drag on the LFO's waveform display.
 - Modulation matrix: minimum 8 slots, each routing source (LFO1, LFO2) → destination (any APVTS parameter) with amount (-100% to +100%).

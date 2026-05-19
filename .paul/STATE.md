@@ -5,35 +5,36 @@ This file is managed by PAUL. Do not edit manually.
 ## Current state
 
 ```yaml
-phase: F5-modulation-matrix
+phase: F6-ui-polish-and-advanced
 loop_position: IDLE
-current_plan: (none — 05-02 complete, ready to plan 05-03)
-last_unified: .paul/phases/05-modulation-matrix/05-02-SUMMARY.md
-session_start: 2026-05-18
+current_plan: (none — F5 complete, ready to plan F6)
+last_unified: .paul/phases/05-modulation-matrix/05-03-SUMMARY.md
+session_start: 2026-05-19
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F5 — Modulation Matrix (6 of 8) — In Progress
-Plan: 05-02 ✅ COMPLETE — ready for 05-03 Snapshots + UI panels
-Status: PLAN 2 of 3 unified
-Last activity: 2026-05-18 — Unified 05-02 (F5b: ModMatrix + engine); 91/91 tests
+Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — Not Started
+Plan: none — ready for /paul:plan F6
+Status: F5 complete — all 3 plans unified
+Last activity: 2026-05-19 — F5 complete; Snapshots, LfoPanel, ModulationMatrixView; 93/93 tests
 
 Progress:
-- Milestone: [██████████████░░░░░░] ~75%
+- Milestone: [████████████████░░░░] ~80%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
 - F4: [████████████████████] 100% ✅
-- F5: [█████████████░░░░░░░] 66% — 05-02 done, 05-03 next
+- F5: [████████████████████] 100% ✅
+- F6: [░░░░░░░░░░░░░░░░░░░░] 0% — not started
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [05-02 complete — ready for /paul:plan 05-03]
+  ✓        ✓        ✓     [F5 complete — ready for /paul:plan F6]
 ```
 
 ## Accumulated context
@@ -41,6 +42,8 @@ PLAN ──▶ APPLY ──▶ UNIFY
 ### Decisions
 | Decision | Phase | Impact |
 |----------|-------|--------|
+| GranoCombinedState wrapper for serialization | F5c | APVTS state type is already "GranoState" — outer wrapper must be different for disambiguation; old format still falls through to else-if branch |
+| UI .cpp files belong in GranoTests too | F5c | PluginEditor.cpp compiled into GranoTests references all editor-included UI files; pattern: add any UI .cpp that PluginEditor includes |
 | ModMatrix() = default explicit required | F5b | GCC suppresses implicit default ctor with JUCE_DECLARE_NON_COPYABLE + non-trivial members — add explicit default to any new class with this macro |
 | ModMatrix owns LFO advances in processBlock() | F5b | PluginProcessor must NOT call lfo1_.processBlock() separately; ModMatrix is sole LFO driver |
 | Tests compile plugin sources directly (not via JUCE shared-code target) | F0 | Pattern for all future test targets in F1+ |
@@ -62,24 +65,27 @@ PLAN ──▶ APPLY ──▶ UNIFY
 ### Deferred issues
 | Issue | Origin | Effort | Revisit |
 |-------|--------|--------|---------|
-| Migrate deprecated `juce::Font(String, float, int)` to `FontOptions` | F0 | S | F3 (GranoLAF build) |
-| Stereo file downmix (proper L+R average) | F2 | S | F4 (when multi-channel engine work begins) |
-| Error label 3-second auto-dismiss | F2 | XS | F3 (GranoLAF + timer infrastructure) |
-| Playhead wired to APVTS `position` parameter | F2 | S | F3 (position param added) |
+| Migrate deprecated `juce::Font(String, float, int)` to `FontOptions` | F0 | S | F6 (GranoLAF polish) |
+| Stereo file downmix (proper L+R average) | F2 | S | F6 (multi-channel engine) |
+| Error label 3-second auto-dismiss | F2 | XS | F6 (timer infrastructure) |
+| Playhead wired to APVTS `position` parameter | F2 | S | F6 |
 | Particle trail / fade-out animation (60 ms decay) | F2 | S | F6 polish |
-| GranoLAF styling for WaveformDisplay + Load button | F2 | M | ✅ Done F3 |
-| Audio response verify (knobs → engine, volume → silence) | F3 | XS | First non-WSL2 session |
 | Embedded Inter + JetBrains Mono fonts via BinaryData | F3 | M | F6 |
+| Audio response verify (knobs → engine, volume → silence) | F3 | XS | First non-WSL2 session |
+| Drawable waveform drag-editor in LfoPanel | F5c | M | F6 |
+| 250ms ramp on snapshot recall | F5c | XS | F6 polish |
+| Color/Motion/Pattern mod destinations consumed by engines | F5b | M | F6 |
+| LFO rate display in Hz/BPM next to rate slider | F5c | XS | F6 polish |
 
 ### Blockers/Concerns
 None.
 
 ## Session continuity
 
-Last session: 2026-05-18
-Stopped at: 05-02 unified — ModMatrix, LFO wiring, 66 APVTS params, 91/91 tests, commit 281378d
-Next action: /paul:plan 05-03 — Snapshots + UI panels (LfoPanel, ModulationMatrixView, human-verify checkpoint)
-Resume context: 91/91 tests. 66 APVTS params. ModMatrix::getModOffset() API stable. Dest enum frozen (29 entries). lfo1_/lfo2_/modMatrix_ live on PluginProcessor.
+Last session: 2026-05-19
+Stopped at: F5 complete — 3/3 plans unified; Snapshots + LfoPanel + ModulationMatrixView; 93/93 tests; commit 3697bcd
+Next action: /paul:plan F6 — UI Polish + Sub-grain + Spectral + Stochastic
+Resume context: 93/93 tests. 66 APVTS params. ModMatrix + LFO + Snapshots APIs stable. Editor 1000×820. 200px bottom panel established.
 
 ## Phase history
 
@@ -93,3 +99,6 @@ Resume context: 91/91 tests. 66 APVTS params. ModMatrix::getModOffset() API stab
 | F4b — Color (in F4) | 2/4 | 2026-05-18 | 1e2e5b9 |
 | F4 CI hardening | 3/4 | 2026-05-18 | 1d0d11f |
 | F4c — Pattern (in F4) | 4/4 | 2026-05-18 | fb44ed6 |
+| F5a — LFO core | 1/3 | 2026-05-18 | (in 281378d) |
+| F5b — ModMatrix + engine | 2/3 | 2026-05-18 | 281378d |
+| F5c — Snapshots + UI | 3/3 | 2026-05-19 | 3697bcd |
