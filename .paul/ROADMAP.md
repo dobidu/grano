@@ -222,14 +222,52 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
+## F8 — QA and Manual Acceptance Testing
+
+**Goal**: Every user-facing feature verified by a human on Windows and macOS using `TESTING.md`. No known regressions. Bugs triaged and either fixed or deferred with rationale.
+
+**Entry**: F7 complete and unified. Beta installers available.
+
+**Exit criteria**:
+- All 88 test cases in `TESTING.md` marked Pass on **Windows** (VST3 in a DAW + Standalone).
+- All 88 test cases in `TESTING.md` marked Pass on **macOS** (VST3 + AU + Standalone).
+- Performance tests (T8.1–T8.8) pass within stated CPU/memory budgets.
+- All known P0/P1 bugs fixed and re-tested.
+- P2 bugs documented in `consider-issues` with deferred rationale.
+- `TESTING.md` signed off with date and OS version per platform.
+
+**Test areas** (from `TESTING.md`):
+1. First Launch (3 tests)
+2. Sample Loading (7 tests)
+3. Core Engine — Density, Grain Size, Position, Jitter, Pitch, Spread (15 tests)
+4. MOTION module — Wow, Flutter, Drift, Crackle (8 tests)
+5. COLOR module — Saturate, Decimate, Tilt EQ, Verb (7 tests)
+6. PATTERN module — Trigger modes, Probability, Reverse, Quantize, Spray (12 tests)
+7. LFO — Waveforms, Sync, Audio-rate, Cross-mod (12 tests)
+8. Modulation Matrix — Routing, amount, disable (5 tests)
+9. Snapshots A/B/C/D — Recall, persistence (4 tests)
+10. Sub-grain recursion — Depth 0/1/2 (3 tests)
+11. Stochastic timing — All 6 distributions (7 tests)
+12. Feedback path — Gain, damp, stability (5 tests)
+13. Spectral Freeze/Blur (6 tests)
+14. Waveform Display — Particles, playhead, resize (4 tests)
+15. State Persistence — DAW project save/reload (3 tests)
+16. Performance and Stability (8 tests)
+
+**Deliverables**: completed `TESTING.md` with all Pass/Fail cells filled in per platform, bug fix commits for any P0/P1 failures, updated `consider-issues` for P2 deferrals.
+
+**Effort estimate**: 3-5 days (human tester time).
+
+---
+
 ## Total estimated effort
 
-35-50 days of focused work, depending on iteration speed and whether you take Linux fully through CI from day one.
+40-60 days of focused work, depending on iteration speed and whether you take Linux fully through CI from day one.
 
 ## Phase dependencies graph
 
 ```
-F0 → F1 → F2 → F3 → F4 (a → b → c) → F5 → F6 → F7
+F0 → F1 → F2 → F3 → F4 (a → b → c) → F5 → F6 → F7 → F8
 ```
 
 No parallel branches in v1.0. After F7, v1.1 work can branch (XY pad/morph, additional modules, etc.).
