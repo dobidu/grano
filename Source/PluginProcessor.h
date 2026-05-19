@@ -3,7 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "Engine/GranularEngine.h"
-#include "Engine/SampleBuffer.h"
+#include "Engine/MultiSampleBank.h"
 #include "Engine/FeedbackPath.h"
 #include "Engine/SpectralProcessor.h"
 #include "Modules/Motion.h"
@@ -76,7 +76,7 @@ public:
 
     const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
 
-    SampleBuffer&              getSampleBuffer()  noexcept { return sampleBuffer_; }
+    SampleBuffer&              getSampleBuffer()  noexcept { return sampleBank_.getSlot(0); }
     GranularEngine&            getEngine()        noexcept { return engine_; }
     juce::AudioFormatManager&  getFormatManager() noexcept { return formatManager_; }
 
@@ -84,13 +84,13 @@ public:
     int    getLastLoadedNumFrames()  const noexcept { return lastLoadedNumFrames_; }
 
 private:
-    void timerCallback() override { sampleBuffer_.processRetired(); }
+    void timerCallback() override { sampleBank_.processRetiredAll(); }
 
-    // Trigger spectral processing from the current sampleBuffer_ contents.
+    // Trigger spectral processing from slot 0 of the sample bank.
     // Call from message thread when spectral is enabled or source changes.
     void triggerSpectralProcessIfEnabled();
 
-    SampleBuffer               sampleBuffer_;  // must be declared before engine_
+    MultiSampleBank            sampleBank_;    // must be declared before engine_
     FeedbackPath               feedbackPath_;
     SpectralProcessor          spectralProcessor_;
     GranularEngine             engine_;

@@ -104,10 +104,16 @@ void GranularEngine::scheduleGrain() noexcept
         srcData = feedbackSource_->getReadPointer();
         srcLen  = feedbackSource_->getNumSamples();
     }
-    else if (sampleSource_ != nullptr)
+    else if (bankSource_ != nullptr)
     {
-        srcData = sampleSource_->getReadPointer();
-        srcLen  = sampleSource_->getNumSamples();
+        float weights[MultiSampleBank::kNumSlots];
+        for (int s = 0; s < MultiSampleBank::kNumSlots; ++s)
+            weights[s] = pSlotWeight_[s]
+                ? pSlotWeight_[s]->load(std::memory_order_relaxed)
+                : 0.f;
+        auto [ptr, len] = bankSource_->pickSlot(grainRng_, weights);
+        srcData = ptr;
+        srcLen  = len;
     }
 
     if (srcData == nullptr || srcLen <= 0)
@@ -224,7 +230,7 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
 
     // If a new sample buffer was swapped in, all active grains carry stale source
     // pointers. Drain them before the new buffer's grains arrive.
-    if (sampleSource_ != nullptr && sampleSource_->trySwap())
+    if (bankSource_ != nullptr && bankSource_->trySwapAll())
     {
         for (int i = 0; i < activeGrainCount_; ++i)
             pool_.release(activeGrains_[i]);
@@ -278,7 +284,7 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
     for (int n = 0; n < N; ++n) { L[n] *= volGain; R[n] *= volGain; }
 
     // Write snapshot for UI particle rendering (read by getGrainSnapshots on UI thread).
-    const int snapLen   = sampleSource_ != nullptr ? sampleSource_->getNumSamples() : 0;
+    const int snapLen   = bankSource_ != nullptr ? bankSource_->getNumSamples(0) : 0;
     const int snapCount = std::min(activeGrainCount_, MaxActiveGrains);
     for (int i = 0; i < snapCount; ++i)
     {

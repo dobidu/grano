@@ -7,7 +7,12 @@ GranoAudioProcessor::GranoAudioProcessor()
         .withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
     formatManager_.registerBasicFormats(); // WAV, AIFF, FLAC, OGG, MP3 (if enabled)
-    engine_.setSource(&sampleBuffer_);
+    engine_.setBank(&sampleBank_);
+    engine_.setBankParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::slot0Weight),
+        apvts_.getRawParameterValue(ParamIDs::slot1Weight),
+        apvts_.getRawParameterValue(ParamIDs::slot2Weight),
+        apvts_.getRawParameterValue(ParamIDs::slot3Weight));
     engine_.setParamPointers(
         apvts_.getRawParameterValue(ParamIDs::grainSize),
         apvts_.getRawParameterValue(ParamIDs::density),
@@ -172,26 +177,40 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file)
     auto buf = std::make_unique<juce::AudioBuffer<float>>(1, numFrames + 2);
     buf->clear();
 
-    // Read left channel only into channel 0 (stereo files: left taken, right ignored).
-    reader->read(buf.get(), 0, numFrames, 0, true, false);
+    if (reader->numChannels >= 2)
+    {
+        // Proper stereo-to-mono downmix: average L and R channels.
+        juce::AudioBuffer<float> stereo(2, numFrames + 2);
+        stereo.clear();
+        reader->read(&stereo, 0, numFrames, 0, true, true);
+        auto*       dst = buf->getWritePointer(0);
+        const auto* L   = stereo.getReadPointer(0);
+        const auto* R   = stereo.getReadPointer(1);
+        for (int i = 0; i < numFrames; ++i)
+            dst[i] = (L[i] + R[i]) * 0.5f;
+    }
+    else
+    {
+        reader->read(buf.get(), 0, numFrames, 0, true, false);
+    }
 
     lastLoadError_        = {};
     lastLoadedSampleRate_ = reader->sampleRate;
     lastLoadedNumFrames_  = numFrames;
-    sampleBuffer_.setPending(std::move(buf), numFrames);
+    sampleBank_.loadSlot(0, std::move(buf), numFrames);
     triggerSpectralProcessIfEnabled();
 }
 
 void GranoAudioProcessor::triggerSpectralProcessIfEnabled()
 {
     const bool on = *apvts_.getRawParameterValue(ParamIDs::spectralEnabled) > 0.5f;
-    if (!on || sampleBuffer_.getReadPointer() == nullptr)
+    if (!on || sampleBank_.getReadPointer(0) == nullptr)
         return;
     const int   mode = (int)*apvts_.getRawParameterValue(ParamIDs::spectralMode);
     const float blur = *apvts_.getRawParameterValue(ParamIDs::spectralBlurAmount);
     spectralProcessor_.processSource(
-        sampleBuffer_.getReadPointer(),
-        sampleBuffer_.getNumSamples(),
+        sampleBank_.getReadPointer(0),
+        sampleBank_.getNumSamples(0),
         static_cast<SpectralProcessor::Mode>(juce::jlimit(0, 1, mode)),
         blur);
 }

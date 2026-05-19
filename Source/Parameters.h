@@ -69,6 +69,12 @@ namespace ParamIDs {
     inline constexpr const char* spectralMode       = "spectralMode";
     inline constexpr const char* spectralBlurAmount = "spectralBlurAmount";
 
+    // F6d — Multi-sample bank slot weights
+    inline constexpr const char* slot0Weight = "slot0Weight";
+    inline constexpr const char* slot1Weight = "slot1Weight";
+    inline constexpr const char* slot2Weight = "slot2Weight";
+    inline constexpr const char* slot3Weight = "slot3Weight";
+
     // F5 — ModMatrix slots (8 slots × 3 params)
     inline constexpr const char* slot1Source = "slot1Source";
     inline constexpr const char* slot1Dest   = "slot1Dest";

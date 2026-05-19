@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 #include "Engine/SampleBuffer.h"
+#include "Engine/MultiSampleBank.h"
 #include "Engine/GranularEngine.h"
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -119,15 +120,13 @@ TEST_CASE("GranularEngine uses SampleBuffer source when loaded", "[GranularEngin
     constexpr int    kBlockSize  = 512;
     constexpr int    kFrames     = (int)kSampleRate; // 1 second
 
-    SampleBuffer sb;
+    MultiSampleBank bank;
     GranularEngine engine;
-    engine.setSource(&sb);
+    engine.setBank(&bank);
     engine.prepare(kSampleRate, kBlockSize);
 
-    // Load the sample, then trigger one processBlock to call trySwap().
-    // Without at least one processBlock, the audio-thread atomic currentReadPtr_
-    // never gets set, so the scheduler can't see the buffer.
-    sb.setPending(makeBuffer(kFrames, 0.5f), kFrames);
+    // Load slot 0, then trigger one processBlock to call trySwapAll().
+    bank.loadSlot(0, makeBuffer(kFrames, 0.5f), kFrames);
 
     juce::AudioBuffer<float> out(2, kBlockSize);
     out.clear();
@@ -154,9 +153,9 @@ TEST_CASE("GranularEngine falls back to sine tone when SampleBuffer is empty", "
     constexpr double kSampleRate = 48000.0;
     constexpr int    kBlockSize  = 512;
 
-    SampleBuffer sb;
+    MultiSampleBank bank;
     GranularEngine engine;
-    engine.setSource(&sb); // no buffer loaded yet
+    engine.setBank(&bank); // no slots loaded yet — falls back to sine
     engine.prepare(kSampleRate, kBlockSize);
 
     juce::Thread::sleep(150);

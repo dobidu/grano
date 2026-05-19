@@ -6,6 +6,7 @@
 #include "StochasticTiming.h"
 #include "FeedbackPath.h"
 #include "SpectralProcessor.h"
+#include "MultiSampleBank.h"
 #include "../Modules/Motion.h"
 #include "../Modules/Pattern.h"
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -49,9 +50,18 @@ public:
     // Stops scheduler, releases all active grains, drains FIFO.
     void reset();
 
-    // Set the live sample source. Call before prepareToPlay (before audio starts).
-    // Pass nullptr to revert to the 440 Hz sine fallback.
-    void setSource(SampleBuffer* sb) noexcept { sampleSource_ = sb; }
+    // Set the multi-sample bank as the grain source. Call before prepareToPlay.
+    void setBank(MultiSampleBank* b) noexcept { bankSource_ = b; }
+    void setBankParamPointers(std::atomic<float>* w0,
+                              std::atomic<float>* w1,
+                              std::atomic<float>* w2,
+                              std::atomic<float>* w3) noexcept
+    {
+        pSlotWeight_[0] = w0;
+        pSlotWeight_[1] = w1;
+        pSlotWeight_[2] = w2;
+        pSlotWeight_[3] = w3;
+    }
 
     // Provide Motion module for per-grain pitch modulation. Call before audio starts.
     void setPitchModSource(Motion* m) noexcept { pitchMod_ = m; }
@@ -160,8 +170,9 @@ private:
     std::vector<float> testSample_;
     std::atomic<bool>  sampleReady_{ false };
 
-    // Live sample source — set once before audio starts, never changed while running.
-    SampleBuffer* sampleSource_{ nullptr };
+    // Multi-sample bank — set once before audio starts, never changed while running.
+    MultiSampleBank*    bankSource_{ nullptr };
+    std::atomic<float>* pSlotWeight_[4]{};
 
     double sampleRate_{ 48000.0 };
 

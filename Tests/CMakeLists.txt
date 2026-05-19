@@ -28,6 +28,8 @@ add_executable(GranoTests
     # F6c — Feedback path + Spectral processor
     ${CMAKE_SOURCE_DIR}/Source/Engine/FeedbackPath.cpp
     ${CMAKE_SOURCE_DIR}/Source/Engine/SpectralProcessor.cpp
+    # F6d — Multi-sample bank
+    ${CMAKE_SOURCE_DIR}/Source/Engine/MultiSampleBank.cpp
     # F2 — UI
     ${CMAKE_SOURCE_DIR}/Source/UI/WaveformDisplay.cpp
     # F3 — UI components and LookAndFeel
@@ -56,6 +58,7 @@ add_executable(GranoTests
     test_stochastic.cpp
     test_feedback.cpp
     test_spectral.cpp
+    test_multisample.cpp
 )
 
 target_include_directories(GranoTests

@@ -73,6 +73,8 @@ target_sources(Grano
         # F6c — Feedback path + Spectral processor
         Source/Engine/FeedbackPath.cpp
         Source/Engine/SpectralProcessor.cpp
+        # F6d — Multi-sample bank
+        Source/Engine/MultiSampleBank.cpp
         # F2 — UI
         Source/UI/WaveformDisplay.cpp
         # F3 — UI components and LookAndFeel

@@ -217,6 +217,21 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::spectralBlurAmount, 1 }, "Spectral Blur",
         juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
 
+    // F6d — Multi-sample bank slot weights
+    // Default: slot 0 = 1.0, others = 0.0 → backward-compatible single-source behavior.
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::slot0Weight, 1 }, "Slot 0 Weight",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 1.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::slot1Weight, 1 }, "Slot 1 Weight",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::slot2Weight, 1 }, "Slot 2 Weight",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::slot3Weight, 1 }, "Slot 3 Weight",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
+
     // F5 — ModMatrix slots (8 × 3 = 24 params)
     const juce::StringArray kModSources{ "None", "LFO1", "LFO2" };
     const juce::StringArray kModDests{
