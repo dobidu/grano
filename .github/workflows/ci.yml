@@ -83,15 +83,23 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           pluginval.app/Contents/MacOS/pluginval \
-            --strictness-level 5 \
+            --strictness-level 10 \
             --validate-in-process \
-            --timeout-ms 30000 \
+            --timeout-ms 60000 \
             build/Grano_artefacts/Release/VST3/Grano.vst3
+
+      - name: Validate AU (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components/
+          cp -r build/Grano_artefacts/Release/AU/Grano.component \
+            ~/Library/Audio/Plug-Ins/Components/
+          auval -v aumu Gran Bidu
 
       - name: Run pluginval (Windows)
         if: runner.os == 'Windows'
         run: |
-          .\pluginval.exe --strictness-level 5 --validate-in-process --timeout-ms 30000 `
+          .\pluginval.exe --strictness-level 10 --validate-in-process --timeout-ms 60000 `
             "build\Grano_artefacts\Release\VST3\Grano.vst3"
 
       - name: Upload VST3
