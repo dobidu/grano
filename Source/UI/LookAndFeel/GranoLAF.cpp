@@ -47,6 +47,18 @@ void GranoLAF::drawRotarySlider(juce::Graphics& g,
         g.setColour(kBorderMuted);
         g.strokePath(arc, juce::PathStrokeType(2.0f));
     }
+    // Halo passes — wider arcs at low alpha before solid arc renders on top
+    {
+        const float halos[][2] = { {6.0f, 0.04f}, {4.5f, 0.09f}, {3.0f, 0.18f} };
+        for (auto& [hw, ha] : halos)
+        {
+            juce::Path halo;
+            halo.addArc(rx, ry, rr, rr, startAngle, angle, true);
+            g.setColour(kVital.withAlpha(ha));
+            g.strokePath(halo, juce::PathStrokeType(hw,
+                juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+    }
     // Value arc (mint)
     {
         juce::Path arc;
@@ -116,6 +128,12 @@ void GranoLAF::drawButtonBackground(juce::Graphics& g, juce::Button& button,
     const juce::Colour border = button.getToggleState() ? kVital : kBorderMuted;
     g.setColour(border);
     g.drawRoundedRectangle(b, 4.0f, 1.0f);
+
+    if (button.getToggleState())
+    {
+        g.setColour(kVital.withAlpha(0.40f));
+        g.drawRoundedRectangle(b.expanded(1.0f), 4.5f, 1.5f);
+    }
 }
 
 void GranoLAF::drawButtonText(juce::Graphics& g, juce::TextButton& button,

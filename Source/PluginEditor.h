@@ -42,6 +42,8 @@ private:
     void clearError();
     void openFileChooser();
 
+    juce::uint32 errorGen_{ 0 };
+
     GranoAudioProcessor& processorRef;
 
     GranoLAF laf_;

@@ -27,9 +27,10 @@ private:
     juce::ComboBox    waveformBox_;
     juce::Slider      rateSlider_, depthSlider_, phaseSlider_;
     juce::ToggleButton syncButton_{ "SYNC" };
-    juce::Label        rateLabel_ { "", "RATE"  };
-    juce::Label        depthLabel_{ "", "DEPTH" };
-    juce::Label        phaseLabel_{ "", "PHASE" };
+    juce::Label        rateLabel_   { "", "RATE"  };
+    juce::Label        depthLabel_  { "", "DEPTH" };
+    juce::Label        phaseLabel_  { "", "PHASE" };
+    juce::Label        rateReadout_;
 
     std::unique_ptr<ComboAttach>  waveAttach_;
     std::unique_ptr<SliderAttach> rateAttach_, depthAttach_, phaseAttach_;

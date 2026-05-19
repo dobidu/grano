@@ -11,17 +11,15 @@ namespace
     constexpr int   kMaxWidth      = 2000;
     constexpr int   kMaxHeight     = 1640;
 
-    // surface.base — the primary background colour
-    const juce::Colour kColourSurfaceBase  { 0xff0a0b0d };
+    // Shared between paint() and resized()
+    constexpr int   kMargin  = 36;
+    constexpr int   kHeaderH = 52;
 
-    // text.primary — used for the logo label
-    const juce::Colour kColourTextPrimary  { 0xffe8e6e1 };
+    const juce::Colour kColourSurfaceBase { 0xff0a0b0du };
+    const juce::Colour kColourTextPrimary { 0xffe8e6e1u };
+    const juce::Colour kColourBorderMuted { 0xff2a2e36u };
 
-    // Logo: JetBrains Mono 18 px medium, UPPERCASE, letter-spacing 0.32 em
-    constexpr float kLogoFontSize          = 18.0f;
-    // Letter-spacing 0.32 em ≈ 0.32 × 18 = 5.76 px per character gap.
-    // Approximated by drawing with extra tracking via juce::GlyphArrangement.
-    constexpr float kLogoLetterSpacing     = 5.76f;
+    constexpr float kLogoFontSize = 18.0f;
 }
 
 GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
@@ -114,10 +112,9 @@ GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
 
 void GranoAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    // ── Background ──────────────────────────────────────────────────────────
     g.fillAll(kColourSurfaceBase);
 
-    // ── Radial vignette — darkens corners ~6% ───────────────────────────────
+    // Radial vignette
     {
         const auto bounds = getLocalBounds().toFloat();
         juce::ColourGradient vignette(
@@ -125,117 +122,100 @@ void GranoAudioProcessorEditor::paint(juce::Graphics& g)
             bounds.getCentreX(), bounds.getCentreY(),
             kColourSurfaceBase.darker(0.06f).withAlpha(1.0f),
             0.0f, 0.0f,
-            true); // radial
+            true);
         g.setGradientFill(vignette);
         g.fillRect(bounds);
     }
 
-    // ── Logo: "GRANO" centred ───────────────────────────────────────────────
-    // JetBrains Mono isn't bundled yet (added in F3 via BinaryData).
-    // Fall back to the system monospaced font for F0.
+    // Logo in title bar — left-aligned, system mono until BinaryData fonts land
     {
-        const juce::String logoText = "GRANO";
-        juce::Font logoFont(juce::FontOptions{}
+        g.setColour(kColourTextPrimary);
+        g.setFont(juce::Font(juce::FontOptions{}
             .withName(juce::Font::getDefaultMonospacedFontName())
             .withHeight(kLogoFontSize)
-            .withStyle("Bold"));
-
-        // Approximate the letter-spacing by distributing glyphs manually.
-        juce::GlyphArrangement glyphs;
-        glyphs.addFittedText(logoFont, logoText,
-                             0.0f, 0.0f,
-                             (float)getWidth(), (float)getHeight(),
-                             juce::Justification::centred, 1);
-
-        // Shift each glyph right by cumulative letter-spacing offset.
-        // Total extra width = (N-1) * kLogoLetterSpacing.
-        const int   n          = logoText.length();
-        const float totalExtra = (float)(n - 1) * kLogoLetterSpacing;
-        const float startShift = -totalExtra * 0.5f;
-
-        juce::GlyphArrangement spaced;
-        for (int i = 0; i < glyphs.getNumGlyphs(); ++i)
-        {
-            auto glyph = glyphs.getGlyph(i);
-            glyph.moveBy(startShift + (float)i * kLogoLetterSpacing, 0.0f);
-            spaced.addGlyph(glyph);
-        }
-
-        g.setColour(kColourTextPrimary);
-        spaced.draw(g);
+            .withStyle("Bold")));
+        g.drawText("GRANO",
+                   kMargin, 0, 120, kHeaderH,
+                   juce::Justification::centredLeft, false);
     }
+
+    // Header separator
+    g.setColour(kColourBorderMuted);
+    g.drawLine(0.0f, (float)kHeaderH, (float)getWidth(), (float)kHeaderH, 1.0f);
 }
 
 void GranoAudioProcessorEditor::resized()
 {
-    constexpr int kMargin       = 40;
-    constexpr int kHeaderH      = 48;
-    constexpr int kPosStripH    = 44;   // position slider strip (label + slider)
-    constexpr int kKnobH        = 100;  // knob area (rotary + label)
-    constexpr int kSpreadH      = 44;   // spread slider strip
-    constexpr int kBottomPanelH = 200;  // LfoPanel + ModulationMatrixView
-    constexpr int kFooterH      = 24;   // error label
+    // kMargin and kHeaderH live in the anonymous namespace (shared with paint())
+    constexpr int kSectionGap   = 12;
+    constexpr int kItemGap      = 6;
+    constexpr int kPosStripH    = 44;
+    constexpr int kKnobH        = 100;
+    constexpr int kSpreadH      = 44;
+    constexpr int kBottomPanelH = 200;
+    constexpr int kFooterH      = 24;
     constexpr int kLoadBtnW     = 72;
     constexpr int kLoadBtnH     = 24;
     constexpr int kLoopBtnW     = 56;
     constexpr int kLoopBtnH     = 24;
-    constexpr int kSnapBtnW     = 36;
+    constexpr int kSnapBtnW     = 32;
     constexpr int kSnapBtnH     = 24;
-    constexpr int kGap          = 4;
 
     const int w        = getWidth();
     const int h        = getHeight();
     const int contentX = kMargin;
     const int contentW = w - 2 * kMargin;
+    const int btnY     = (kHeaderH - kSnapBtnH) / 2;
 
-    // Snapshot buttons A/B/C/D — header left side
+    // Snap buttons A/B/C/D — header left, after logo (~128 px)
     {
-        int sx = contentX;
+        int sx = contentX + 128;
         for (int i = 0; i < 4; ++i)
         {
-            snapButtons_[i].setBounds(sx, (kHeaderH - kSnapBtnH) / 2, kSnapBtnW, kSnapBtnH);
-            sx += kSnapBtnW + kGap;
+            snapButtons_[i].setBounds(sx, btnY, kSnapBtnW, kSnapBtnH);
+            sx += kSnapBtnW + kItemGap;
         }
     }
 
-    // Load button — header top-right
+    // Load button — header far right
     loadButton_.setBounds(w - kMargin - kLoadBtnW,
-                          (kHeaderH - kLoadBtnH) / 2,
-                          kLoadBtnW, kLoadBtnH);
+                          btnY, kLoadBtnW, kLoadBtnH);
 
-    // Waveform — fills space between header and controls + bottom panel
-    const int controlsH = kPosStripH + kGap + kKnobH + kGap + kSpreadH;
-    const int waveformH = h - kHeaderH - kGap - controlsH - kGap - kBottomPanelH - kGap - kFooterH;
-    waveformDisplay_.setBounds(contentX, kHeaderH, contentW, waveformH);
+    // Loop toggle — header right, left of Load
+    loopButton_.setBounds(w - kMargin - kLoadBtnW - kItemGap - kLoopBtnW,
+                          btnY, kLoopBtnW, kLoopBtnH);
 
-    // Position slider — directly below waveform
-    int y = kHeaderH + waveformH + kGap;
+    // Waveform — variable height filling space between header and controls
+    const int waveformH = h - kHeaderH
+                            - 5 * kSectionGap
+                            - kPosStripH - kKnobH - kSpreadH - kBottomPanelH - kFooterH;
+    int y = kHeaderH + kSectionGap;
+    waveformDisplay_.setBounds(contentX, y, contentW, waveformH);
+    y += waveformH + kSectionGap;
+
+    // Position slider
     positionSlider_.setBounds(contentX, y, contentW, kPosStripH);
-    y += kPosStripH + kGap;
+    y += kPosStripH + kSectionGap;
 
-    // Knob row — 5 knobs + loop button
-    const int knobZoneW = contentW - kLoopBtnW - kGap;
-    const int knobW     = knobZoneW / 5;
-    grainSizeKnob_ .setBounds(contentX,             y, knobW, kKnobH);
-    densityKnob_   .setBounds(contentX + knobW,     y, knobW, kKnobH);
-    posJitterKnob_ .setBounds(contentX + knobW * 2, y, knobW, kKnobH);
-    pitchShiftKnob_.setBounds(contentX + knobW * 3, y, knobW, kKnobH);
-    masterVolKnob_ .setBounds(contentX + knobW * 4, y, knobW, kKnobH);
-    loopButton_    .setBounds(contentX + knobZoneW + kGap,
-                              y + (kKnobH - kLoopBtnH) / 2,
-                              kLoopBtnW, kLoopBtnH);
-    y += kKnobH + kGap;
+    // Knob row — 5 equal columns (LOOP moved to header)
+    const int knobW = contentW / 5;
+    grainSizeKnob_ .setBounds(contentX,             y, knobW,                kKnobH);
+    densityKnob_   .setBounds(contentX + knobW,     y, knobW,                kKnobH);
+    posJitterKnob_ .setBounds(contentX + knobW * 2, y, knobW,                kKnobH);
+    pitchShiftKnob_.setBounds(contentX + knobW * 3, y, knobW,                kKnobH);
+    masterVolKnob_ .setBounds(contentX + knobW * 4, y, contentW - knobW * 4, kKnobH);
+    y += kKnobH + kSectionGap;
 
-    // Spread slider — below knob row
+    // Spread slider
     spreadSlider_.setBounds(contentX, y, contentW, kSpreadH);
-    y += kSpreadH + kGap;
+    y += kSpreadH + kSectionGap;
 
     // Bottom panel — LfoPanel left half, ModulationMatrixView right half
     const int halfW = contentW / 2;
-    lfoPanel_     .setBounds(contentX,           y, halfW,            kBottomPanelH);
-    modMatrixView_.setBounds(contentX + halfW,   y, contentW - halfW, kBottomPanelH);
+    lfoPanel_     .setBounds(contentX,         y, halfW,            kBottomPanelH);
+    modMatrixView_.setBounds(contentX + halfW, y, contentW - halfW, kBottomPanelH);
 
-    // Error label — docked to bottom
+    // Error label — docked to bottom edge
     errorLabel_.setBounds(0, h - kFooterH, w, kFooterH);
 }
 
@@ -278,6 +258,13 @@ void GranoAudioProcessorEditor::showError(const juce::String& message)
     errorLabel_.setText(message, juce::dontSendNotification);
     errorLabel_.setVisible(true);
     repaint();
+
+    // Auto-dismiss after 3 s; generation counter cancels stale callbacks.
+    // Both here and the lambda run on the message thread — no race.
+    const auto gen = ++errorGen_;
+    juce::Timer::callAfterDelay(3000, [this, gen] {
+        if (errorGen_ == gen) clearError();
+    });
 }
 
 void GranoAudioProcessorEditor::clearError()

@@ -27,6 +27,11 @@ LfoPanel::LfoPanel()
     addAndMakeVisible(rateLabel_);
     addAndMakeVisible(depthLabel_);
     addAndMakeVisible(phaseLabel_);
+
+    rateReadout_.setFont(juce::Font(juce::FontOptions{}.withHeight(10.0f)));
+    rateReadout_.setJustificationType(juce::Justification::centredLeft);
+    rateReadout_.setColour(juce::Label::textColourId, juce::Colour(0xff8b8985u));
+    addAndMakeVisible(rateReadout_);
 }
 
 void LfoPanel::init(juce::AudioProcessorValueTreeState& apvts)
@@ -71,6 +76,16 @@ void LfoPanel::showLfo(int idx)
     depthAttach_ = std::make_unique<SliderAttach>(*apvts_, depthID, depthSlider_);
     phaseAttach_ = std::make_unique<SliderAttach>(*apvts_, phaseID, phaseSlider_);
     syncAttach_  = std::make_unique<ButtonAttach>(*apvts_, syncID,  syncButton_);
+
+    rateSlider_.onValueChange = [this] {
+        const double hz = rateSlider_.getValue();
+        juce::String text;
+        if      (hz < 1.0)    text = juce::String(hz, 2) + " Hz";
+        else if (hz < 1000.0) text = juce::String(hz, 1) + " Hz";
+        else                  text = juce::String(hz / 1000.0, 2) + " kHz";
+        rateReadout_.setText(text, juce::dontSendNotification);
+    };
+    rateSlider_.onValueChange(); // populate immediately on tab switch
 }
 
 void LfoPanel::paint(juce::Graphics& g)
@@ -100,12 +115,14 @@ void LfoPanel::resized()
     waveformBox_.setBounds(pad, y, w - pad * 2, 22);
     y += 22 + pad;
 
-    const int labelW  = 44;
-    const int sliderH = 22;
-    const int sliderW = w - pad * 2 - labelW;
+    const int labelW   = 44;
+    const int sliderH  = 22;
+    const int sliderW  = w - pad * 2 - labelW;
+    const int readoutW = 50;
 
-    rateLabel_.setBounds (pad,            y, labelW,  sliderH);
-    rateSlider_.setBounds(pad + labelW,   y, sliderW, sliderH);
+    rateLabel_  .setBounds(pad,                            y, labelW,                         sliderH);
+    rateSlider_ .setBounds(pad + labelW,                   y, sliderW - readoutW - pad,        sliderH);
+    rateReadout_.setBounds(w - pad - readoutW,             y, readoutW,                        sliderH);
     y += sliderH + pad;
 
     depthLabel_.setBounds (pad,           y, labelW,  sliderH);

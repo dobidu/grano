@@ -28,12 +28,14 @@ public:
     void resized()              override;
 
 private:
-    void timerCallback() override { repaint(); }
+    void timerCallback() override;
 
     void paintBackground    (juce::Graphics&, juce::Rectangle<float> bounds);
     void paintWaveform      (juce::Graphics&, juce::Rectangle<float> bounds);
     void paintParticles     (juce::Graphics&, juce::Rectangle<float> bounds,
-                             const GranularEngine::GrainSnapshot* snaps, int count);
+                             const GranularEngine::GrainSnapshot* snaps,  int count,
+                             const GranularEngine::GrainSnapshot* trail1, int count1,
+                             const GranularEngine::GrainSnapshot* trail2, int count2);
     void paintPlayhead      (juce::Graphics&, juce::Rectangle<float> bounds,
                              const GranularEngine::GrainSnapshot* snaps, int count);
     void paintLabels        (juce::Graphics&, juce::Rectangle<float> bounds, int grainCount);
@@ -52,6 +54,12 @@ private:
     bool dragHighlightActive_{ false };
     std::atomic<float>* positionParam_  { nullptr };
     std::atomic<float>* grainSizeParam_ { nullptr };
+
+    // Trail ring: [0]=current, [1]=1 frame ago, [2]=2 frames ago
+    static constexpr int kTrailFrames = 3;
+    std::array<std::array<GranularEngine::GrainSnapshot,
+        GranularEngine::MaxActiveGrains>, kTrailFrames> trailSnaps_{};
+    std::array<int, kTrailFrames> trailCounts_{};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WaveformDisplay)
 };

@@ -25,6 +25,21 @@ WaveformDisplay::~WaveformDisplay()
     stopTimer();
 }
 
+void WaveformDisplay::timerCallback()
+{
+    // Shift history ring before capturing new frame
+    trailSnaps_[2]  = trailSnaps_[1];
+    trailCounts_[2] = trailCounts_[1];
+    trailSnaps_[1]  = trailSnaps_[0];
+    trailCounts_[1] = trailCounts_[0];
+    if (engine_ != nullptr)
+        trailCounts_[0] = engine_->getGrainSnapshots(
+            trailSnaps_[0].data(), GranularEngine::MaxActiveGrains);
+    else
+        trailCounts_[0] = 0;
+    repaint();
+}
+
 void WaveformDisplay::setFile(const juce::File& file, double sampleRate, int numFrames)
 {
     filename_       = file.getFileName();
@@ -50,16 +65,15 @@ void WaveformDisplay::paint(juce::Graphics& g)
 
     const auto inner = bounds.reduced(8.0f);
 
-    // Collect snapshots once — used by both particles and playhead.
-    std::array<GranularEngine::GrainSnapshot, GranularEngine::MaxActiveGrains> snaps;
-    int snapCount = 0;
-    if (engine_ != nullptr)
-        snapCount = engine_->getGrainSnapshots(snaps.data(), GranularEngine::MaxActiveGrains);
-
+    // Snapshots are captured each timer tick into the trail ring buffer;
+    // use stored frames here so all paint helpers see consistent data.
     paintWaveform(g, inner);
-    paintParticles(g, inner, snaps.data(), snapCount);
-    paintPlayhead(g, inner, snaps.data(), snapCount);
-    paintLabels(g, inner, snapCount);
+    paintParticles(g, inner,
+                   trailSnaps_[0].data(), trailCounts_[0],
+                   trailSnaps_[1].data(), trailCounts_[1],
+                   trailSnaps_[2].data(), trailCounts_[2]);
+    paintPlayhead(g, inner, trailSnaps_[0].data(), trailCounts_[0]);
+    paintLabels(g, inner, trailCounts_[0]);
 
     if (dragHighlightActive_)
         paintDragHighlight(g, bounds);
@@ -89,21 +103,28 @@ void WaveformDisplay::paintWaveform(juce::Graphics& g, juce::Rectangle<float> bo
 }
 
 void WaveformDisplay::paintParticles(juce::Graphics& g, juce::Rectangle<float> bounds,
-                                     const GranularEngine::GrainSnapshot* snaps, int count)
+                                     const GranularEngine::GrainSnapshot* snaps,  int count,
+                                     const GranularEngine::GrainSnapshot* trail1, int count1,
+                                     const GranularEngine::GrainSnapshot* trail2, int count2)
 {
-    if (count <= 0 || fileNumFrames_ <= 0)
+    if (fileNumFrames_ <= 0)
         return;
 
-    for (int i = 0; i < count; ++i)
+    const auto drawFrame = [&](const GranularEngine::GrainSnapshot* s, int n, float alphaScale)
     {
-        const float x = bounds.getX() + snaps[i].srcFraction * bounds.getWidth();
-        // Deterministic vertical jitter per grain index, distributed across component height
-        const float yFrac = static_cast<float>(std::hash<int>{}(i) % 1000) / 1000.0f;
-        const float y = bounds.getY() + yFrac * bounds.getHeight();
+        for (int i = 0; i < n; ++i)
+        {
+            const float x = bounds.getX() + s[i].srcFraction * bounds.getWidth();
+            const float yFrac = static_cast<float>(std::hash<int>{}(i) % 1000) / 1000.0f;
+            const float y = bounds.getY() + yFrac * bounds.getHeight();
+            g.setColour(WD::kGrain.withAlpha(s[i].envelopeAmp * alphaScale));
+            g.fillEllipse(x - 1.5f, y - 1.5f, 3.0f, 3.0f);
+        }
+    };
 
-        g.setColour(WD::kGrain.withAlpha(snaps[i].envelopeAmp));
-        g.fillEllipse(x - 1.5f, y - 1.5f, 3.0f, 3.0f);
-    }
+    drawFrame(trail2, count2, 0.15f);
+    drawFrame(trail1, count1, 0.30f);
+    drawFrame(snaps,  count,  1.00f);
 }
 
 void WaveformDisplay::paintPlayhead(juce::Graphics& g, juce::Rectangle<float> bounds,
