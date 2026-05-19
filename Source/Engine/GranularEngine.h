@@ -2,6 +2,8 @@
 
 #include "GrainPool.h"
 #include "SampleBuffer.h"
+#include "SubGrain.h"
+#include "StochasticTiming.h"
 #include "../Modules/Motion.h"
 #include "../Modules/Pattern.h"
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -78,6 +80,14 @@ public:
         pLoop_           = loop;
     }
 
+    // Wire F6b params. Call once from PluginProcessor constructor.
+    void setAdvancedParamPointers(std::atomic<float>* subGrainDepth,
+                                  std::atomic<float>* stochasticDist) noexcept
+    {
+        pSubGrainDepth_  = subGrainDepth;
+        pStochasticDist_ = stochasticDist;
+    }
+
     struct GrainSnapshot
     {
         float srcFraction;  // grain start position as [0..1] of loaded sample length
@@ -140,6 +150,8 @@ private:
     std::atomic<float>* pStereoSpread_  { nullptr };
     std::atomic<float>* pMasterVolume_  { nullptr };
     std::atomic<float>* pLoop_          { nullptr };
+    std::atomic<float>* pSubGrainDepth_ { nullptr };
+    std::atomic<float>* pStochasticDist_{ nullptr };
 
     // Pitch modulation source — set once before audio starts, read in scheduler thread.
     Motion*  pitchMod_ { nullptr };

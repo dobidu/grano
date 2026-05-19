@@ -62,7 +62,12 @@ void GranularEngine::SchedulerThread::run()
         {
             const float density = engine_.pDensity_
                 ? engine_.pDensity_->load(std::memory_order_relaxed) : 10.0f;
-            waitMs = (int)(1000.0f / std::max(density, 0.1f));
+            const float meanMs = 1000.0f / std::max(density, 0.1f);
+            const int distIdx = engine_.pStochasticDist_
+                ? (int)engine_.pStochasticDist_->load(std::memory_order_relaxed) : 0;
+            const auto dist = static_cast<StochasticTiming::Distribution>(
+                juce::jlimit(0, 5, distIdx));
+            waitMs = (int)StochasticTiming::nextIntervalMs(meanMs, dist, engine_.grainRng_);
         }
         wait(std::max(waitMs, 1));
 
@@ -145,21 +150,46 @@ void GranularEngine::scheduleGrain() noexcept
     g->currentPhase  = 0.0f;
     g->reversed      = reversed;
 
+    // Capture parent descriptor before pushing — audio thread may consume the
+    // slot immediately after finishedWrite(), invalidating the pointer.
+    const Grain parentCopy = *g;
+
     int s1, n1, s2, n2;
     fifo_.prepareToWrite(1, s1, n1, s2, n2);
+    bool parentPushed = false;
     if (n1 > 0)
     {
         fifoSlots_[s1] = g;
         fifo_.finishedWrite(1);
+        parentPushed = true;
     }
     else if (n2 > 0)
     {
         fifoSlots_[s2] = g;
         fifo_.finishedWrite(1);
+        parentPushed = true;
     }
     else
     {
         pool_.release(g); // FIFO full — drop grain
+    }
+
+    // Sub-grain recursion (depth 1 or 2) — scheduler thread only.
+    const int depth = (parentPushed && pSubGrainDepth_)
+        ? (int)pSubGrainDepth_->load(std::memory_order_relaxed) : 0;
+    if (depth > 0)
+    {
+        const int maxExtra = SubGrain::kMaxSubs * (1 + SubGrain::kMaxSubs2);
+        int es1, en1, es2, en2;
+        fifo_.prepareToWrite(maxExtra, es1, en1, es2, en2);
+        if (en1 > 0)
+        {
+            const int written = SubGrain::spawnInto(parentCopy, depth, pool_,
+                                                    fifoSlots_.data(),
+                                                    es1, es1 + en1,
+                                                    grainRng_);
+            fifo_.finishedWrite(written);
+        }
     }
 }
 

@@ -55,6 +55,10 @@ namespace ParamIDs {
     inline constexpr const char* lfo2Phase    = "lfo2Phase";
     inline constexpr const char* lfo2Depth    = "lfo2Depth";
 
+    // F6b — Sub-grain + Stochastic timing
+    inline constexpr const char* subGrainDepth  = "subGrainDepth";
+    inline constexpr const char* stochasticDist = "stochasticDist";
+
     // F5 — ModMatrix slots (8 slots × 3 params)
     inline constexpr const char* slot1Source = "slot1Source";
     inline constexpr const char* slot1Dest   = "slot1Dest";

@@ -6,19 +6,19 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F6-ui-polish-and-advanced
-loop_position: IDLE
-current_plan: (none — F5 complete, ready to plan F6)
-last_unified: .paul/phases/05-modulation-matrix/05-03-SUMMARY.md
+loop_position: PLAN_DONE
+current_plan: .paul/phases/06-ui-polish-and-advanced/06-02-PLAN.md
+last_unified: .paul/phases/06-ui-polish-and-advanced/06-01-SUMMARY.md
 session_start: 2026-05-19
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — Not Started
-Plan: none — ready for /paul:plan F6
-Status: F5 complete — all 3 plans unified
-Last activity: 2026-05-19 — F5 complete; Snapshots, LfoPanel, ModulationMatrixView; 93/93 tests
+Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — In Progress
+Plan: 06-02 — Sub-grain recursion + Stochastic timing distributions (PLAN ✓, awaiting apply)
+Status: F6 plan 1/5 unified; 06-02 planned
+Last activity: 2026-05-19 — 06-02 plan created; ready for /paul:apply 06-02
 
 Progress:
 - Milestone: [████████████████░░░░] ~80%
@@ -28,13 +28,13 @@ Progress:
 - F3: [████████████████████] 100% ✅
 - F4: [████████████████████] 100% ✅
 - F5: [████████████████████] 100% ✅
-- F6: [░░░░░░░░░░░░░░░░░░░░] 0% — not started
+- F6: [████░░░░░░░░░░░░░░░░] ~20% — 06-01 ✅
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [F5 complete — ready for /paul:plan F6]
+  ✓        ○        ○     [06-02 — Sub-grain + Stochastic — ready for /paul:apply]
 ```
 
 ## Accumulated context
@@ -65,17 +65,12 @@ PLAN ──▶ APPLY ──▶ UNIFY
 ### Deferred issues
 | Issue | Origin | Effort | Revisit |
 |-------|--------|--------|---------|
-| Migrate deprecated `juce::Font(String, float, int)` to `FontOptions` | F0 | S | F6 (GranoLAF polish) |
-| Stereo file downmix (proper L+R average) | F2 | S | F6 (multi-channel engine) |
-| Error label 3-second auto-dismiss | F2 | XS | F6 (timer infrastructure) |
-| Playhead wired to APVTS `position` parameter | F2 | S | F6 |
-| Particle trail / fade-out animation (60 ms decay) | F2 | S | F6 polish |
-| Embedded Inter + JetBrains Mono fonts via BinaryData | F3 | M | F6 |
+| Stereo file downmix (proper L+R average) | F2 | S | F6-04 (multi-sample engine) |
+| Embedded Inter + JetBrains Mono fonts via BinaryData | F3 | M | F6-05 (integration) |
 | Audio response verify (knobs → engine, volume → silence) | F3 | XS | First non-WSL2 session |
-| Drawable waveform drag-editor in LfoPanel | F5c | M | F6 |
-| 250ms ramp on snapshot recall | F5c | XS | F6 polish |
-| Color/Motion/Pattern mod destinations consumed by engines | F5b | M | F6 |
-| LFO rate display in Hz/BPM next to rate slider | F5c | XS | F6 polish |
+| Drawable waveform drag-editor in LfoPanel | F5c | M | F6-02+ |
+| 250ms ramp on snapshot recall | F5c | XS | F6-04 |
+| Color/Motion/Pattern mod destinations consumed by engines | F5b | M | F6-03+ |
 
 ### Blockers/Concerns
 None.
@@ -83,9 +78,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-19
-Stopped at: F5 complete — 3/3 plans unified; Snapshots + LfoPanel + ModulationMatrixView; 93/93 tests; commit 3697bcd
-Next action: /paul:plan F6 — UI Polish + Sub-grain + Spectral + Stochastic
-Resume context: 93/93 tests. 66 APVTS params. ModMatrix + LFO + Snapshots APIs stable. Editor 1000×820. 200px bottom panel established.
+Stopped at: 06-02 plan created — 4 tasks (T1 new files, T2 engine integration, T3 tests, T4 verify)
+Next action: /paul:apply .paul/phases/06-ui-polish-and-advanced/06-02-PLAN.md
+Resume context: 93/93 tests. APVTS 66 params → 68 after T1. SubGrain: pool-based, scheduler-thread only, depth 0/1/2. StochasticTiming: 6 distributions via nextIntervalMs(). GranularEngine needs setAdvancedParamPointers() + integration in run() and scheduleGrain().
 
 ## Phase history
 

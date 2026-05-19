@@ -67,6 +67,9 @@ target_sources(Grano
         Source/Engine/GranularEngine.cpp
         # F2 — Sample I/O
         Source/Engine/SampleBuffer.cpp
+        # F6b — Sub-grain + Stochastic timing
+        Source/Engine/SubGrain.cpp
+        Source/Engine/StochasticTiming.cpp
         # F2 — UI
         Source/UI/WaveformDisplay.cpp
         # F3 — UI components and LookAndFeel

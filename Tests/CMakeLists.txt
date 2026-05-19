@@ -22,6 +22,9 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/Engine/GranularEngine.cpp
     # F2 — Sample I/O
     ${CMAKE_SOURCE_DIR}/Source/Engine/SampleBuffer.cpp
+    # F6b — Sub-grain + Stochastic timing
+    ${CMAKE_SOURCE_DIR}/Source/Engine/SubGrain.cpp
+    ${CMAKE_SOURCE_DIR}/Source/Engine/StochasticTiming.cpp
     # F2 — UI
     ${CMAKE_SOURCE_DIR}/Source/UI/WaveformDisplay.cpp
     # F3 — UI components and LookAndFeel
@@ -46,6 +49,8 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/UI/LfoPanel.cpp
     ${CMAKE_SOURCE_DIR}/Source/UI/ModulationMatrixView.cpp
     test_modulation.cpp
+    test_subgrain.cpp
+    test_stochastic.cpp
 )
 
 target_include_directories(GranoTests

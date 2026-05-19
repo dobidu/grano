@@ -17,6 +17,9 @@ GranoAudioProcessor::GranoAudioProcessor()
         apvts_.getRawParameterValue(ParamIDs::stereoSpread),
         apvts_.getRawParameterValue(ParamIDs::masterVolume),
         apvts_.getRawParameterValue(ParamIDs::loop));
+    engine_.setAdvancedParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::subGrainDepth),
+        apvts_.getRawParameterValue(ParamIDs::stochasticDist));
     engine_.setPitchModSource(&motion_);
     engine_.setPatternSource(&pattern_);
     engine_.setModMatrixSource(&modMatrix_);

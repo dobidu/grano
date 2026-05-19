@@ -184,6 +184,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::lfo2Depth, 1 }, "LFO2 Depth",
         juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
 
+    // F6b — Sub-grain + Stochastic timing
+    layout.add(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID{ ParamIDs::subGrainDepth, 1 }, "Sub-grain Depth", 0, 2, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::stochasticDist, 1 }, "Stochastic Distribution",
+        juce::StringArray{ "Uniform", "Gaussian", "Poisson",
+                           "Exponential", "Pareto", "1/f" }, 0));
+
     // F5 — ModMatrix slots (8 × 3 = 24 params)
     const juce::StringArray kModSources{ "None", "LFO1", "LFO2" };
     const juce::StringArray kModDests{
