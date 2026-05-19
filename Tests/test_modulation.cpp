@@ -211,7 +211,7 @@ TEST_CASE("APVTS contains 79 parameters after F6e envelopeShape param added")
 
     // F6e envelope shape param present; default = 0 (Hann)
     REQUIRE(apvts.getParameter(ParamIDs::envelopeShape) != nullptr);
-    REQUIRE(*apvts.getRawParameterValue(ParamIDs::envelopeShape) == Approx(0.0f));
+    REQUIRE(apvts.getRawParameterValue(ParamIDs::envelopeShape)->load(std::memory_order_relaxed) == 0.0f);
 
     // Total count = 79 (78 prev + 1 F6e)
     REQUIRE((int)proc.getParameters().size() == 79);
