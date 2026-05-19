@@ -5,11 +5,11 @@
 namespace
 {
     constexpr int   kDefaultWidth  = 1000;
-    constexpr int   kDefaultHeight = 620;
+    constexpr int   kDefaultHeight = 820;
     constexpr int   kMinWidth      = 800;
-    constexpr int   kMinHeight     = 500;
+    constexpr int   kMinHeight     = 650;
     constexpr int   kMaxWidth      = 2000;
-    constexpr int   kMaxHeight     = 1240;
+    constexpr int   kMaxHeight     = 1640;
 
     // surface.base — the primary background colour
     const juce::Colour kColourSurfaceBase  { 0xff0a0b0d };
@@ -81,6 +81,30 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
 
     positionSlider_.setGrainExtent(
         apvts.getRawParameterValue(ParamIDs::grainSize), 0.0f);
+
+    // F5 panels
+    lfoPanel_.init(apvts);
+    addAndMakeVisible(lfoPanel_);
+
+    modMatrixView_.init(apvts);
+    addAndMakeVisible(modMatrixView_);
+
+    // Snapshot buttons A/B/C/D
+    static const char* kSnapLabels[] = { "A", "B", "C", "D" };
+    for (int i = 0; i < 4; ++i)
+    {
+        snapButtons_[i].setButtonText(kSnapLabels[i]);
+        snapButtons_[i].onClick = [this, i]
+        {
+            auto& snaps = processorRef.getSnapshots();
+            auto& apvts_ = processorRef.getAPVTS();
+            if (juce::ModifierKeys::currentModifiers.isCtrlDown())
+                snaps.save(i, apvts_.copyState());
+            else
+                snaps.recall(i, apvts_);
+        };
+        addAndMakeVisible(snapButtons_[i]);
+    }
 }
 
 GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
@@ -144,31 +168,44 @@ void GranoAudioProcessorEditor::paint(juce::Graphics& g)
 
 void GranoAudioProcessorEditor::resized()
 {
-    constexpr int kMargin    = 40;
-    constexpr int kHeaderH   = 48;
-    constexpr int kPosStripH = 44;   // position slider strip (label + slider)
-    constexpr int kKnobH     = 100;  // knob area (rotary + label)
-    constexpr int kSpreadH   = 44;   // spread slider strip
-    constexpr int kFooterH   = 24;   // error label
-    constexpr int kLoadBtnW  = 72;
-    constexpr int kLoadBtnH  = 24;
-    constexpr int kLoopBtnW  = 56;
-    constexpr int kLoopBtnH  = 24;
-    constexpr int kGap       = 4;
+    constexpr int kMargin       = 40;
+    constexpr int kHeaderH      = 48;
+    constexpr int kPosStripH    = 44;   // position slider strip (label + slider)
+    constexpr int kKnobH        = 100;  // knob area (rotary + label)
+    constexpr int kSpreadH      = 44;   // spread slider strip
+    constexpr int kBottomPanelH = 200;  // LfoPanel + ModulationMatrixView
+    constexpr int kFooterH      = 24;   // error label
+    constexpr int kLoadBtnW     = 72;
+    constexpr int kLoadBtnH     = 24;
+    constexpr int kLoopBtnW     = 56;
+    constexpr int kLoopBtnH     = 24;
+    constexpr int kSnapBtnW     = 36;
+    constexpr int kSnapBtnH     = 24;
+    constexpr int kGap          = 4;
 
-    const int w          = getWidth();
-    const int h          = getHeight();
-    const int contentX   = kMargin;
-    const int contentW   = w - 2 * kMargin;
+    const int w        = getWidth();
+    const int h        = getHeight();
+    const int contentX = kMargin;
+    const int contentW = w - 2 * kMargin;
+
+    // Snapshot buttons A/B/C/D — header left side
+    {
+        int sx = contentX;
+        for (int i = 0; i < 4; ++i)
+        {
+            snapButtons_[i].setBounds(sx, (kHeaderH - kSnapBtnH) / 2, kSnapBtnW, kSnapBtnH);
+            sx += kSnapBtnW + kGap;
+        }
+    }
 
     // Load button — header top-right
     loadButton_.setBounds(w - kMargin - kLoadBtnW,
                           (kHeaderH - kLoadBtnH) / 2,
                           kLoadBtnW, kLoadBtnH);
 
-    // Waveform — fills space between header and controls section
-    const int controlsH  = kPosStripH + kGap + kKnobH + kGap + kSpreadH;
-    const int waveformH  = h - kHeaderH - kGap - controlsH - kGap - kFooterH;
+    // Waveform — fills space between header and controls + bottom panel
+    const int controlsH = kPosStripH + kGap + kKnobH + kGap + kSpreadH;
+    const int waveformH = h - kHeaderH - kGap - controlsH - kGap - kBottomPanelH - kGap - kFooterH;
     waveformDisplay_.setBounds(contentX, kHeaderH, contentW, waveformH);
 
     // Position slider — directly below waveform
@@ -179,11 +216,11 @@ void GranoAudioProcessorEditor::resized()
     // Knob row — 5 knobs + loop button
     const int knobZoneW = contentW - kLoopBtnW - kGap;
     const int knobW     = knobZoneW / 5;
-    grainSizeKnob_ .setBounds(contentX,                 y, knobW, kKnobH);
-    densityKnob_   .setBounds(contentX + knobW,         y, knobW, kKnobH);
-    posJitterKnob_ .setBounds(contentX + knobW * 2,     y, knobW, kKnobH);
-    pitchShiftKnob_.setBounds(contentX + knobW * 3,     y, knobW, kKnobH);
-    masterVolKnob_ .setBounds(contentX + knobW * 4,     y, knobW, kKnobH);
+    grainSizeKnob_ .setBounds(contentX,             y, knobW, kKnobH);
+    densityKnob_   .setBounds(contentX + knobW,     y, knobW, kKnobH);
+    posJitterKnob_ .setBounds(contentX + knobW * 2, y, knobW, kKnobH);
+    pitchShiftKnob_.setBounds(contentX + knobW * 3, y, knobW, kKnobH);
+    masterVolKnob_ .setBounds(contentX + knobW * 4, y, knobW, kKnobH);
     loopButton_    .setBounds(contentX + knobZoneW + kGap,
                               y + (kKnobH - kLoopBtnH) / 2,
                               kLoopBtnW, kLoopBtnH);
@@ -191,6 +228,12 @@ void GranoAudioProcessorEditor::resized()
 
     // Spread slider — below knob row
     spreadSlider_.setBounds(contentX, y, contentW, kSpreadH);
+    y += kSpreadH + kGap;
+
+    // Bottom panel — LfoPanel left half, ModulationMatrixView right half
+    const int halfW = contentW / 2;
+    lfoPanel_     .setBounds(contentX,           y, halfW,            kBottomPanelH);
+    modMatrixView_.setBounds(contentX + halfW,   y, contentW - halfW, kBottomPanelH);
 
     // Error label — docked to bottom
     errorLabel_.setBounds(0, h - kFooterH, w, kFooterH);

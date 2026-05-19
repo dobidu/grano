@@ -2,6 +2,7 @@
 #include <catch2/catch_approx.hpp>
 #include "Modulation/Lfo.h"
 #include "Modulation/ModMatrix.h"
+#include "Modulation/Snapshots.h"
 #include "PluginProcessor.h"
 
 struct LfoFixture
@@ -298,6 +299,41 @@ TEST_CASE("ModMatrix null LFOs do not crash and return zero")
         matrix.processBlock(512, 120.0);
 
     REQUIRE(matrix.getModOffset(ModMatrix::kPitchShift) == Catch::Approx(0.0f));
+}
+
+// ─── Snapshots ────────────────────────────────────────────────────────────────
+
+TEST_CASE("Snapshots round-trip: save, modify, recall restores value")
+{
+    GranoAudioProcessor proc;
+    auto& apvts = proc.getAPVTS();
+    auto& snaps = proc.getSnapshots();
+
+    if (auto* p = dynamic_cast<juce::AudioParameterFloat*>(
+            apvts.getParameter(ParamIDs::grainSize)))
+        p->setValueNotifyingHost(p->convertTo0to1(50.0f));
+
+    snaps.save(0, apvts.copyState());
+
+    if (auto* p = dynamic_cast<juce::AudioParameterFloat*>(
+            apvts.getParameter(ParamIDs::grainSize)))
+        p->setValueNotifyingHost(p->convertTo0to1(200.0f));
+
+    snaps.recall(0, apvts);
+
+    const float restored = apvts.getRawParameterValue(ParamIDs::grainSize)->load();
+    REQUIRE(restored == Catch::Approx(50.0f).margin(0.5f));
+}
+
+TEST_CASE("Snapshots isOccupied false before save, true after")
+{
+    GranoAudioProcessor proc;
+    auto& snaps = proc.getSnapshots();
+    REQUIRE(!snaps.isOccupied(0));
+    REQUIRE(!snaps.isOccupied(3));
+    snaps.save(0, proc.getAPVTS().copyState());
+    REQUIRE(snaps.isOccupied(0));
+    REQUIRE(!snaps.isOccupied(1));
 }
 
 TEST_CASE("ModMatrix cross-mod LFO1->kLfo2Rate accelerates LFO2")

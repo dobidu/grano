@@ -9,6 +9,7 @@
 #include "Modules/Pattern.h"
 #include "Modulation/Lfo.h"
 #include "Modulation/ModMatrix.h"
+#include "Modulation/Snapshots.h"
 #include "Parameters.h"
 
 // GranoAudioProcessor is the AudioProcessor entry point for the Grano plugin.
@@ -63,7 +64,8 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
-    juce::AudioProcessorValueTreeState& getAPVTS() noexcept { return apvts_; }
+    juce::AudioProcessorValueTreeState& getAPVTS()    noexcept { return apvts_; }
+    Snapshots&                          getSnapshots() noexcept { return snapshots_; }
 
     // ── Sample loading (message thread) ───────────────────────────────────────
     // Called by the editor's FileDragAndDropTarget handler.
@@ -89,6 +91,7 @@ private:
     Pattern                    pattern_;       // consulted by engine scheduler; processed before engine
     Lfo                        lfo1_, lfo2_;   // must be declared before modMatrix_
     ModMatrix                  modMatrix_;
+    Snapshots                  snapshots_;
     juce::AudioFormatManager   formatManager_;
     juce::AudioProcessorValueTreeState apvts_{
         *this, nullptr, "GranoState", createParameterLayout()};

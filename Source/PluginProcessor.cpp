@@ -159,15 +159,30 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file)
 
 void GranoAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    if (auto xml = apvts_.copyState().createXml())
+    juce::ValueTree combined("GranoCombinedState");
+    combined.addChild(apvts_.copyState(), -1, nullptr);
+    combined.addChild(snapshots_.serialise(), -1, nullptr);
+    if (auto xml = combined.createXml())
         copyXmlToBinary(*xml, destData);
 }
 
 void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary(data, sizeInBytes))
-        if (xml->hasTagName(apvts_.state.getType()))
-            apvts_.replaceState(juce::ValueTree::fromXml(*xml));
+    {
+        auto tree = juce::ValueTree::fromXml(*xml);
+        if (tree.hasType("GranoCombinedState"))
+        {
+            if (auto apvtsChild = tree.getChildWithName(apvts_.state.getType()); apvtsChild.isValid())
+                apvts_.replaceState(apvtsChild);
+            if (auto snapChild = tree.getChildWithName("Snapshots"); snapChild.isValid())
+                snapshots_.deserialise(snapChild);
+        }
+        else if (tree.hasType(apvts_.state.getType()))
+        {
+            apvts_.replaceState(tree); // old format — no snapshots
+        }
+    }
 }
 
 // Required factory function — JUCE calls this to instantiate the plugin.

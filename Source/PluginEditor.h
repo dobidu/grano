@@ -6,6 +6,8 @@
 #include "UI/LookAndFeel/GranoLAF.h"
 #include "UI/Knob.h"
 #include "UI/Slider.h"
+#include "UI/LfoPanel.h"
+#include "UI/ModulationMatrixView.h"
 
 // GranoAudioProcessorEditor is the AudioProcessorEditor entry point.
 //
@@ -68,6 +70,10 @@ private:
     std::unique_ptr<SliderAttachment> spreadAttach_;
     std::unique_ptr<SliderAttachment> masterVolAttach_;
     std::unique_ptr<ButtonAttachment> loopAttach_;
+
+    LfoPanel             lfoPanel_;
+    ModulationMatrixView modMatrixView_;
+    juce::TextButton     snapButtons_[4];
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessorEditor)
 };

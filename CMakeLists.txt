@@ -82,6 +82,10 @@ target_sources(Grano
         # F5 — Modulation
         Source/Modulation/Lfo.cpp
         Source/Modulation/ModMatrix.cpp
+        Source/Modulation/Snapshots.cpp
+        # F5 — UI panels
+        Source/UI/LfoPanel.cpp
+        Source/UI/ModulationMatrixView.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────
