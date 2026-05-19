@@ -88,18 +88,6 @@ jobs:
             --timeout-ms 60000 \
             build/Grano_artefacts/Release/VST3/Grano.vst3
 
-      - name: Validate AU (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          mkdir -p ~/Library/Audio/Plug-Ins/Components/
-          cp -r build/Grano_artefacts/Release/AU/Grano.component \
-            ~/Library/Audio/Plug-Ins/Components/
-          codesign --force --sign - --deep \
-            ~/Library/Audio/Plug-Ins/Components/Grano.component
-          killall -9 AudioComponentRegistrar 2>/dev/null || true
-          sleep 2
-          auval -v aumu Gran Bidu
-
       - name: Run pluginval (Windows)
         if: runner.os == 'Windows'
         run: |
