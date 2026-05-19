@@ -177,13 +177,32 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F6 — UI Polish and Sub-grain + Spectral + Stochastic
+## ✅ F6 — UI Polish and Sub-grain + Spectral + Stochastic — COMPLETE (2026-05-19)
 
 **Goal**: Visual polish per `DESIGN_SPEC.md`, plus the advanced "loud-and-loose" features (sub-grain recursion, stochastic distributions, internal feedback, spectral freeze/blur, 4-sample multi-blend, pitch/envelope curves drawable).
 
+**Plans**: 5 of 5 complete — see `.paul/phases/06-ui-polish-and-advanced/`
+
+**Exit criteria met**:
+- [x] LookAndFeel finalized: halo glows, radial vignette, particle trails (06-01)
+- [x] Sub-grain recursion depth 0/1/2 (06-02)
+- [x] Stochastic distribution selector: Uniform/Gaussian/Poisson/Exponential/Pareto/1f (06-02)
+- [x] Internal feedback path with dampening (06-03)
+- [x] Spectral Freeze + Blur: 2048 FFT, 75% overlap, latency reported (06-03)
+- [x] Multi-sample slots: 4 slots, weighted random selection (06-04)
+- [x] Envelope shape selector: CurveEditor with 5 thumbnails, APVTS-wired (06-05)
+- [x] 117/117 Catch2 tests pass; 79 APVTS params
+
+**Deferred (non-blocking for v1.0)**:
+- Spectrogram secondary display (post-v1.0)
+- Font embedding via BinaryData (F7)
+- LfoPanel drawable waveform editor (post-v1.0)
+- 250ms snapshot recall ramp (F7)
+- Full pitch-curve control-point editor (post-v1.0)
+
 **Entry**: F5 complete and unified.
 
-**Exit criteria**:
+**Exit criteria (original)**:
 - LookAndFeel finalized: halo glows via `Graphics::drawDropShadow`, radial vignette background, particle animation with trails (motion blur ≈ 60 ms decay).
 - Sub-grain recursion: depth 0/1/2 selector. Verified by listening tests: depth 2 produces noticeably more "pulverized" texture than depth 0.
 - Stochastic distribution selector for inter-grain timing: Uniform, Gaussian, Poisson, Exponential, Pareto, 1/f (fractal). Each implemented mathematically correctly; verified by histograms of inter-arrival times in unit tests.

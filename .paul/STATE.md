@@ -5,36 +5,37 @@ This file is managed by PAUL. Do not edit manually.
 ## Current state
 
 ```yaml
-phase: F6-ui-polish-and-advanced
-loop_position: PLAN
-current_plan: .paul/phases/06-ui-polish-and-advanced/06-05-PLAN.md
-last_unified: .paul/phases/06-ui-polish-and-advanced/06-04-SUMMARY.md
+phase: F7-release
+loop_position: IDLE
+current_plan: null
+last_unified: .paul/phases/06-ui-polish-and-advanced/06-05-SUMMARY.md
 session_start: 2026-05-19
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — In Progress
-Plan: 06-05 — CurveEditor + Multi-slot UI + envelopeShape param (created, awaiting approval)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-19 — 06-05-PLAN.md created; final F6 plan
+Phase: F7 — Release (8 of 8) — Not Started
+Plan: None — ready for /paul:plan F7
+Status: F6 complete; F7 planning next
+Last activity: 2026-05-19 — 06-05 unified; F6 complete (5/5 plans); 79 params; 117/117 tests
 
 Progress:
-- Milestone: [█████████████████░░░] ~88%
+- Milestone: [███████████████████░] ~95%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
 - F4: [████████████████████] 100% ✅
 - F5: [████████████████████] 100% ✅
-- F6: [████████████████░░░░] ~80% — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅
+- F6: [████████████████████] 100% ✅ — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅ 06-05 ✅
+- F7: [░░░░░░░░░░░░░░░░░░░░] 0% — Not started
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [06-05 plan created, awaiting approval]
+  ✓        ✓        ✓     [F6 complete — loop closed — ready for F7]
 ```
 
 ## Accumulated context
@@ -66,16 +67,22 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | GranoLAF scoped to editor (not global) | F3 | Avoids polluting other JUCE components; setLookAndFeel(nullptr) in destructor |
 | Grain size shadow added to WaveformDisplay | F3 | 10% mint fill + 25% right-edge; low opacity preserves waveform readability |
 | FileChooser as unique_ptr member on editor | F2 | Keeps async callback alive; same load/error flow as filesDropped |
+| EnvelopeShape::Gaussian (not Gauss) | F6e | Enum value in EnvelopeShapes.h is Gaussian; any future UI or test code must use ::Gaussian |
+| CurveEditor uses applyEnvelope() | F6e | Visual thumbnails use same code path as engine — no drift between UI and audio |
+| openFileChooser captures slot in lambda | F6e | Avoids pendingSlot_ race; correct slot guaranteed even if user rapidly clicks multiple slot buttons |
 
 ### Deferred issues
 | Issue | Origin | Effort | Revisit |
 |-------|--------|--------|---------|
 | ~~Stereo file downmix (proper L+R average)~~ | ~~F2~~ | ~~S~~ | ✅ Resolved in F6d |
-| Embedded Inter + JetBrains Mono fonts via BinaryData | F3 | M | F6-05 (integration) |
+| Embedded Inter + JetBrains Mono fonts via BinaryData | F3 | M | F7 |
 | Audio response verify (knobs → engine, volume → silence) | F3 | XS | First non-WSL2 session |
-| Drawable waveform drag-editor in LfoPanel | F5c | M | F6-02+ |
-| 250ms ramp on snapshot recall | F5c | XS | F6-04 |
-| Color/Motion/Pattern mod destinations consumed by engines | F5b | M | F6-03+ |
+| Drawable waveform drag-editor in LfoPanel | F5c | M | post-v1.0 |
+| 250ms ramp on snapshot recall | F5c | XS | F7 |
+| Color/Motion/Pattern mod destinations consumed by engines | F5b | M | post-v1.0 |
+| Spectrogram secondary display | F6 exit criteria | M | post-v1.0 |
+| Full pitch-curve control-point editor | F6 scope-out | L | post-v1.0 |
+| CurveEditor frontend-design polish pass | F6e skill gap | XS | F7 |
 
 ### Blockers/Concerns
 None.
@@ -83,9 +90,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-19
-Stopped at: 06-05-PLAN.md created — envelopeShape param + CurveEditor + multi-slot UI (final F6 plan)
-Next action: /paul:apply .paul/phases/06-ui-polish-and-advanced/06-05-PLAN.md
-Resume context: 117/117 tests. 78 APVTS params. 4-slot MultiSampleBank done; slots 1-3 have no UI. envelopeShape hardcoded Hann. Plan 06-05 adds: envelopeShape param (→79), CurveEditor envelope selector, slotButtons_[4]+slotWeightKnobs_[4] in editor, loadSampleFile(file, slot) signature. After unify: F6 complete → F7.
+Stopped at: 06-05 unified — F6 complete (5/5 plans, commit 827a4b9); 79 APVTS params; 117/117 tests
+Next action: /paul:plan F7
+Resume context: F7 = Release phase. Goals: pluginval --strictness-level 10, code signing, installers (macOS .pkg, Windows .exe, Linux .tar.gz), 5 demo presets, README for end users, beta tag v1.0.0-beta.1. Deferred from F6: font embedding, 250ms snapshot ramp, spectrogram. WSL2 can't run Standalone — F7 audio verify needs Windows/macOS.
 
 ## Phase history
 
@@ -106,3 +113,4 @@ Resume context: 117/117 tests. 78 APVTS params. 4-slot MultiSampleBank done; slo
 | F6b — Sub-grain + Stochastic | 2/5 | 2026-05-19 | ab1f039 |
 | F6c — FeedbackPath + Spectral | 3/5 | 2026-05-19 | a1ea272 |
 | F6d — MultiSampleBank | 4/5 | 2026-05-19 | b17ab73 |
+| F6e — CurveEditor + Multi-slot UI | 5/5 | 2026-05-19 | 827a4b9 |

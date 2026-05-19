@@ -1,4 +1,5 @@
 #include "CurveEditor.h"
+#include "../Engine/EnvelopeShapes.h"
 
 const char* CurveEditor::shapeLabels_[CurveEditor::kNumShapes] = {
     "Hann", "Tukey", "Gauss", "Tri", "Rect"
@@ -96,48 +97,11 @@ void CurveEditor::drawEnvelopeCurve(juce::Graphics& g, EnvelopeShape shape,
     const float w  = bounds.getWidth();
     const float h  = bounds.getHeight();
 
-    auto shapeToY = [&](float t) -> float
-    {
-        // t in [0,1]; returns amplitude in [0,1]
-        float amp = 0.0f;
-        switch (shape)
-        {
-            case EnvelopeShape::Hann:
-                amp = 0.5f * (1.0f - std::cos(juce::MathConstants<float>::twoPi * t));
-                break;
-            case EnvelopeShape::Tukey:
-            {
-                const float alpha = 0.5f;
-                if (t < alpha / 2.0f)
-                    amp = 0.5f * (1.0f - std::cos(juce::MathConstants<float>::twoPi * t / alpha));
-                else if (t > 1.0f - alpha / 2.0f)
-                    amp = 0.5f * (1.0f - std::cos(juce::MathConstants<float>::twoPi * (1.0f - t) / alpha));
-                else
-                    amp = 1.0f;
-                break;
-            }
-            case EnvelopeShape::Gaussian:
-            {
-                const float sigma = 0.4f;
-                const float x = (t - 0.5f) / sigma;
-                amp = std::exp(-0.5f * x * x);
-                break;
-            }
-            case EnvelopeShape::Triangle:
-                amp = 1.0f - std::abs(2.0f * t - 1.0f);
-                break;
-            case EnvelopeShape::Rectangle:
-                amp = (t > 0.0f && t < 1.0f) ? 1.0f : 0.0f;
-                break;
-        }
-        return amp;
-    };
-
     path.startNewSubPath(x0, y0);
     for (int i = 0; i <= kPoints; ++i)
     {
-        const float t = (float)i / (float)kPoints;
-        const float amp = shapeToY(t);
+        const float t   = (float)i / (float)kPoints;
+        const float amp = applyEnvelope(shape, t);
         path.lineTo(x0 + t * w, y0 - amp * h);
     }
     path.lineTo(x0 + w, y0);
