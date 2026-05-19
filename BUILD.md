@@ -225,7 +225,8 @@ Strictness levels:
 | 7 | F4 acceptance criterion. |
 | 10 | F7 release gate. Full host simulation. |
 
-CI runs strictness 5 on every push, strictness 10 on release tags.
+CI runs strictness 10 on every push to `main` (raised from 5 in F7). Strictness 10 exercises full
+host simulation; do not lower it without a documented reason.
 
 ### auval (macOS, AU only)
 
@@ -236,6 +237,12 @@ auval -v aumu Gran Bidu
 The four-letter codes (`aumu`, `Gran`, `Bidu`) come from the AU bundle's manifest, set in `CMakeLists.txt`. `auval -a` lists all registered Audio Units; verify Grano appears.
 
 `auval` exit code 0 = pass. Investigate any warnings before release.
+
+> **macOS 14+ (Sonoma / Sequoia):** `auval` requires the AU component to be code-signed with an
+> Apple Developer ID certificate. Unsigned builds will report a load failure (exit 2). The AU
+> loads and runs correctly in compatible DAWs (Logic Pro, GarageBand, Reaper) regardless. Code
+> signing is documented in the "Code signing and notarization" section below. auval CI validation
+> is planned once Developer ID is in place.
 
 ### Manual DAW smoke tests
 
