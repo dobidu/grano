@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F6-ui-polish-and-advanced
-loop_position: IDLE
-current_plan: null
+loop_position: PLAN
+current_plan: .paul/phases/06-ui-polish-and-advanced/06-05-PLAN.md
 last_unified: .paul/phases/06-ui-polish-and-advanced/06-04-SUMMARY.md
 session_start: 2026-05-19
 ```
@@ -16,9 +16,9 @@ session_start: 2026-05-19
 
 Milestone: v1.0 Initial Release
 Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — In Progress
-Plan: 06-04 — MultiSampleBank ✅ COMPLETE
-Status: Ready for next PLAN (06-05)
-Last activity: 2026-05-19 — 06-04 unified; MultiSampleBank 4-slot; stereo downmix fix; 117/117; b17ab73
+Plan: 06-05 — CurveEditor + Multi-slot UI + envelopeShape param (created, awaiting approval)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-19 — 06-05-PLAN.md created; final F6 plan
 
 Progress:
 - Milestone: [█████████████████░░░] ~88%
@@ -34,7 +34,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Loop complete — ready for next PLAN]
+  ✓        ○        ○     [06-05 plan created, awaiting approval]
 ```
 
 ## Accumulated context
@@ -83,9 +83,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-19
-Stopped at: 06-04 unified — MultiSampleBank 4-slot weighted-random; stereo downmix fix; 117/117; b17ab73
-Next action: /paul:plan F6 (plan 05) — CurveEditor + Spectrogram + multi-slot UI + integration pass
-Resume context: 117/117 tests. 78 APVTS params. Source priority chain: Spectral > Feedback > Bank(4 slots) > sine. MultiSampleBank done; slots 1-3 have no UI yet. getSampleBuffer() still returns slot 0 ref. Next: 06-05 final F6 integration — slot load UI, CurveEditor, Spectrogram (optional), full integration pass.
+Stopped at: 06-05-PLAN.md created — envelopeShape param + CurveEditor + multi-slot UI (final F6 plan)
+Next action: /paul:apply .paul/phases/06-ui-polish-and-advanced/06-05-PLAN.md
+Resume context: 117/117 tests. 78 APVTS params. 4-slot MultiSampleBank done; slots 1-3 have no UI. envelopeShape hardcoded Hann. Plan 06-05 adds: envelopeShape param (→79), CurveEditor envelope selector, slotButtons_[4]+slotWeightKnobs_[4] in editor, loadSampleFile(file, slot) signature. After unify: F6 complete → F7.
 
 ## Phase history
 
