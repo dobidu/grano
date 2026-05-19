@@ -81,11 +81,30 @@ void GranularEngine::SchedulerThread::run()
 
 void GranularEngine::scheduleGrain() noexcept
 {
-    // Prefer live SampleBuffer; fall back to 440 Hz test tone.
+    // Source priority: Spectral > Feedback > SampleBuffer > 440 Hz sine.
     const float* srcData = nullptr;
     int          srcLen  = 0;
 
-    if (sampleSource_ != nullptr)
+    const bool spectralOn = spectralSource_ != nullptr &&
+        pSpectralEnabled_ != nullptr &&
+        pSpectralEnabled_->load(std::memory_order_relaxed) > 0.5f;
+
+    const bool feedbackOn = !spectralOn &&
+        feedbackSource_ != nullptr &&
+        pFeedbackEnabled_ != nullptr &&
+        pFeedbackEnabled_->load(std::memory_order_relaxed) > 0.5f;
+
+    if (spectralOn)
+    {
+        srcData = spectralSource_->getReadPointer();
+        srcLen  = spectralSource_->getNumSamples();
+    }
+    else if (feedbackOn)
+    {
+        srcData = feedbackSource_->getReadPointer();
+        srcLen  = feedbackSource_->getNumSamples();
+    }
+    else if (sampleSource_ != nullptr)
     {
         srcData = sampleSource_->getReadPointer();
         srcLen  = sampleSource_->getNumSamples();

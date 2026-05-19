@@ -4,6 +4,8 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "Engine/GranularEngine.h"
 #include "Engine/SampleBuffer.h"
+#include "Engine/FeedbackPath.h"
+#include "Engine/SpectralProcessor.h"
 #include "Modules/Motion.h"
 #include "Modules/Color.h"
 #include "Modules/Pattern.h"
@@ -84,7 +86,13 @@ public:
 private:
     void timerCallback() override { sampleBuffer_.processRetired(); }
 
+    // Trigger spectral processing from the current sampleBuffer_ contents.
+    // Call from message thread when spectral is enabled or source changes.
+    void triggerSpectralProcessIfEnabled();
+
     SampleBuffer               sampleBuffer_;  // must be declared before engine_
+    FeedbackPath               feedbackPath_;
+    SpectralProcessor          spectralProcessor_;
     GranularEngine             engine_;
     Motion                     motion_;        // must be declared after engine_
     Color                      color_;         // driven after motion_ in processBlock

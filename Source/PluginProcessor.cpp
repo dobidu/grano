@@ -20,6 +20,16 @@ GranoAudioProcessor::GranoAudioProcessor()
     engine_.setAdvancedParamPointers(
         apvts_.getRawParameterValue(ParamIDs::subGrainDepth),
         apvts_.getRawParameterValue(ParamIDs::stochasticDist));
+    engine_.setFeedbackSource(&feedbackPath_);
+    engine_.setFeedbackParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::feedbackEnabled),
+        apvts_.getRawParameterValue(ParamIDs::feedbackGain),
+        apvts_.getRawParameterValue(ParamIDs::feedbackDamp));
+    engine_.setSpectralSource(&spectralProcessor_);
+    engine_.setSpectralParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::spectralEnabled),
+        apvts_.getRawParameterValue(ParamIDs::spectralMode),
+        apvts_.getRawParameterValue(ParamIDs::spectralBlurAmount));
     engine_.setPitchModSource(&motion_);
     engine_.setPatternSource(&pattern_);
     engine_.setModMatrixSource(&modMatrix_);
@@ -90,6 +100,8 @@ void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     lfo1_.prepare(sampleRate);
     lfo2_.prepare(sampleRate);
     modMatrix_.prepare(sampleRate);
+    const bool spectralOn = *apvts_.getRawParameterValue(ParamIDs::spectralEnabled) > 0.5f;
+    setLatencySamples(spectralOn ? SpectralProcessor::kFFTSize : 0);
 }
 
 void GranoAudioProcessor::releaseResources()
@@ -123,6 +135,15 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     engine_.processBlock(buffer);
     motion_.processBlock(buffer);
     color_.processBlock(buffer);
+
+    // Feed audio output back into FeedbackPath for re-injection as a grain source.
+    {
+        const float gain = *apvts_.getRawParameterValue(ParamIDs::feedbackGain);
+        const float damp = *apvts_.getRawParameterValue(ParamIDs::feedbackDamp);
+        const float* L = buffer.getReadPointer(0);
+        const float* R = buffer.getNumChannels() > 1 ? buffer.getReadPointer(1) : nullptr;
+        feedbackPath_.process(L, R, buffer.getNumSamples(), gain, damp);
+    }
 }
 
 juce::AudioProcessorEditor* GranoAudioProcessor::createEditor()
@@ -158,6 +179,21 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file)
     lastLoadedSampleRate_ = reader->sampleRate;
     lastLoadedNumFrames_  = numFrames;
     sampleBuffer_.setPending(std::move(buf), numFrames);
+    triggerSpectralProcessIfEnabled();
+}
+
+void GranoAudioProcessor::triggerSpectralProcessIfEnabled()
+{
+    const bool on = *apvts_.getRawParameterValue(ParamIDs::spectralEnabled) > 0.5f;
+    if (!on || sampleBuffer_.getReadPointer() == nullptr)
+        return;
+    const int   mode = (int)*apvts_.getRawParameterValue(ParamIDs::spectralMode);
+    const float blur = *apvts_.getRawParameterValue(ParamIDs::spectralBlurAmount);
+    spectralProcessor_.processSource(
+        sampleBuffer_.getReadPointer(),
+        sampleBuffer_.getNumSamples(),
+        static_cast<SpectralProcessor::Mode>(juce::jlimit(0, 1, mode)),
+        blur);
 }
 
 void GranoAudioProcessor::getStateInformation(juce::MemoryBlock& destData)

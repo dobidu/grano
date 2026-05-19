@@ -70,6 +70,9 @@ target_sources(Grano
         # F6b — Sub-grain + Stochastic timing
         Source/Engine/SubGrain.cpp
         Source/Engine/StochasticTiming.cpp
+        # F6c — Feedback path + Spectral processor
+        Source/Engine/FeedbackPath.cpp
+        Source/Engine/SpectralProcessor.cpp
         # F2 — UI
         Source/UI/WaveformDisplay.cpp
         # F3 — UI components and LookAndFeel

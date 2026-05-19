@@ -59,6 +59,16 @@ namespace ParamIDs {
     inline constexpr const char* subGrainDepth  = "subGrainDepth";
     inline constexpr const char* stochasticDist = "stochasticDist";
 
+    // F6c — Feedback path
+    inline constexpr const char* feedbackEnabled = "feedbackEnabled";
+    inline constexpr const char* feedbackGain    = "feedbackGain";
+    inline constexpr const char* feedbackDamp    = "feedbackDamp";
+
+    // F6c — Spectral processor
+    inline constexpr const char* spectralEnabled    = "spectralEnabled";
+    inline constexpr const char* spectralMode       = "spectralMode";
+    inline constexpr const char* spectralBlurAmount = "spectralBlurAmount";
+
     // F5 — ModMatrix slots (8 slots × 3 params)
     inline constexpr const char* slot1Source = "slot1Source";
     inline constexpr const char* slot1Dest   = "slot1Dest";

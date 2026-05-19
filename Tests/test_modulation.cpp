@@ -174,7 +174,7 @@ TEST_CASE("Lfo null param pointers do not crash")
 
 // ─── AC-8: APVTS param count (updated for 05-02) ─────────────────────────────
 
-TEST_CASE("APVTS contains 68 parameters after F6b sub-grain + stochastic params added")
+TEST_CASE("APVTS contains 74 parameters after F6c feedback + spectral params added")
 {
     GranoAudioProcessor proc;
     auto& apvts = proc.getAPVTS();
@@ -193,8 +193,18 @@ TEST_CASE("APVTS contains 68 parameters after F6b sub-grain + stochastic params 
     REQUIRE(apvts.getParameter(ParamIDs::subGrainDepth)  != nullptr);
     REQUIRE(apvts.getParameter(ParamIDs::stochasticDist) != nullptr);
 
-    // Total count = 68 (66 prev + 2 F6b)
-    REQUIRE((int)proc.getParameters().size() == 68);
+    // F6c feedback params present
+    REQUIRE(apvts.getParameter(ParamIDs::feedbackEnabled) != nullptr);
+    REQUIRE(apvts.getParameter(ParamIDs::feedbackGain)    != nullptr);
+    REQUIRE(apvts.getParameter(ParamIDs::feedbackDamp)    != nullptr);
+
+    // F6c spectral params present
+    REQUIRE(apvts.getParameter(ParamIDs::spectralEnabled)    != nullptr);
+    REQUIRE(apvts.getParameter(ParamIDs::spectralMode)       != nullptr);
+    REQUIRE(apvts.getParameter(ParamIDs::spectralBlurAmount) != nullptr);
+
+    // Total count = 74 (68 prev + 6 F6c)
+    REQUIRE((int)proc.getParameters().size() == 74);
 }
 
 // ─── ModMatrix ────────────────────────────────────────────────────────────────

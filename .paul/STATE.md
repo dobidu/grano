@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F6-ui-polish-and-advanced
-loop_position: IDLE
-current_plan: (none — 06-02 complete, ready for 06-03)
+loop_position: APPLY
+current_plan: .paul/phases/06-ui-polish-and-advanced/06-03-PLAN.md
 last_unified: .paul/phases/06-ui-polish-and-advanced/06-02-SUMMARY.md
 session_start: 2026-05-19
 ```
@@ -16,9 +16,9 @@ session_start: 2026-05-19
 
 Milestone: v1.0 Initial Release
 Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — In Progress
-Plan: 06-02 complete — ready for /paul:plan F6 (plan 3: Feedback Path + Spectral Processor)
-Status: F6 plan 2/5 unified
-Last activity: 2026-05-19 — 06-02 unified; SubGrain depth 0/1/2, StochasticTiming 6 distributions; 101/101; ab1f039
+Plan: 06-03 — FeedbackPath + SpectralProcessor (applying)
+Status: F6 plan 3/5 in progress
+Last activity: 2026-05-19 — 06-03 APPLY started; FeedbackPath + SpectralProcessor
 
 Progress:
 - Milestone: [████████████████░░░░] ~83%
@@ -34,7 +34,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [06-02 complete — ready for /paul:plan 06-03]
+  ✓        ○        ○     [06-03 in progress — FeedbackPath + SpectralProcessor]
 ```
 
 ## Accumulated context

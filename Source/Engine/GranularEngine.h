@@ -4,6 +4,8 @@
 #include "SampleBuffer.h"
 #include "SubGrain.h"
 #include "StochasticTiming.h"
+#include "FeedbackPath.h"
+#include "SpectralProcessor.h"
 #include "../Modules/Motion.h"
 #include "../Modules/Pattern.h"
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -88,6 +90,28 @@ public:
         pStochasticDist_ = stochasticDist;
     }
 
+    // Wire feedback source + params. Call once from PluginProcessor constructor.
+    void setFeedbackSource(FeedbackPath* fb) noexcept { feedbackSource_ = fb; }
+    void setFeedbackParamPointers(std::atomic<float>* enabled,
+                                  std::atomic<float>* gain,
+                                  std::atomic<float>* damp) noexcept
+    {
+        pFeedbackEnabled_ = enabled;
+        pFeedbackGain_    = gain;
+        pFeedbackDamp_    = damp;
+    }
+
+    // Wire spectral source + params. Call once from PluginProcessor constructor.
+    void setSpectralSource(SpectralProcessor* sp) noexcept { spectralSource_ = sp; }
+    void setSpectralParamPointers(std::atomic<float>* enabled,
+                                  std::atomic<float>* mode,
+                                  std::atomic<float>* blurAmount) noexcept
+    {
+        pSpectralEnabled_    = enabled;
+        pSpectralMode_       = mode;
+        pSpectralBlurAmount_ = blurAmount;
+    }
+
     struct GrainSnapshot
     {
         float srcFraction;  // grain start position as [0..1] of loaded sample length
@@ -152,6 +176,18 @@ private:
     std::atomic<float>* pLoop_          { nullptr };
     std::atomic<float>* pSubGrainDepth_ { nullptr };
     std::atomic<float>* pStochasticDist_{ nullptr };
+
+    // Feedback source + params — set once before audio starts.
+    FeedbackPath*       feedbackSource_  { nullptr };
+    std::atomic<float>* pFeedbackEnabled_{ nullptr };
+    std::atomic<float>* pFeedbackGain_   { nullptr };
+    std::atomic<float>* pFeedbackDamp_   { nullptr };
+
+    // Spectral source + params — set once before audio starts.
+    SpectralProcessor*  spectralSource_     { nullptr };
+    std::atomic<float>* pSpectralEnabled_   { nullptr };
+    std::atomic<float>* pSpectralMode_      { nullptr };
+    std::atomic<float>* pSpectralBlurAmount_{ nullptr };
 
     // Pitch modulation source — set once before audio starts, read in scheduler thread.
     Motion*  pitchMod_ { nullptr };

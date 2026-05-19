@@ -25,6 +25,9 @@ add_executable(GranoTests
     # F6b — Sub-grain + Stochastic timing
     ${CMAKE_SOURCE_DIR}/Source/Engine/SubGrain.cpp
     ${CMAKE_SOURCE_DIR}/Source/Engine/StochasticTiming.cpp
+    # F6c — Feedback path + Spectral processor
+    ${CMAKE_SOURCE_DIR}/Source/Engine/FeedbackPath.cpp
+    ${CMAKE_SOURCE_DIR}/Source/Engine/SpectralProcessor.cpp
     # F2 — UI
     ${CMAKE_SOURCE_DIR}/Source/UI/WaveformDisplay.cpp
     # F3 — UI components and LookAndFeel
@@ -51,6 +54,8 @@ add_executable(GranoTests
     test_modulation.cpp
     test_subgrain.cpp
     test_stochastic.cpp
+    test_feedback.cpp
+    test_spectral.cpp
 )
 
 target_include_directories(GranoTests

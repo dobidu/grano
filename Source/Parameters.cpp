@@ -193,6 +193,30 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::StringArray{ "Uniform", "Gaussian", "Poisson",
                            "Exponential", "Pareto", "1/f" }, 0));
 
+    // F6c — Feedback path
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ ParamIDs::feedbackEnabled, 1 }, "Feedback", false));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::feedbackGain, 1 }, "Feedback Gain",
+        juce::NormalisableRange<float>{ 0.0f, 0.95f }, 0.5f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::feedbackDamp, 1 }, "Feedback Damp",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.3f));
+
+    // F6c — Spectral processor
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ ParamIDs::spectralEnabled, 1 }, "Spectral", false));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::spectralMode, 1 }, "Spectral Mode",
+        juce::StringArray{ "Freeze", "Blur" }, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::spectralBlurAmount, 1 }, "Spectral Blur",
+        juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
+
     // F5 — ModMatrix slots (8 × 3 = 24 params)
     const juce::StringArray kModSources{ "None", "LFO1", "LFO2" };
     const juce::StringArray kModDests{
