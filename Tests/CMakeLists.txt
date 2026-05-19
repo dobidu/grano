@@ -40,6 +40,7 @@ add_executable(GranoTests
     test_pattern.cpp
     # F5 — Modulation
     ${CMAKE_SOURCE_DIR}/Source/Modulation/Lfo.cpp
+    ${CMAKE_SOURCE_DIR}/Source/Modulation/ModMatrix.cpp
     test_modulation.cpp
 )
 

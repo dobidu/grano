@@ -184,5 +184,39 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::lfo2Depth, 1 }, "LFO2 Depth",
         juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.5f));
 
+    // F5 — ModMatrix slots (8 × 3 = 24 params)
+    const juce::StringArray kModSources{ "None", "LFO1", "LFO2" };
+    const juce::StringArray kModDests{
+        "None", "Grain Size", "Density", "Position", "Pos Jitter", "Pitch Shift",
+        "Stereo Spread", "Master Vol",
+        "Wow Depth", "Wow Rate", "Flutter Depth", "Flutter Rate", "Drift",
+        "Crackle Lvl", "Crackle Color",
+        "Saturate", "Decimate", "Tilt EQ", "Verb Mix",
+        "Probability", "Reverse Prob", "Spray", "Transient Sens",
+        "LFO1 Rate", "LFO1 Phase", "LFO1 Depth",
+        "LFO2 Rate", "LFO2 Phase", "LFO2 Depth"
+    };
+    for (int i = 1; i <= 8; ++i)
+    {
+        const juce::String srcID = slotParamID(i, "Source");
+        const juce::String dstID = slotParamID(i, "Dest");
+        const juce::String amtID = slotParamID(i, "Amount");
+        layout.add(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID{ srcID.toRawUTF8(), 1 },
+            "Slot " + juce::String(i) + " Source", kModSources, 0));
+        layout.add(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID{ dstID.toRawUTF8(), 1 },
+            "Slot " + juce::String(i) + " Dest", kModDests, 0));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID{ amtID.toRawUTF8(), 1 },
+            "Slot " + juce::String(i) + " Amount",
+            juce::NormalisableRange<float>{ -1.0f, 1.0f }, 0.0f));
+    }
+
     return layout;
+}
+
+juce::String slotParamID(int slotIndex, const char* suffix)
+{
+    return "slot" + juce::String(juce::jlimit(1, 8, slotIndex)) + suffix;
 }

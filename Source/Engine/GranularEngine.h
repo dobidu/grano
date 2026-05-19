@@ -55,6 +55,9 @@ public:
     // Provide Pattern module for grain scheduling. Call before audio starts.
     void setPatternSource(Pattern* p) noexcept { pattern_ = p; }
 
+    // Provide ModMatrix for per-grain pitch and jitter modulation. Call before audio starts.
+    void setModMatrixSource(class ModMatrix* mm) noexcept { modMatrix_ = mm; }
+
     // Wire APVTS parameter atomics. Call once from PluginProcessor constructor.
     void setParamPointers(std::atomic<float>* grainSize,
                           std::atomic<float>* density,
@@ -143,6 +146,9 @@ private:
 
     // Pattern module — set once before audio starts, consulted in scheduler thread.
     Pattern* pattern_  { nullptr };
+
+    // ModMatrix — set once before audio starts, read in scheduler thread.
+    class ModMatrix* modMatrix_{ nullptr };
 
     // Used only from SchedulerThread — no synchronization needed.
     juce::Random grainRng_;

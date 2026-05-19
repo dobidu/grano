@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 #include "Modulation/Lfo.h"
+#include "Modulation/ModMatrix.h"
 #include "PluginProcessor.h"
 
 struct LfoFixture
@@ -170,25 +171,164 @@ TEST_CASE("Lfo null param pointers do not crash")
     REQUIRE(true);
 }
 
-// ─── AC-8: APVTS param count ──────────────────────────────────────────────────
+// ─── AC-8: APVTS param count (updated for 05-02) ─────────────────────────────
 
-TEST_CASE("APVTS contains 42 parameters after F5 LFO params added")
+TEST_CASE("APVTS contains 66 parameters after F5 ModMatrix params added")
 {
     GranoAudioProcessor proc;
     auto& apvts = proc.getAPVTS();
 
-    // Spot-check new LFO params present
+    // LFO params present
     REQUIRE(apvts.getParameter(ParamIDs::lfo1Rate)     != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo1Waveform) != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo1Sync)     != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo1Phase)    != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo1Depth)    != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo2Rate)     != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo2Waveform) != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo2Sync)     != nullptr);
-    REQUIRE(apvts.getParameter(ParamIDs::lfo2Phase)    != nullptr);
     REQUIRE(apvts.getParameter(ParamIDs::lfo2Depth)    != nullptr);
 
-    // Total count = 42
-    REQUIRE((int)proc.getParameters().size() == 42);
+    // Spot-check ModMatrix slot params
+    REQUIRE(apvts.getParameter(ParamIDs::slot1Source)  != nullptr);
+    REQUIRE(apvts.getParameter(ParamIDs::slot1Dest)    != nullptr);
+    REQUIRE(apvts.getParameter(ParamIDs::slot1Amount)  != nullptr);
+    REQUIRE(apvts.getParameter(ParamIDs::slot8Amount)  != nullptr);
+
+    // Total count = 66 (42 prev + 24 ModMatrix)
+    REQUIRE((int)proc.getParameters().size() == 66);
+}
+
+// ─── ModMatrix ────────────────────────────────────────────────────────────────
+
+struct ModFixture
+{
+    std::atomic<float> src    { 0.0f }; // None
+    std::atomic<float> dst    { 0.0f }; // None
+    std::atomic<float> amount { 0.0f };
+
+    std::atomic<float> l1Rate { 1.0f };
+    std::atomic<float> l1Wf   { 3.0f }; // Square — deterministic +1/-1 output
+    std::atomic<float> l1Sync { 0.0f };
+    std::atomic<float> l1Phase{ 0.0f };
+    std::atomic<float> l1Depth{ 1.0f };
+
+    Lfo lfo1;
+    ModMatrix matrix;
+
+    ModFixture()
+    {
+        lfo1.setParamPointers(&l1Rate, &l1Wf, &l1Sync, &l1Phase, &l1Depth);
+        lfo1.prepare(44100.0);
+        matrix.setLfos(&lfo1, nullptr);
+        matrix.setSlotParams(0, &src, &dst, &amount);
+        matrix.prepare(44100.0);
+    }
+
+    void oneBlock() { matrix.processBlock(512, 120.0); }
+};
+
+TEST_CASE("ModMatrix bypass: all slots None, offsets are zero")
+{
+    ModFixture f;
+    f.oneBlock();
+    REQUIRE(f.matrix.getModOffset(ModMatrix::kPitchShift)    == Catch::Approx(0.0f));
+    REQUIRE(f.matrix.getModOffset(ModMatrix::kPositionJitter) == Catch::Approx(0.0f));
+    REQUIRE(f.matrix.getModOffset(ModMatrix::kGrainSize)     == Catch::Approx(0.0f));
+}
+
+TEST_CASE("ModMatrix LFO1->kPitchShift: offset non-zero with Square LFO")
+{
+    ModFixture f;
+    f.src.store(1.0f);                             // LFO1
+    f.dst.store((float)ModMatrix::kPitchShift);
+    f.amount.store(1.0f);
+
+    float maxAbs = 0.0f;
+    for (int i = 0; i < 20; ++i)
+    {
+        f.oneBlock();
+        maxAbs = std::max(maxAbs, std::abs(f.matrix.getModOffset(ModMatrix::kPitchShift)));
+    }
+    REQUIRE(maxAbs > 0.5f);
+}
+
+TEST_CASE("ModMatrix amount scales output linearly")
+{
+    // Square LFO at t=0 is +1.0 (first half of cycle); use two separate fixtures
+    ModFixture f05, f10;
+    f05.src.store(1.0f); f05.dst.store((float)ModMatrix::kPitchShift); f05.amount.store(0.5f);
+    f10.src.store(1.0f); f10.dst.store((float)ModMatrix::kPitchShift); f10.amount.store(1.0f);
+
+    f05.oneBlock();
+    f10.oneBlock();
+
+    const float v05 = f05.matrix.getModOffset(ModMatrix::kPitchShift);
+    const float v10 = f10.matrix.getModOffset(ModMatrix::kPitchShift);
+
+    // Both started from same phase; ratio should be 0.5
+    REQUIRE(std::abs(v10) > 0.01f);
+    REQUIRE(v05 == Catch::Approx(v10 * 0.5f).margin(0.01f));
+}
+
+TEST_CASE("ModMatrix LFO2 source path produces non-zero offset")
+{
+    std::atomic<float> l2Rate{10.0f}, l2Wf{3.0f}, l2Sync{0.0f}, l2Phase{0.0f}, l2Depth{1.0f};
+    Lfo lfo2;
+    lfo2.setParamPointers(&l2Rate, &l2Wf, &l2Sync, &l2Phase, &l2Depth);
+    lfo2.prepare(44100.0);
+
+    ModFixture f;
+    f.matrix.setLfos(&f.lfo1, &lfo2);
+    f.src.store(2.0f); // LFO2
+    f.dst.store((float)ModMatrix::kGrainSize);
+    f.amount.store(1.0f);
+
+    float maxAbs = 0.0f;
+    for (int i = 0; i < 20; ++i)
+    {
+        f.oneBlock();
+        maxAbs = std::max(maxAbs, std::abs(f.matrix.getModOffset(ModMatrix::kGrainSize)));
+    }
+    REQUIRE(maxAbs > 0.5f);
+}
+
+TEST_CASE("ModMatrix null LFOs do not crash and return zero")
+{
+    ModMatrix matrix;
+    std::atomic<float> src{1.0f}, dst{(float)ModMatrix::kPitchShift}, amt{1.0f};
+    matrix.setLfos(nullptr, nullptr);
+    matrix.setSlotParams(0, &src, &dst, &amt);
+    matrix.prepare(44100.0);
+
+    for (int i = 0; i < 10; ++i)
+        matrix.processBlock(512, 120.0);
+
+    REQUIRE(matrix.getModOffset(ModMatrix::kPitchShift) == Catch::Approx(0.0f));
+}
+
+TEST_CASE("ModMatrix cross-mod LFO1->kLfo2Rate accelerates LFO2")
+{
+    // LFO1: Square at +1, amount=1 → lfo2RateMod = +8000 Hz
+    // LFO2: Sine at base 1 Hz; with +8000 Hz offset it completes many cycles quickly
+    std::atomic<float> l2Rate{1.0f}, l2Wf{0.0f}, l2Sync{0.0f}, l2Phase{0.0f}, l2Depth{1.0f};
+    Lfo lfo2;
+    lfo2.setParamPointers(&l2Rate, &l2Wf, &l2Sync, &l2Phase, &l2Depth);
+    lfo2.prepare(44100.0);
+
+    ModFixture f;
+    f.matrix.setLfos(&f.lfo1, &lfo2);
+    f.src.store(1.0f);                              // LFO1
+    f.dst.store((float)ModMatrix::kLfo2Rate);
+    f.amount.store(1.0f);
+
+    // Drive cross-mod for a few blocks
+    for (int i = 0; i < 5; ++i)
+        f.oneBlock();
+
+    // LFO2 should have advanced many cycles; count zero-crossings in 1000 samples
+    float prev = lfo2.advanceSample();
+    int crossings = 0;
+    for (int i = 1; i < 1000; ++i)
+    {
+        const float cur = lfo2.advanceSample();
+        if ((prev >= 0.0f && cur < 0.0f) || (prev < 0.0f && cur >= 0.0f))
+            ++crossings;
+        prev = cur;
+    }
+    // At ~8001 Hz, ~181 crossings per 1000 samples; baseline 1 Hz would give ~0
+    REQUIRE(crossings > 10);
 }

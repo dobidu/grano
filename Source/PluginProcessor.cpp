@@ -19,6 +19,27 @@ GranoAudioProcessor::GranoAudioProcessor()
         apvts_.getRawParameterValue(ParamIDs::loop));
     engine_.setPitchModSource(&motion_);
     engine_.setPatternSource(&pattern_);
+    engine_.setModMatrixSource(&modMatrix_);
+    lfo1_.setParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::lfo1Rate),
+        apvts_.getRawParameterValue(ParamIDs::lfo1Waveform),
+        apvts_.getRawParameterValue(ParamIDs::lfo1Sync),
+        apvts_.getRawParameterValue(ParamIDs::lfo1Phase),
+        apvts_.getRawParameterValue(ParamIDs::lfo1Depth));
+    lfo2_.setParamPointers(
+        apvts_.getRawParameterValue(ParamIDs::lfo2Rate),
+        apvts_.getRawParameterValue(ParamIDs::lfo2Waveform),
+        apvts_.getRawParameterValue(ParamIDs::lfo2Sync),
+        apvts_.getRawParameterValue(ParamIDs::lfo2Phase),
+        apvts_.getRawParameterValue(ParamIDs::lfo2Depth));
+    modMatrix_.setLfos(&lfo1_, &lfo2_);
+    for (int i = 1; i <= 8; ++i)
+    {
+        modMatrix_.setSlotParams(i - 1,
+            apvts_.getRawParameterValue(slotParamID(i, "Source")),
+            apvts_.getRawParameterValue(slotParamID(i, "Dest")),
+            apvts_.getRawParameterValue(slotParamID(i, "Amount")));
+    }
     pattern_.setParamPointers(
         apvts_.getRawParameterValue(ParamIDs::patternEnabled),
         apvts_.getRawParameterValue(ParamIDs::triggerMode),
@@ -63,6 +84,9 @@ void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     motion_.prepare(sampleRate);
     color_.prepare(sampleRate, samplesPerBlock);
     pattern_.prepare(sampleRate);
+    lfo1_.prepare(sampleRate);
+    lfo2_.prepare(sampleRate);
+    modMatrix_.prepare(sampleRate);
 }
 
 void GranoAudioProcessor::releaseResources()
@@ -71,6 +95,9 @@ void GranoAudioProcessor::releaseResources()
     motion_.reset();
     color_.reset();
     pattern_.reset();
+    lfo1_.reset();
+    lfo2_.reset();
+    modMatrix_.reset();
 }
 
 // processBlock runs on the host audio thread — real-time safe.
@@ -85,8 +112,11 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         if (auto pos = ph->getPosition())
             if (auto b = pos->getBpm())
                 bpm = *b;
-    pattern_.processBlock(buffer, bpm);
 
+    // ModMatrix advances LFOs and computes mod offsets; must run before engine schedules grains.
+    modMatrix_.processBlock(buffer.getNumSamples(), bpm);
+
+    pattern_.processBlock(buffer, bpm);
     engine_.processBlock(buffer);
     motion_.processBlock(buffer);
     color_.processBlock(buffer);

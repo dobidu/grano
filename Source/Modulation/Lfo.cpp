@@ -66,7 +66,8 @@ float Lfo::advanceSample() noexcept
     const float phOff   = pPhase_   ? pPhase_->load(std::memory_order_relaxed)    : 0.0f;
     const float depth   = pDepth_   ? pDepth_->load(std::memory_order_relaxed)    : 0.0f;
 
-    const float effectiveRate = synced ? syncRateHz_ : rateHz;
+    const float effectiveRate = std::max(0.01f,
+        (synced ? syncRateHz_ : rateHz) + rateModOffset_.load(std::memory_order_relaxed));
     const double increment = effectiveRate / sampleRate_;
 
     // Apply phase offset (degrees → normalized)

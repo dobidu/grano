@@ -37,6 +37,12 @@ public:
     void setDrawablePoint(int index, float value) noexcept;
     float getDrawablePoint(int index) const noexcept;
 
+    // ModMatrix → LFO cross-mod: adds Hz offset to effective rate (clamped ≥ 0.01).
+    // Safe to call from audio thread while advanceSample() runs on same thread.
+    void setRateModOffset(float offsetHz) noexcept {
+        rateModOffset_.store(offsetHz, std::memory_order_relaxed);
+    }
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Lfo)
 
 private:
@@ -58,6 +64,9 @@ private:
 
     // Sync mode: rate computed from DAW bpm (updated in processBlock)
     float  syncRateHz_{ 1.0f };
+
+    // Cross-mod offset in Hz — written by ModMatrix, read in advanceSample()
+    std::atomic<float> rateModOffset_{ 0.0f };
 
     // 64-point drawable table — written from UI, read from audio thread
     std::array<std::atomic<float>, kDrawablePoints> drawable_{};

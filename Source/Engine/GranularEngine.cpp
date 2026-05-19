@@ -1,5 +1,6 @@
 #include "GranularEngine.h"
 #include "EnvelopeShapes.h"
+#include "../Modulation/ModMatrix.h"
 #include <cmath>
 
 GranularEngine::GranularEngine() = default;
@@ -101,11 +102,13 @@ void GranularEngine::scheduleGrain() noexcept
         ? pGrainSize_->load(std::memory_order_relaxed) : 100.0f;
     const float position = pPosition_
         ? pPosition_->load(std::memory_order_relaxed) : 0.0f;
-    const float posJitter = pPositionJitter_
-        ? pPositionJitter_->load(std::memory_order_relaxed) : 0.0f;
+    const float posJitter = juce::jlimit(0.0f, 1.0f,
+        (pPositionJitter_ ? pPositionJitter_->load(std::memory_order_relaxed) : 0.0f)
+        + (modMatrix_ ? modMatrix_->getModOffset(ModMatrix::kPositionJitter) : 0.0f));
     const float pitchShiftSt = pPitchShift_
         ? pPitchShift_->load(std::memory_order_relaxed) : 0.0f;
-    const float pitchModSt   = pitchMod_ ? pitchMod_->getPitchModSemitones() : 0.0f;
+    const float pitchModSt = (pitchMod_ ? pitchMod_->getPitchModSemitones() : 0.0f)
+        + (modMatrix_ ? modMatrix_->getModOffset(ModMatrix::kPitchShift) * 24.0f : 0.0f);
     const float stereoSpread = pStereoSpread_
         ? pStereoSpread_->load(std::memory_order_relaxed) : 0.5f;
 

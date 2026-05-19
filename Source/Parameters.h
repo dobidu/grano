@@ -54,6 +54,35 @@ namespace ParamIDs {
     inline constexpr const char* lfo2Sync     = "lfo2Sync";
     inline constexpr const char* lfo2Phase    = "lfo2Phase";
     inline constexpr const char* lfo2Depth    = "lfo2Depth";
+
+    // F5 — ModMatrix slots (8 slots × 3 params)
+    inline constexpr const char* slot1Source = "slot1Source";
+    inline constexpr const char* slot1Dest   = "slot1Dest";
+    inline constexpr const char* slot1Amount = "slot1Amount";
+    inline constexpr const char* slot2Source = "slot2Source";
+    inline constexpr const char* slot2Dest   = "slot2Dest";
+    inline constexpr const char* slot2Amount = "slot2Amount";
+    inline constexpr const char* slot3Source = "slot3Source";
+    inline constexpr const char* slot3Dest   = "slot3Dest";
+    inline constexpr const char* slot3Amount = "slot3Amount";
+    inline constexpr const char* slot4Source = "slot4Source";
+    inline constexpr const char* slot4Dest   = "slot4Dest";
+    inline constexpr const char* slot4Amount = "slot4Amount";
+    inline constexpr const char* slot5Source = "slot5Source";
+    inline constexpr const char* slot5Dest   = "slot5Dest";
+    inline constexpr const char* slot5Amount = "slot5Amount";
+    inline constexpr const char* slot6Source = "slot6Source";
+    inline constexpr const char* slot6Dest   = "slot6Dest";
+    inline constexpr const char* slot6Amount = "slot6Amount";
+    inline constexpr const char* slot7Source = "slot7Source";
+    inline constexpr const char* slot7Dest   = "slot7Dest";
+    inline constexpr const char* slot7Amount = "slot7Amount";
+    inline constexpr const char* slot8Source = "slot8Source";
+    inline constexpr const char* slot8Dest   = "slot8Dest";
+    inline constexpr const char* slot8Amount = "slot8Amount";
 }
+
+// Returns "slotNSource", "slotNDest", or "slotNAmount" for slot index 1..8.
+juce::String slotParamID(int slotIndex, const char* suffix);
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

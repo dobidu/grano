@@ -81,6 +81,7 @@ target_sources(Grano
         Source/Modules/Pattern.cpp
         # F5 — Modulation
         Source/Modulation/Lfo.cpp
+        Source/Modulation/ModMatrix.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────

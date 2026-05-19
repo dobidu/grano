@@ -7,6 +7,8 @@
 #include "Modules/Motion.h"
 #include "Modules/Color.h"
 #include "Modules/Pattern.h"
+#include "Modulation/Lfo.h"
+#include "Modulation/ModMatrix.h"
 #include "Parameters.h"
 
 // GranoAudioProcessor is the AudioProcessor entry point for the Grano plugin.
@@ -85,6 +87,8 @@ private:
     Motion                     motion_;        // must be declared after engine_
     Color                      color_;         // driven after motion_ in processBlock
     Pattern                    pattern_;       // consulted by engine scheduler; processed before engine
+    Lfo                        lfo1_, lfo2_;   // must be declared before modMatrix_
+    ModMatrix                  modMatrix_;
     juce::AudioFormatManager   formatManager_;
     juce::AudioProcessorValueTreeState apvts_{
         *this, nullptr, "GranoState", createParameterLayout()};
