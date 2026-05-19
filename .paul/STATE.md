@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F7-release
-loop_position: IDLE
-current_plan: null
+loop_position: PLAN
+current_plan: .paul/phases/07-release/07-02-PLAN.md
 last_unified: .paul/phases/07-release/07-01-SUMMARY.md
 session_start: 2026-05-19
 ```
@@ -16,9 +16,9 @@ session_start: 2026-05-19
 
 Milestone: v1.0 Initial Release
 Phase: F7 — Release (8 of 8) — In Progress
-Plan: 07-01 ✅ — pluginval-10 CI hardening complete
-Status: Loop closed — ready for F7-02
-Last activity: 2026-05-19 — 07-01 unified; CI green (117/117, pluginval-10 Win+macOS)
+Plan: 07-02 — RELEASE_NOTES + factory presets + README download section (created, awaiting approval)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-19 — 07-02-PLAN.md created; content/docs only plan
 
 Progress:
 - Milestone: [████████████████████] ~97%
@@ -35,7 +35,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [07-01 complete — ready for 07-02]
+  ✓        ○        ○     [07-02 plan created, awaiting approval]
 ```
 
 ## Accumulated context
@@ -92,8 +92,8 @@ None.
 
 Last session: 2026-05-19
 Stopped at: 07-01 unified — CI green (pluginval-10 Win+macOS, 117/117 tests)
-Next action: /paul:plan F7 (to create 07-02 — presets + RELEASE_NOTES + README)
-Resume context: F7 plan 1 of 3 done. 07-02 scope: factory presets (≥3), RELEASE_NOTES.md, README install section. 07-03 scope: signing docs + v1.0.0-beta.1 tag. auval blocked until Developer ID available — add to 07-03 scope.
+Next action: /paul:apply .paul/phases/07-release/07-02-PLAN.md
+Resume context: F7 plan 2 of 3. 07-02 is content-only (no code): RELEASE_NOTES.md + 5 preset files + README download section. Autonomous — no checkpoints. After 07-02: F7-03 (beta tag + signing docs).
 
 ## Phase history
 
