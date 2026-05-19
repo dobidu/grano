@@ -232,6 +232,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::slot3Weight, 1 }, "Slot 3 Weight",
         juce::NormalisableRange<float>{ 0.0f, 1.0f }, 0.0f));
 
+    // F6e — Envelope shape selector (0=Hann 1=Tukey 2=Gaussian 3=Triangle 4=Rectangle)
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ ParamIDs::envelopeShape, 1 }, "Envelope Shape",
+        juce::NormalisableRange<float>{ 0.0f, 4.0f, 1.0f }, 0.0f));
+
     // F5 — ModMatrix slots (8 × 3 = 24 params)
     const juce::StringArray kModSources{ "None", "LFO1", "LFO2" };
     const juce::StringArray kModDests{

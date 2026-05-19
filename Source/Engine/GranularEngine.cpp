@@ -171,7 +171,9 @@ void GranularEngine::scheduleGrain() noexcept
     g->lengthSamples = std::min((int)((float)baseLen * durMult), srcLen - startPos);
     g->pitchRatio    = pitchRatio;
     g->pan           = std::clamp(pan, -1.0f, 1.0f);
-    g->shape         = EnvelopeShape::Hann;
+    const int shapeIdx = pEnvelopeShape_
+        ? (int)std::clamp(pEnvelopeShape_->load(std::memory_order_relaxed), 0.0f, 4.0f) : 0;
+    g->shape = static_cast<EnvelopeShape>(shapeIdx);
     g->currentPhase  = 0.0f;
     g->reversed      = reversed;
 

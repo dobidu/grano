@@ -25,6 +25,8 @@ GranoAudioProcessor::GranoAudioProcessor()
     engine_.setAdvancedParamPointers(
         apvts_.getRawParameterValue(ParamIDs::subGrainDepth),
         apvts_.getRawParameterValue(ParamIDs::stochasticDist));
+    engine_.setEnvelopeShapeParam(
+        apvts_.getRawParameterValue(ParamIDs::envelopeShape));
     engine_.setFeedbackSource(&feedbackPath_);
     engine_.setFeedbackParamPointers(
         apvts_.getRawParameterValue(ParamIDs::feedbackEnabled),
@@ -156,7 +158,7 @@ juce::AudioProcessorEditor* GranoAudioProcessor::createEditor()
     return new GranoAudioProcessorEditor(*this);
 }
 
-void GranoAudioProcessor::loadSampleFile(const juce::File& file)
+void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
 {
     std::unique_ptr<juce::AudioFormatReader> reader(formatManager_.createReaderFor(file));
 
@@ -197,7 +199,7 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file)
     lastLoadError_        = {};
     lastLoadedSampleRate_ = reader->sampleRate;
     lastLoadedNumFrames_  = numFrames;
-    sampleBank_.loadSlot(0, std::move(buf), numFrames);
+    sampleBank_.loadSlot(slot, std::move(buf), numFrames);
     triggerSpectralProcessIfEnabled();
 }
 

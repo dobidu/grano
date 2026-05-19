@@ -94,6 +94,8 @@ target_sources(Grano
         # F5 — UI panels
         Source/UI/LfoPanel.cpp
         Source/UI/ModulationMatrixView.cpp
+        # F6e — Envelope shape selector UI
+        Source/UI/CurveEditor.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────

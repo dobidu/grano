@@ -75,6 +75,9 @@ namespace ParamIDs {
     inline constexpr const char* slot2Weight = "slot2Weight";
     inline constexpr const char* slot3Weight = "slot3Weight";
 
+    // F6e — Envelope shape selector (0=Hann 1=Tukey 2=Gaussian 3=Triangle 4=Rectangle)
+    inline constexpr const char* envelopeShape = "envelopeShape";
+
     // F5 — ModMatrix slots (8 slots × 3 params)
     inline constexpr const char* slot1Source = "slot1Source";
     inline constexpr const char* slot1Dest   = "slot1Dest";

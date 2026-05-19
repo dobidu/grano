@@ -38,9 +38,16 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
         p.getAPVTS().getRawParameterValue(ParamIDs::grainSize));
     addAndMakeVisible(waveformDisplay_);
 
-    loadButton_.setButtonText("Load");
-    loadButton_.onClick = [this] { openFileChooser(); };
-    addAndMakeVisible(loadButton_);
+    static const char* kSlotLabels[] = { "S0", "S1", "S2", "S3" };
+    for (int i = 0; i < 4; ++i)
+    {
+        slotButtons_[i].setButtonText(kSlotLabels[i]);
+        slotButtons_[i].onClick = [this, i] { openFileChooser(i); };
+        addAndMakeVisible(slotButtons_[i]);
+    }
+
+    curveEditor_.setAPVTS(&p.getAPVTS());
+    addAndMakeVisible(curveEditor_);
 
     errorLabel_.setJustificationType(juce::Justification::centred);
     errorLabel_.setColour(juce::Label::textColourId, juce::Colour{ 0xffff6b6b });
@@ -76,6 +83,17 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     masterVolAttach_ = std::make_unique<SliderAttachment>(apvts, ParamIDs::masterVolume,
                                                            masterVolKnob_.getSlider());
     loopAttach_      = std::make_unique<ButtonAttachment>(apvts, ParamIDs::loop, loopButton_);
+
+    static const char* kSlotWeightIDs[] = {
+        ParamIDs::slot0Weight, ParamIDs::slot1Weight,
+        ParamIDs::slot2Weight, ParamIDs::slot3Weight
+    };
+    for (int i = 0; i < 4; ++i)
+    {
+        addAndMakeVisible(slotWeightKnobs_[i]);
+        slotWeightAttachments_[i] = std::make_unique<SliderAttachment>(
+            apvts, kSlotWeightIDs[i], slotWeightKnobs_[i].getSlider());
+    }
 
     positionSlider_.setGrainExtent(
         apvts.getRawParameterValue(ParamIDs::grainSize), 0.0f);
@@ -152,10 +170,11 @@ void GranoAudioProcessorEditor::resized()
     constexpr int kPosStripH    = 44;
     constexpr int kKnobH        = 100;
     constexpr int kSpreadH      = 44;
+    constexpr int kSlotStripH   = 80;
     constexpr int kBottomPanelH = 200;
     constexpr int kFooterH      = 24;
-    constexpr int kLoadBtnW     = 72;
-    constexpr int kLoadBtnH     = 24;
+    constexpr int kSlotBtnW     = 28;
+    constexpr int kSlotBtnH     = 24;
     constexpr int kLoopBtnW     = 56;
     constexpr int kLoopBtnH     = 24;
     constexpr int kSnapBtnW     = 32;
@@ -177,18 +196,28 @@ void GranoAudioProcessorEditor::resized()
         }
     }
 
-    // Load button — header far right
-    loadButton_.setBounds(w - kMargin - kLoadBtnW,
-                          btnY, kLoadBtnW, kLoadBtnH);
+    // Slot load buttons S0-S3 — header far right
+    {
+        const int totalSlotW = 4 * kSlotBtnW + 3 * kItemGap;
+        int sx = w - kMargin - totalSlotW;
+        for (int i = 0; i < 4; ++i)
+        {
+            slotButtons_[i].setBounds(sx, btnY, kSlotBtnW, kSlotBtnH);
+            sx += kSlotBtnW + kItemGap;
+        }
+    }
 
-    // Loop toggle — header right, left of Load
-    loopButton_.setBounds(w - kMargin - kLoadBtnW - kItemGap - kLoopBtnW,
-                          btnY, kLoopBtnW, kLoopBtnH);
+    // Loop toggle — header right, left of slot buttons
+    {
+        const int totalSlotW = 4 * kSlotBtnW + 3 * kItemGap;
+        loopButton_.setBounds(w - kMargin - totalSlotW - kItemGap - kLoopBtnW,
+                              btnY, kLoopBtnW, kLoopBtnH);
+    }
 
     // Waveform — variable height filling space between header and controls
     const int waveformH = h - kHeaderH
-                            - 5 * kSectionGap
-                            - kPosStripH - kKnobH - kSpreadH - kBottomPanelH - kFooterH;
+                            - 6 * kSectionGap
+                            - kPosStripH - kKnobH - kSpreadH - kSlotStripH - kBottomPanelH - kFooterH;
     int y = kHeaderH + kSectionGap;
     waveformDisplay_.setBounds(contentX, y, contentW, waveformH);
     y += waveformH + kSectionGap;
@@ -209,6 +238,16 @@ void GranoAudioProcessorEditor::resized()
     // Spread slider
     spreadSlider_.setBounds(contentX, y, contentW, kSpreadH);
     y += kSpreadH + kSectionGap;
+
+    // Slot strip — weight knobs (left) + CurveEditor envelope selector (right)
+    {
+        const int slotKnobW = contentW / 8;
+        for (int i = 0; i < 4; ++i)
+            slotWeightKnobs_[i].setBounds(contentX + i * slotKnobW, y, slotKnobW, kSlotStripH);
+        curveEditor_.setBounds(contentX + 4 * slotKnobW, y,
+                               contentW - 4 * slotKnobW, kSlotStripH);
+    }
+    y += kSlotStripH + kSectionGap;
 
     // Bottom panel — LfoPanel left half, ModulationMatrixView right half
     const int halfW = contentW / 2;
@@ -236,7 +275,7 @@ void GranoAudioProcessorEditor::filesDropped(const juce::StringArray& files, int
     if (files.isEmpty())
         return;
 
-    processorRef.loadSampleFile(juce::File(files[0]));
+    processorRef.loadSampleFile(juce::File(files[0]), 0);
 
     const auto& err = processorRef.getLastLoadError();
     if (err.isEmpty())
@@ -273,7 +312,7 @@ void GranoAudioProcessorEditor::clearError()
     repaint();
 }
 
-void GranoAudioProcessorEditor::openFileChooser()
+void GranoAudioProcessorEditor::openFileChooser(int slot)
 {
     fileChooser_ = std::make_unique<juce::FileChooser>(
         "Select audio file",
@@ -282,19 +321,22 @@ void GranoAudioProcessorEditor::openFileChooser()
 
     fileChooser_->launchAsync(juce::FileBrowserComponent::openMode |
                               juce::FileBrowserComponent::canSelectFiles,
-        [this](const juce::FileChooser& fc)
+        [this, slot](const juce::FileChooser& fc)
         {
             const auto results = fc.getResults();
             if (results.isEmpty())
                 return;
             const auto file = results[0];
-            processorRef.loadSampleFile(file);
+            processorRef.loadSampleFile(file, slot);
             if (processorRef.getLastLoadError().isEmpty())
             {
-                const double sr = processorRef.getLastLoadedSampleRate();
-                const int    nf = processorRef.getLastLoadedNumFrames();
-                waveformDisplay_.setFile(file, sr, nf);
-                positionSlider_.setFileDurationMs((float)(nf / sr * 1000.0));
+                if (slot == 0)
+                {
+                    const double sr = processorRef.getLastLoadedSampleRate();
+                    const int    nf = processorRef.getLastLoadedNumFrames();
+                    waveformDisplay_.setFile(file, sr, nf);
+                    positionSlider_.setFileDurationMs((float)(nf / sr * 1000.0));
+                }
                 clearError();
             }
             else

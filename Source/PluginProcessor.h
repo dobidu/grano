@@ -72,7 +72,7 @@ public:
     // ── Sample loading (message thread) ───────────────────────────────────────
     // Called by the editor's FileDragAndDropTarget handler.
     // On success, clears lastLoadError_. On failure, sets it.
-    void loadSampleFile(const juce::File& file);
+    void loadSampleFile(const juce::File& file, int slot = 0);
 
     const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
 

@@ -8,6 +8,7 @@
 #include "UI/Slider.h"
 #include "UI/LfoPanel.h"
 #include "UI/ModulationMatrixView.h"
+#include "UI/CurveEditor.h"
 
 // GranoAudioProcessorEditor is the AudioProcessorEditor entry point.
 //
@@ -40,7 +41,7 @@ private:
 
     void showError(const juce::String& message);
     void clearError();
-    void openFileChooser();
+    void openFileChooser(int slot);
 
     juce::uint32 errorGen_{ 0 };
 
@@ -49,9 +50,13 @@ private:
     GranoLAF laf_;
 
     WaveformDisplay                    waveformDisplay_;
-    juce::TextButton                   loadButton_;
+    juce::TextButton                   slotButtons_[4];
     std::unique_ptr<juce::FileChooser> fileChooser_;
+    int                                pendingSlot_{ 0 };
     juce::Label                        errorLabel_;
+    CurveEditor                        curveEditor_;
+    Knob                               slotWeightKnobs_[4] = { Knob{"W0"}, Knob{"W1"}, Knob{"W2"}, Knob{"W3"} };
+    std::unique_ptr<SliderAttachment>  slotWeightAttachments_[4];
 
     // ── Core controls ─────────────────────────────────────────────────────────
     GranoSlider        positionSlider_  { "POSITION" };

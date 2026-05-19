@@ -100,6 +100,9 @@ public:
         pStochasticDist_ = stochasticDist;
     }
 
+    // Wire F6e envelope shape param. Call once from PluginProcessor constructor.
+    void setEnvelopeShapeParam(std::atomic<float>* p) noexcept { pEnvelopeShape_ = p; }
+
     // Wire feedback source + params. Call once from PluginProcessor constructor.
     void setFeedbackSource(FeedbackPath* fb) noexcept { feedbackSource_ = fb; }
     void setFeedbackParamPointers(std::atomic<float>* enabled,
@@ -187,6 +190,7 @@ private:
     std::atomic<float>* pLoop_          { nullptr };
     std::atomic<float>* pSubGrainDepth_ { nullptr };
     std::atomic<float>* pStochasticDist_{ nullptr };
+    std::atomic<float>* pEnvelopeShape_ { nullptr };
 
     // Feedback source + params — set once before audio starts.
     FeedbackPath*       feedbackSource_  { nullptr };
