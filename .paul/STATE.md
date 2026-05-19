@@ -6,9 +6,9 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F6-ui-polish-and-advanced
-loop_position: PLAN_DONE
-current_plan: .paul/phases/06-ui-polish-and-advanced/06-02-PLAN.md
-last_unified: .paul/phases/06-ui-polish-and-advanced/06-01-SUMMARY.md
+loop_position: IDLE
+current_plan: (none — 06-02 complete, ready for 06-03)
+last_unified: .paul/phases/06-ui-polish-and-advanced/06-02-SUMMARY.md
 session_start: 2026-05-19
 ```
 
@@ -16,25 +16,25 @@ session_start: 2026-05-19
 
 Milestone: v1.0 Initial Release
 Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — In Progress
-Plan: 06-02 — Sub-grain recursion + Stochastic timing distributions (PLAN ✓, awaiting apply)
-Status: F6 plan 1/5 unified; 06-02 planned
-Last activity: 2026-05-19 — 06-02 plan created; ready for /paul:apply 06-02
+Plan: 06-02 complete — ready for /paul:plan F6 (plan 3: Feedback Path + Spectral Processor)
+Status: F6 plan 2/5 unified
+Last activity: 2026-05-19 — 06-02 unified; SubGrain depth 0/1/2, StochasticTiming 6 distributions; 101/101; ab1f039
 
 Progress:
-- Milestone: [████████████████░░░░] ~80%
+- Milestone: [████████████████░░░░] ~83%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
 - F4: [████████████████████] 100% ✅
 - F5: [████████████████████] 100% ✅
-- F6: [████░░░░░░░░░░░░░░░░] ~20% — 06-01 ✅
+- F6: [████████░░░░░░░░░░░░] ~40% — 06-01 ✅ 06-02 ✅
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [06-02 — Sub-grain + Stochastic — ready for /paul:apply]
+  ✓        ✓        ✓     [06-02 complete — ready for /paul:plan 06-03]
 ```
 
 ## Accumulated context
@@ -42,6 +42,9 @@ PLAN ──▶ APPLY ──▶ UNIFY
 ### Decisions
 | Decision | Phase | Impact |
 |----------|-------|--------|
+| parentCopy before FIFO finishedWrite in scheduleGrain() | F6b | Audio thread owns slot immediately after finishedWrite; copy must be taken beforehand for sub-grain spawning |
+| StochasticTiming::Poisson = Exponential inter-arrival | F6b | Mathematically correct: Poisson process inter-arrival time is Exp(λ); name is user-facing |
+| Pareto test tolerance 20% (not 15%) | F6b | E[X_clamped] = 0.83×mean analytically for α=1.5 at 5× clamp ceiling; not a bug — documented in test |
 | GranoCombinedState wrapper for serialization | F5c | APVTS state type is already "GranoState" — outer wrapper must be different for disambiguation; old format still falls through to else-if branch |
 | UI .cpp files belong in GranoTests too | F5c | PluginEditor.cpp compiled into GranoTests references all editor-included UI files; pattern: add any UI .cpp that PluginEditor includes |
 | ModMatrix() = default explicit required | F5b | GCC suppresses implicit default ctor with JUCE_DECLARE_NON_COPYABLE + non-trivial members — add explicit default to any new class with this macro |
@@ -78,9 +81,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-19
-Stopped at: 06-02 plan created — 4 tasks (T1 new files, T2 engine integration, T3 tests, T4 verify)
-Next action: /paul:apply .paul/phases/06-ui-polish-and-advanced/06-02-PLAN.md
-Resume context: 93/93 tests. APVTS 66 params → 68 after T1. SubGrain: pool-based, scheduler-thread only, depth 0/1/2. StochasticTiming: 6 distributions via nextIntervalMs(). GranularEngine needs setAdvancedParamPointers() + integration in run() and scheduleGrain().
+Stopped at: 06-02 unified — SubGrain depth 0/1/2, StochasticTiming 6 distributions; 101/101; ab1f039
+Next action: /paul:plan F6 (plan 03) — Feedback Path + Spectral Processor
+Resume context: 101/101 tests. 68 APVTS params. SubGrain and StochasticTiming active in engine. GranularEngine.h includes both new headers. New classes needed: FeedbackPath.{h,cpp} (internal feedback loop) and SpectralProcessor.{h,cpp} (FFT freeze/blur, juce::dsp::FFT) in Source/Engine/.
 
 ## Phase history
 
@@ -97,3 +100,5 @@ Resume context: 93/93 tests. APVTS 66 params → 68 after T1. SubGrain: pool-bas
 | F5a — LFO core | 1/3 | 2026-05-18 | (in 281378d) |
 | F5b — ModMatrix + engine | 2/3 | 2026-05-18 | 281378d |
 | F5c — Snapshots + UI | 3/3 | 2026-05-19 | 3697bcd |
+| F6a — UI Polish | 1/5 | 2026-05-19 | ecb8aca |
+| F6b — Sub-grain + Stochastic | 2/5 | 2026-05-19 | ab1f039 |
