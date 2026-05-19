@@ -6,9 +6,9 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F6-ui-polish-and-advanced
-loop_position: APPLY
-current_plan: .paul/phases/06-ui-polish-and-advanced/06-03-PLAN.md
-last_unified: .paul/phases/06-ui-polish-and-advanced/06-02-SUMMARY.md
+loop_position: IDLE
+current_plan: null
+last_unified: .paul/phases/06-ui-polish-and-advanced/06-03-SUMMARY.md
 session_start: 2026-05-19
 ```
 
@@ -16,25 +16,25 @@ session_start: 2026-05-19
 
 Milestone: v1.0 Initial Release
 Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — In Progress
-Plan: 06-03 — FeedbackPath + SpectralProcessor (applying)
-Status: F6 plan 3/5 in progress
-Last activity: 2026-05-19 — 06-03 APPLY started; FeedbackPath + SpectralProcessor
+Plan: 06-03 — FeedbackPath + SpectralProcessor (unified ✅)
+Status: F6 plan 3/5 complete; 06-04 (MultiSampleBank) next
+Last activity: 2026-05-19 — 06-03 unified; FeedbackPath + SpectralProcessor; 110/110; a1ea272
 
 Progress:
-- Milestone: [████████████████░░░░] ~83%
+- Milestone: [████████████████░░░░] ~85%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
 - F4: [████████████████████] 100% ✅
 - F5: [████████████████████] 100% ✅
-- F6: [████████░░░░░░░░░░░░] ~40% — 06-01 ✅ 06-02 ✅
+- F6: [████████████░░░░░░░░] ~60% — 06-01 ✅ 06-02 ✅ 06-03 ✅
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [06-03 in progress — FeedbackPath + SpectralProcessor]
+  ✓        ✓        ✓     [Loop complete — ready for 06-04]
 ```
 
 ## Accumulated context
@@ -42,6 +42,8 @@ PLAN ──▶ APPLY ──▶ UNIFY
 ### Decisions
 | Decision | Phase | Impact |
 |----------|-------|--------|
+| JUCE performRealOnlyInverseTransform normalises by 1/N internally | F6c | Do NOT divide output by kFFTSize after IFFT — double-normalization makes output 2048× too quiet |
+| feedbackGain hard-clamped to 0.95 in process() | F6c | Prevents divergence regardless of param value; LP filter: k = 1 - clamp(damp); damp=0 → passthrough |
 | parentCopy before FIFO finishedWrite in scheduleGrain() | F6b | Audio thread owns slot immediately after finishedWrite; copy must be taken beforehand for sub-grain spawning |
 | StochasticTiming::Poisson = Exponential inter-arrival | F6b | Mathematically correct: Poisson process inter-arrival time is Exp(λ); name is user-facing |
 | Pareto test tolerance 20% (not 15%) | F6b | E[X_clamped] = 0.83×mean analytically for α=1.5 at 5× clamp ceiling; not a bug — documented in test |
@@ -81,9 +83,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-19
-Stopped at: 06-02 unified — SubGrain depth 0/1/2, StochasticTiming 6 distributions; 101/101; ab1f039
-Next action: /paul:plan F6 (plan 03) — Feedback Path + Spectral Processor
-Resume context: 101/101 tests. 68 APVTS params. SubGrain and StochasticTiming active in engine. GranularEngine.h includes both new headers. New classes needed: FeedbackPath.{h,cpp} (internal feedback loop) and SpectralProcessor.{h,cpp} (FFT freeze/blur, juce::dsp::FFT) in Source/Engine/.
+Stopped at: 06-03 unified — FeedbackPath + SpectralProcessor; 110/110; a1ea272
+Next action: /paul:plan F6 (plan 04) — MultiSampleBank (4-slot weighted-random sample blending)
+Resume context: 110/110 tests. 74 APVTS params. FeedbackPath + SpectralProcessor wired as alternate grain sources. Source priority chain: Spectral > Feedback > SampleBuffer > sine. Next: MultiSampleBank.{h,cpp} — 4 sample slots, per-grain weighted-random selection, blending logic.
 
 ## Phase history
 
@@ -102,3 +104,4 @@ Resume context: 101/101 tests. 68 APVTS params. SubGrain and StochasticTiming ac
 | F5c — Snapshots + UI | 3/3 | 2026-05-19 | 3697bcd |
 | F6a — UI Polish | 1/5 | 2026-05-19 | ecb8aca |
 | F6b — Sub-grain + Stochastic | 2/5 | 2026-05-19 | ab1f039 |
+| F6c — FeedbackPath + Spectral | 3/5 | 2026-05-19 | a1ea272 |
