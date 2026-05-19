@@ -132,11 +132,12 @@ TEST_CASE("GranularEngine uses SampleBuffer source when loaded", "[GranularEngin
     out.clear();
     engine.processBlock(out); // triggers trySwap(); currentReadPtr_ now set
 
-    // Give scheduler time to fill grains from the new source (~7 cycles @ 20 ms).
-    juce::Thread::sleep(150);
+    // Give scheduler time to queue multiple grains (Uniform [50,150]ms interval,
+    // 400ms guarantees 2-4 grains in FIFO before we start measuring).
+    juce::Thread::sleep(400);
 
     float totalEnergy = 0.0f;
-    for (int b = 0; b < 20; ++b)
+    for (int b = 0; b < 50; ++b)
     {
         out.clear();
         engine.processBlock(out);
@@ -158,11 +159,11 @@ TEST_CASE("GranularEngine falls back to sine tone when SampleBuffer is empty", "
     engine.setBank(&bank); // no slots loaded yet — falls back to sine
     engine.prepare(kSampleRate, kBlockSize);
 
-    juce::Thread::sleep(150);
+    juce::Thread::sleep(400);
 
     juce::AudioBuffer<float> out(2, kBlockSize);
     float totalEnergy = 0.0f;
-    for (int b = 0; b < 20; ++b)
+    for (int b = 0; b < 50; ++b)
     {
         out.clear();
         engine.processBlock(out);
