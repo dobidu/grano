@@ -6,9 +6,9 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F6-ui-polish-and-advanced
-loop_position: PLAN
-current_plan: .paul/phases/06-ui-polish-and-advanced/06-04-PLAN.md
-last_unified: .paul/phases/06-ui-polish-and-advanced/06-03-SUMMARY.md
+loop_position: IDLE
+current_plan: null
+last_unified: .paul/phases/06-ui-polish-and-advanced/06-04-SUMMARY.md
 session_start: 2026-05-19
 ```
 
@@ -16,25 +16,25 @@ session_start: 2026-05-19
 
 Milestone: v1.0 Initial Release
 Phase: F6 — UI Polish + Sub-grain + Spectral (7 of 8) — In Progress
-Plan: 06-04 — MultiSampleBank (created, awaiting approval)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-19 — 06-04-PLAN.md created; MultiSampleBank + stereo downmix
+Plan: 06-04 — MultiSampleBank ✅ COMPLETE
+Status: Ready for next PLAN (06-05)
+Last activity: 2026-05-19 — 06-04 unified; MultiSampleBank 4-slot; stereo downmix fix; 117/117; b17ab73
 
 Progress:
-- Milestone: [████████████████░░░░] ~85%
+- Milestone: [█████████████████░░░] ~88%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
 - F4: [████████████████████] 100% ✅
 - F5: [████████████████████] 100% ✅
-- F6: [████████████░░░░░░░░] ~60% — 06-01 ✅ 06-02 ✅ 06-03 ✅
+- F6: [████████████████░░░░] ~80% — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [06-04 plan created, awaiting approval]
+  ✓        ✓        ✓     [Loop complete — ready for next PLAN]
 ```
 
 ## Accumulated context
@@ -70,7 +70,7 @@ PLAN ──▶ APPLY ──▶ UNIFY
 ### Deferred issues
 | Issue | Origin | Effort | Revisit |
 |-------|--------|--------|---------|
-| Stereo file downmix (proper L+R average) | F2 | S | F6-04 (multi-sample engine) |
+| ~~Stereo file downmix (proper L+R average)~~ | ~~F2~~ | ~~S~~ | ✅ Resolved in F6d |
 | Embedded Inter + JetBrains Mono fonts via BinaryData | F3 | M | F6-05 (integration) |
 | Audio response verify (knobs → engine, volume → silence) | F3 | XS | First non-WSL2 session |
 | Drawable waveform drag-editor in LfoPanel | F5c | M | F6-02+ |
@@ -83,9 +83,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-19
-Stopped at: 06-03 unified — FeedbackPath + SpectralProcessor; 110/110; a1ea272
-Next action: /paul:plan F6 (plan 04) — MultiSampleBank (4-slot weighted-random sample blending)
-Resume context: 110/110 tests. 74 APVTS params. FeedbackPath + SpectralProcessor wired as alternate grain sources. Source priority chain: Spectral > Feedback > SampleBuffer > sine. Next: MultiSampleBank.{h,cpp} — 4 sample slots, per-grain weighted-random selection, blending logic.
+Stopped at: 06-04 unified — MultiSampleBank 4-slot weighted-random; stereo downmix fix; 117/117; b17ab73
+Next action: /paul:plan F6 (plan 05) — CurveEditor + Spectrogram + multi-slot UI + integration pass
+Resume context: 117/117 tests. 78 APVTS params. Source priority chain: Spectral > Feedback > Bank(4 slots) > sine. MultiSampleBank done; slots 1-3 have no UI yet. getSampleBuffer() still returns slot 0 ref. Next: 06-05 final F6 integration — slot load UI, CurveEditor, Spectrogram (optional), full integration pass.
 
 ## Phase history
 
@@ -105,3 +105,4 @@ Resume context: 110/110 tests. 74 APVTS params. FeedbackPath + SpectralProcessor
 | F6a — UI Polish | 1/5 | 2026-05-19 | ecb8aca |
 | F6b — Sub-grain + Stochastic | 2/5 | 2026-05-19 | ab1f039 |
 | F6c — FeedbackPath + Spectral | 3/5 | 2026-05-19 | a1ea272 |
+| F6d — MultiSampleBank | 4/5 | 2026-05-19 | b17ab73 |
