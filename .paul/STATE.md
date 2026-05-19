@@ -7,8 +7,8 @@ This file is managed by PAUL. Do not edit manually.
 ```yaml
 phase: F5-modulation-matrix
 loop_position: IDLE
-current_plan: (none — 05-01 complete, ready to plan 05-02)
-last_unified: .paul/phases/05-modulation-matrix/05-01-SUMMARY.md
+current_plan: (none — 05-02 complete, ready to plan 05-03)
+last_unified: .paul/phases/05-modulation-matrix/05-02-SUMMARY.md
 session_start: 2026-05-18
 ```
 
@@ -16,24 +16,24 @@ session_start: 2026-05-18
 
 Milestone: v1.0 Initial Release
 Phase: F5 — Modulation Matrix (6 of 8) — In Progress
-Plan: 05-01 ✅ COMPLETE — ready for 05-02 ModMatrix
-Status: PLAN 1 of 3 unified
-Last activity: 2026-05-18 — Unified 05-01 (F5a: LFO core); 85/85 tests
+Plan: 05-02 ✅ COMPLETE — ready for 05-03 Snapshots + UI panels
+Status: PLAN 2 of 3 unified
+Last activity: 2026-05-18 — Unified 05-02 (F5b: ModMatrix + engine); 91/91 tests
 
 Progress:
-- Milestone: [█████████████░░░░░░░] ~70%
+- Milestone: [██████████████░░░░░░] ~75%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
 - F3: [████████████████████] 100% ✅
 - F4: [████████████████████] 100% ✅
-- F5: [███████░░░░░░░░░░░░░] 33% — 05-01 done, 05-02 next
+- F5: [█████████████░░░░░░░] 66% — 05-02 done, 05-03 next
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [05-01 complete — ready for /paul:plan 05-02]
+  ✓        ✓        ✓     [05-02 complete — ready for /paul:plan 05-03]
 ```
 
 ## Accumulated context
@@ -41,6 +41,8 @@ PLAN ──▶ APPLY ──▶ UNIFY
 ### Decisions
 | Decision | Phase | Impact |
 |----------|-------|--------|
+| ModMatrix() = default explicit required | F5b | GCC suppresses implicit default ctor with JUCE_DECLARE_NON_COPYABLE + non-trivial members — add explicit default to any new class with this macro |
+| ModMatrix owns LFO advances in processBlock() | F5b | PluginProcessor must NOT call lfo1_.processBlock() separately; ModMatrix is sole LFO driver |
 | Tests compile plugin sources directly (not via JUCE shared-code target) | F0 | Pattern for all future test targets in F1+ |
 | Font API deprecation deferred | F0 | Must migrate to `FontOptions` in F3 when GranoLAF is built |
 | DAW smoke via WSLg Standalone | F0 | Win/mac smoke covered by CI on first push |
@@ -75,9 +77,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-18
-Stopped at: 05-01 unified — Lfo class, 10 APVTS params, 85/85 tests, commit bb7d921
-Next action: /paul:plan 05-02 — ModMatrix + engine integration (LFO wiring, 8-slot routing)
-Resume context: 85/85 tests. 42 APVTS params. Lfo::advanceSample() API ready. Two LFO instances go on PluginProcessor in 05-02.
+Stopped at: 05-02 unified — ModMatrix, LFO wiring, 66 APVTS params, 91/91 tests, commit 281378d
+Next action: /paul:plan 05-03 — Snapshots + UI panels (LfoPanel, ModulationMatrixView, human-verify checkpoint)
+Resume context: 91/91 tests. 66 APVTS params. ModMatrix::getModOffset() API stable. Dest enum frozen (29 entries). lfo1_/lfo2_/modMatrix_ live on PluginProcessor.
 
 ## Phase history
 
