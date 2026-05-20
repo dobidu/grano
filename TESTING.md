@@ -1,13 +1,17 @@
 # TESTING.md — Grano Manual Acceptance Test
 
-**Version:** v1.0  
-**Date:** 2026-05-19  
-**Tester:**  
-**Build:**  
-**DAW / Host:**  
-**OS / Platform:**  
+**Version:** v1.1 (multi-platform)
 
-Mark each test `[x]` when it passes. Note failures inline with a short description.
+| Field          | Windows                     | macOS                        |
+|----------------|-----------------------------|------------------------------|
+| Tester         |                             |                              |
+| Date           |                             |                              |
+| Build          | v1.0.0-beta.1               | v1.0.0-beta.1                |
+| DAW / Host     |                             |                              |
+| OS Version     |                             |                              |
+| Plugin formats | VST3 in DAW, Standalone     | VST3, AU, Standalone         |
+
+Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below: `> Failure: <short description>`. Skipped tests: `[S]` with a note.
 
 ---
 
@@ -21,7 +25,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Insert Grano as a VST3 (Windows/Linux) or AU (macOS) plugin.
 
 **Expected result:** Plugin window opens with no error dialogs. All UI panels visible. No audio glitches or crashes.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -41,7 +46,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 - Feedback off, Spectral off.
 - Waveform display is empty (no sample loaded).  
 
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -52,7 +58,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Select an audio output device when prompted.
 
 **Expected result:** Application window opens. Audio device initializes without errors. UI is fully functional.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -66,7 +73,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Click **Open** (or equivalent).
 
 **Expected result:** Waveform display renders the sample waveform. No error dialog. Playback head appears at position 0.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -78,7 +86,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Confirm.
 
 **Expected result:** Waveform display shows AIFF content. Granular engine outputs audio when the host is playing.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -88,7 +97,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Drag a FLAC file from the file manager and drop it onto the waveform display area.
 
 **Expected result:** FLAC sample loads. Waveform renders. No crash or silent failure.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -98,7 +108,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Drag an OGG file onto the waveform display.
 
 **Expected result:** OGG sample loads and waveform renders correctly.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -108,7 +119,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Drag an MP3 file onto the waveform display.
 
 **Expected result:** MP3 sample loads and waveform renders correctly.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -118,7 +130,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Drag a non-audio file (e.g., a `.txt` or `.png`) onto the waveform display.
 
 **Expected result:** File is rejected. No crash. Previously loaded sample (if any) remains unchanged. Optional: brief error message or no response.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -129,7 +142,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Monitor the output meter or listen through monitors.
 
 **Expected result:** Audible granular output. Grains are heard at roughly the expected density.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -143,7 +157,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Turn Grain Size to its minimum (5ms).
 
 **Expected result:** Output sounds grainy, dense, and short — almost pitched noise. Distinct from default.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -153,7 +168,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Turn Grain Size to its maximum (500ms).
 
 **Expected result:** Output sounds smooth, slow-moving, with very long overlapping grains.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -163,7 +179,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Density to 1 g/s.
 
 **Expected result:** Clearly spaced, sparse grain triggers. Audible gaps or silence between grains.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -173,7 +190,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Density to 100 g/s.
 
 **Expected result:** Dense, washy output. Significantly louder/fuller than at 1 g/s.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -183,7 +201,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Slowly sweep Position from 0% to 100%.
 
 **Expected result:** The timbral character of the output changes continuously as the read position moves through the sample. Start and end positions sound distinctly different.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -194,7 +213,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Position Jitter = 100%. Listen.
 
 **Expected result:** At 0%: stable, consistent grain starting point. At 100%: grains scatter across the full sample, producing a diffuse, variable texture.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -204,7 +224,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Pitch Shift to +24st.
 
 **Expected result:** Output pitch is clearly two octaves above the natural sample pitch.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -214,7 +235,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Pitch Shift to −24st.
 
 **Expected result:** Output pitch is clearly two octaves below the natural sample pitch.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -224,7 +246,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Return Pitch Shift to 0st.
 
 **Expected result:** Output pitch matches the original sample pitch (within granular approximation).  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -235,7 +258,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Pan-check on a stereo scope or by toggling L/R solo.
 
 **Expected result:** Left and right channels are identical (mono). No stereo width.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -246,7 +270,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Check stereo scope.
 
 **Expected result:** Wide stereo image. Left and right grains diverge noticeably.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -256,7 +281,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Master Volume to −60dB.
 
 **Expected result:** Output is near-silent (−60dB is effectively inaudible on most monitors).  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -266,7 +292,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Master Volume to +6dB.
 
 **Expected result:** Output is louder than at 0dB. Ensure no unexpected clipping in the plugin's own output stage (may clip downstream).  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -277,7 +304,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Let the engine run for 10 seconds.
 
 **Expected result:** Granular output continues indefinitely. No silence or dropout when the playhead would otherwise reach the end of the sample.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -288,7 +316,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Advance Position to 100%.
 
 **Expected result:** Grains at or near the end of the sample may become sparse or silent if the position playhead passes the end. Output does not loop back automatically.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -305,7 +334,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 4. Re-enable bypass (MOTION off).
 
 **Expected result:** With MOTION on: slow pitch wavering (wow) audible. With MOTION off (bypass): wow disappears. Clean before/after comparison.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -315,7 +345,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Wow Depth from 0 to max.
 
 **Expected result:** Pitch modulation depth increases continuously. At max, a pronounced slow pitch wobble is clearly audible.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -325,7 +356,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Wow Rate from minimum to maximum.
 
 **Expected result:** The speed of the pitch wobble increases from very slow (tape wow) to faster oscillation.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -335,7 +367,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Flutter Depth from 0 to max.
 
 **Expected result:** A faster, shallower pitch variation (flutter) increases in prominence. Distinctly higher frequency than wow.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -345,7 +378,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Flutter Rate from min to max.
 
 **Expected result:** The flutter frequency changes from slow to fast.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -356,7 +390,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Listen for 10–15 seconds.
 
 **Expected result:** Slow, random-walk pitch drift accumulates over time. Not periodic like wow. Output wanders in pitch unpredictably.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -366,7 +401,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Crackle Level to maximum.
 
 **Expected result:** Audible crackle artifacts added to the output — irregular, impulsive noise like a vinyl record.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -376,7 +412,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Crackle Color from minimum to maximum.
 
 **Expected result:** The tonal quality of the crackle changes — from darker/duller to brighter/harsher (or vice versa depending on implementation direction).  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -391,7 +428,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Re-enable bypass. Listen.
 
 **Expected result:** With COLOR on: audible saturation/distortion. With bypass on: clean granular output.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -401,7 +439,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Saturate from 0 to 100%.
 
 **Expected result:** Increasing harmonic saturation/warmth. At high values, audible harmonic distortion.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -411,7 +450,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Decimate from 0 to 100%.
 
 **Expected result:** Bit-crushing / sample-rate reduction effect increases. At high values, clearly lo-fi / aliased character.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -421,7 +461,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Tilt to −1.
 
 **Expected result:** High frequencies roll off, low frequencies boosted. Output sounds darker/bassier.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -431,7 +472,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Tilt to +1.
 
 **Expected result:** High frequencies boosted, lows rolled off. Output sounds brighter/thinner.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -441,7 +483,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Tilt to 0.
 
 **Expected result:** Output returns to spectrally unaltered. No tonal coloring from Tilt alone.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -451,7 +494,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Verb Mix from 0 to 100%.
 
 **Expected result:** Reverb tail builds in. At 100%, a clearly reverberant, decaying tail follows each grain cluster. At 0%, no reverb.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -466,7 +510,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Bypass PATTERN. Listen.
 
 **Expected result:** With PATTERN on: rhythmic, structured grain trigger pattern. With bypass: free (uniform) grain triggering.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -476,7 +521,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Trigger Mode to **Free**.
 
 **Expected result:** Grains trigger continuously at the rate set by Density. Not sync-locked, not rhythmic.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -487,7 +533,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Adjust Sync Division (e.g., 1/8).
 
 **Expected result:** Grain triggers lock to the host BPM at the chosen subdivision. Rhythmically predictable when monitored against a click.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -497,7 +544,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Change Sync Division from 1/4 to 1/16.
 
 **Expected result:** Grain trigger rate increases 4×. At 1/16, triggers occur four times as frequently as at 1/4.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -508,7 +556,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Eucl Steps = 16, Eucl Pulses = 4, Eucl Rotation = 0.
 
 **Expected result:** 4 evenly spaced grain triggers per 16-step cycle. Rhythmic and repetitive.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -518,7 +567,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Increment Eucl Rotation from 0 to 4.
 
 **Expected result:** The phase of the euclidean pattern shifts. Triggers shift in time relative to the cycle start.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -530,7 +580,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Adjust Transient Sensitivity from low to high.
 
 **Expected result:** Grain triggers fire in response to incoming transients. Higher Transient Sensitivity fires on subtler transients. At low sensitivity, only loud hits trigger.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -541,7 +592,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Probability = 50%. Count grain events over same duration.
 
 **Expected result:** At 50%, roughly half as many grain triggers fire compared to 100%. Output is sparser and intermittent.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -552,7 +604,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Reverse Prob = 100%. Listen.
 
 **Expected result:** At 0%: all grains play forward. At 100%: all grains play backward. Distinct timbral change.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -563,7 +616,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Sweep Pitch Shift across its range.
 
 **Expected result:** Pitch Shift values snap to semitones of the major scale. Perceived pitch jumps in scale steps, not chromatically.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -573,7 +627,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Click through all 11 Quantize Scale options and confirm each label is distinct and selectable.
 
 **Expected result:** 11 distinct scale names appear (e.g., Major, Minor, Dorian, Pentatonic, etc.). No duplicate entries, no blank slots.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -584,7 +639,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Spray = 100%. Listen.
 
 **Expected result:** At 0%: triggers evenly spaced. At 100%: trigger timing is randomized/stochastic, producing an uneven, humanized rhythm.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -596,7 +652,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep LFO 1 Rate from 0.01Hz to 8000Hz.
 
 **Expected result:** At low rates (< 1Hz): slow, perceptible sweep of Grain Size. At audio rates (> 20Hz): the grain size modulation becomes a timbral/tonal effect rather than a slow sweep.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -606,7 +663,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Select Sine waveform on LFO 1.
 
 **Expected result:** Smooth, continuous pitch modulation — slow vibrato with no sharp edges.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -616,7 +674,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Select Triangle waveform.
 
 **Expected result:** Linear ramp up/down pitch — audibly different from sine (V-shaped rather than curved).  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -626,7 +685,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Select Saw waveform.
 
 **Expected result:** Pitch ramps in one direction then resets sharply. Asymmetric modulation clearly audible.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -636,7 +696,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Select Square waveform.
 
 **Expected result:** Pitch alternates between two values with hard transitions — a pitch trill effect.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -646,7 +707,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Select Random waveform.
 
 **Expected result:** Pitch modulation is continuously random and non-periodic. No repeating pattern audible.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -656,7 +718,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Select S&H waveform.
 
 **Expected result:** Pitch snaps to a new random value at each cycle — staircase-style random steps, not continuous.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -667,7 +730,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Draw a custom shape in the LFO curve editor.
 
 **Expected result:** Pitch modulation follows the drawn shape. Output changes as the shape is edited.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -677,7 +741,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set LFO 1 Phase = 0°, LFO 2 Phase = 180°.
 
 **Expected result:** The two LFOs are in anti-phase. Their effects partially or fully cancel when their amounts are equal. With both modulating different L/R destinations or observed on a scope, the 180° offset is visible/audible.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -688,7 +753,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Change host tempo from 120BPM to 90BPM.
 
 **Expected result:** LFO rate tracks the host tempo change. The modulation period changes proportionally when tempo changes.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -699,7 +765,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Listen and observe both modulations running simultaneously.
 
 **Expected result:** Two independent modulations occur concurrently. Grain Size and Position both modulate at their respective rates without interfering with each other.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -709,7 +776,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set LFO 1 Depth = 0.
 
 **Expected result:** Pitch Shift modulation ceases. Output is static in pitch.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -722,7 +790,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. LFO 1 Rate = 1Hz, Sine.
 
 **Expected result:** Grain Size modulates at 1Hz. Audible cyclic texture change.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -732,7 +801,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Change Amount to −50%.
 
 **Expected result:** The modulation direction inverts. When LFO is at its positive peak, Position moves in the opposite direction compared to +50%.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -744,7 +814,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Let run for 10 seconds.
 
 **Expected result:** All 8 modulations operate simultaneously without crash, silence, or excessive CPU spike. Output is complex but continuous.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -755,7 +826,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Count/verify all destination options appear.
 
 **Expected result:** Exactly 29 destinations listed. No blank entries, no duplicates. All parameter names are legible.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -765,7 +837,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Source of slot 1 to None.
 
 **Expected result:** Modulation stops immediately. Pitch Shift returns to its static value.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -778,7 +851,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Long-press or right-click Snapshot **A** and select "Save" (or use the save action per the UI design).
 
 **Expected result:** Snapshot A now holds the modified parameter state. Visual indicator on A confirms it has saved content.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -789,7 +863,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Click Snapshot **A** to recall.
 
 **Expected result:** All parameters snap back to the values saved in step 9.1: Grain Size = 50ms, Density = 80 g/s, Pitch Shift = +7st.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -803,7 +878,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 5. Recall each snapshot in order: D → B → A → C.
 
 **Expected result:** Each recall loads the correct unique parameter set saved to that slot. No cross-contamination between slots.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -815,7 +891,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Recall Snapshot A.
 
 **Expected result:** Snapshot A retains the saved parameter values after reload.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -828,7 +905,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Listen and note the texture.
 
 **Expected result:** Standard granular output. No recursive grain spawning.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -838,7 +916,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Sub-grain Depth = 1.
 
 **Expected result:** Each primary grain spawns one child grain. Output becomes denser and more complex than at depth 0. Audible increase in grain density without changing Density knob.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -848,7 +927,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Sub-grain Depth = 2.
 
 **Expected result:** Two levels of recursive grain spawning. Further density increase over depth 1. Output is significantly more complex. CPU usage may rise noticeably.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -863,7 +943,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Listen to inter-grain timing.
 
 **Expected result:** Even, regular grain spacing. Metronomic feel.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -872,7 +953,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Stochastic Distribution = **Gaussian**.
 
 **Expected result:** Grain timing clusters around the mean. Subtle timing variation — slightly uneven but centered.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -881,7 +963,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Stochastic Distribution = **Poisson**.
 
 **Expected result:** Grain timing has occasional bursts and gaps. Statistically random but with memoryless inter-arrival times.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -890,7 +973,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Stochastic Distribution = **Exponential**.
 
 **Expected result:** Timing skewed toward short inter-grain intervals with rare long gaps. Output sounds front-loaded.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -899,7 +983,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Stochastic Distribution = **Pareto**.
 
 **Expected result:** Timing has heavy tail — most grains arrive quickly, but occasional very long silences occur.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -908,7 +993,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Set Stochastic Distribution = **1/f**.
 
 **Expected result:** Grain timing exhibits self-similarity and long-range correlation. Feels more "organic" than uniform — neither fully random nor periodic.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -917,7 +1003,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Rapidly cycle through all 6 distributions while audio is running.
 
 **Expected result:** No audio dropout, glitch, or crash when switching distributions in real time.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -930,7 +1017,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Feedback Gain = 0.5.
 
 **Expected result:** Audible feedback loop develops. Output becomes richer/thicker due to recycled signal feeding back into the granular engine.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -940,7 +1028,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Slowly raise Feedback Gain from 0 to 0.95.
 
 **Expected result:** Feedback intensity increases. At high gain (0.9–0.95), a buildup of recycled signal produces a dense, echoing texture. Must not self-oscillate into an uncontrolled blow-up.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -950,7 +1039,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Run for 30 seconds without touching any controls.
 
 **Expected result:** Output remains bounded — no exponential volume blowup. May be dense and loud, but stable.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -960,7 +1050,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Feedback Damp from 0 to 100%.
 
 **Expected result:** At 0%: bright, full-spectrum feedback. At 100%: high-frequency content in the feedback loop is attenuated — warmer, darker feedback tail.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -970,7 +1061,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Disable Feedback toggle.
 
 **Expected result:** Feedback signal disappears. Output returns to clean dry granular output within a short decay.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -983,7 +1075,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Mode = **Freeze**.
 
 **Expected result:** Output freezes spectrally — a sustained, static pad-like tone derived from the spectral snapshot at the moment of freeze. Position changes have reduced/no effect during freeze.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -993,7 +1086,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Disable Spectral toggle.
 
 **Expected result:** Output returns to normal granular processing. Frozen spectral content disappears.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1004,7 +1098,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Blur Amount = 50%.
 
 **Expected result:** Output has a smeared, diffuse quality. Transients and fine spectral detail are softened/blended.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1014,7 +1109,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Sweep Blur Amount from 0 to 100%.
 
 **Expected result:** At 0%: minimal blur (near-normal output). At 100%: maximum spectral smearing — highly diffuse, resonant texture.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1025,7 +1121,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Read the reported plugin latency in the DAW.
 
 **Expected result:** DAW reports a latency of approximately 2048 samples at the current sample rate (≈ 42ms at 48kHz). Latency compensation offsets other tracks accordingly.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1036,7 +1133,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Check reported latency.
 
 **Expected result:** Reported latency drops back to the non-spectral value (≤ 64 samples). DAW adjusts compensation.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1048,7 +1146,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Load a WAV file (any length).
 
 **Expected result:** Waveform display renders the sample amplitude envelope. Shape is recognizable and matches the audio file's content.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1058,7 +1157,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Observe the waveform display.
 
 **Expected result:** Grain particles appear on the waveform at the current grain read positions. Particles update in real time as grains spawn.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1069,7 +1169,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Density = 80 g/s. Observe particle count.
 
 **Expected result:** Visibly more particles at 80 g/s than at 5 g/s. Particle activity scales with the Density parameter.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1080,7 +1181,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Set Position Jitter = 100%. Observe.
 
 **Expected result:** At 0%: particles cluster tightly around the 50% position marker. At 100%: particles scatter across the full waveform width.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1095,7 +1197,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 4. Reopen the project.
 
 **Expected result:** All parameter values are restored exactly. Sample is reloaded. Module bypass states are correct. Output sounds identical to before saving.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1108,7 +1211,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 4. Play the track.
 
 **Expected result:** Grano initializes with the saved state. No manual reconfiguration needed. Output matches the saved session.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1120,7 +1224,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Save project, close, reopen.
 
 **Expected result:** Each instance restores its own independent state. Instance A and B remain distinct.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1133,7 +1238,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Monitor DAW CPU meter or system CPU usage.
 
 **Expected result:** CPU usage ≤ 15% on a modern (2020-era) multi-core CPU. No xruns or audio dropouts.  
-**Pass/Fail:** `[ ]`  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`  
 **Observed CPU:** ____%
 
 ---
@@ -1145,7 +1251,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Monitor CPU.
 
 **Expected result:** CPU usage ≤ 40% on a modern (2020-era) multi-core CPU. Plugin remains stable — no crash, no audio blowup.  
-**Pass/Fail:** `[ ]`  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`  
 **Observed CPU:** ____%
 
 ---
@@ -1158,7 +1265,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 3. Run for 16 bars.
 
 **Expected result:** Continuous audio output. No xruns, pops, or dropouts. CPU stays within bounds.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1169,7 +1277,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Monitor RAM usage via OS task manager or DAW diagnostics.
 
 **Expected result:** Total plugin resident memory ≤ 200MB with all slots filled.  
-**Pass/Fail:** `[ ]`  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`  
 **Observed RAM:** ____MB
 
 ---
@@ -1180,7 +1289,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 1. Rapidly toggle the bypass switches for MOTION, COLOR, and PATTERN in quick succession for 10 seconds.
 
 **Expected result:** No crash or audio blowup. Bypass toggles cleanly with at most a brief audio artifact on the toggle edge.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1191,7 +1301,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Listen to the master output.
 
 **Expected result:** No audio from the Grano track passes through to the master. Complete silence from this track.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1202,7 +1313,8 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Monitor Grano's output.
 
 **Expected result:** No audio output. No noise floor introduced. Meter reads silence.  
-**Pass/Fail:** `[ ]`
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
@@ -1213,9 +1325,21 @@ Mark each test `[x]` when it passes. Note failures inline with a short descripti
 2. Leave running for 30 minutes without touching controls.
 
 **Expected result:** Plugin remains stable throughout. No crash, no memory leak (check RAM at start vs. end), no progressive audio degradation.  
-**Pass/Fail:** `[ ]`  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`  
 **RAM at start:** ____MB  **RAM at end:** ____MB
 
 ---
 
-*End of TESTING.md — v1.0*
+## Sign-off
+
+| Platform | Tester | Date | Result |
+|----------|--------|------|--------|
+| Windows (VST3 + Standalone) | | | ○ Pending |
+| macOS (VST3 + AU + Standalone) | | | ○ Pending |
+
+**Release gate:** Both rows must read ✅ Pass before v1.0.0 final is tagged.
+
+---
+
+*End of TESTING.md — v1.1*
