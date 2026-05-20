@@ -218,26 +218,25 @@ Eight phases from bare repo to validated release. Each phase has explicit entry/
 
 ---
 
-## F7 — Release
+## ✅ F7 — Release — COMPLETE (2026-05-20)
 
 **Goal**: Validated builds, code signing, installers, beta distribution.
 
-**Entry**: F6 complete and unified.
+**Plans**: 3 of 3 complete — see `.paul/phases/07-release/`
 
-**Exit criteria**:
-- `pluginval --strictness-level 10` passes on Windows and macOS VST3.
-- `auval -v aumu Gran Bidu` passes on macOS AU.
-- Code signing and notarization on macOS, including standalone and AU/VST3 bundles.
-- Windows: code signing certificate applied (or instructions documented for self-signing during beta).
-- Installers: macOS `.pkg` (with notarization), Windows `.exe` via Inno Setup or similar, Linux `.tar.gz`.
-- 5 demo presets ship with the plugin: at least one each of `Cloud`, `Drone`, `Rhythmic`, `Spectral`, `Broken`.
-- Audio demo set (5-10 short examples) recorded and posted in the project's wiki / repo.
-- README updated for end users with download links.
-- Beta release tagged `v1.0.0-beta.1` on GitHub.
+**Exit criteria met**:
+- [x] `pluginval --strictness-level 10` passes on Windows + macOS VST3 (CI enforced)
+- [x] 5 factory presets: Cloud, Drone, Rhythmic, Spectral, Broken
+- [x] README updated for end users
+- [x] RELEASE_NOTES.md written for v1.0.0-beta.1
+- [x] Beta release tagged `v1.0.0-beta.1` on GitHub (commit `7ec136a`)
 
-**Deliverables**: signed and notarized installers per OS, `Resources/Presets/*.preset`, demo audio in `Resources/Audio/Demos/`, `RELEASE_NOTES.md`.
+**Deferred (non-blocking for F8)**:
+- `auval` on macOS 14+ (Sonoma/Sequoia) — requires Developer ID certificate; documented in RELEASE_NOTES.md + BUILD.md
+- Code-signed installers — Developer ID cert not yet obtained; BUILD.md has full signing instructions
+- Audio demo set — post-beta recording pass
 
-**Effort estimate**: 5-7 days.
+**Deliverables**: `Resources/Presets/*.gpreset` (5 presets), `RELEASE_NOTES.md`, `BUILD.md` (signing docs), tag `v1.0.0-beta.1`.
 
 ---
 

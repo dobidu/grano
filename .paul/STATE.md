@@ -5,23 +5,23 @@ This file is managed by PAUL. Do not edit manually.
 ## Current state
 
 ```yaml
-phase: F7-release
-loop_position: PLAN
-current_plan: .paul/phases/07-release/07-03-PLAN.md
-last_unified: .paul/phases/07-release/07-02-SUMMARY.md
-session_start: 2026-05-19
+phase: F8-qa
+loop_position: IDLE
+current_plan: null
+last_unified: .paul/phases/07-release/07-03-SUMMARY.md
+session_start: 2026-05-20
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F7 — Release (8 of 8) — In Progress
-Plan: 07-03 — BUILD.md fixes + v1.0.0-beta.1 git tag (created, awaiting approval)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-19 — 07-03-PLAN.md created; 2 tasks + 1 checkpoint (git push)
+Phase: F8 — QA and Manual Acceptance Testing — Pending
+Plan: none (F8 not yet planned)
+Status: F7 complete ✅ — awaiting /paul:plan F8
+Last activity: 2026-05-20 — F7 unified; v1.0.0-beta.1 tagged and pushed
 
 Progress:
-- Milestone: [████████████████████] ~97%
+- Milestone: [███████████████████░] ~98%
 - F0: [████████████████████] 100% ✅
 - F1: [████████████████████] 100% ✅
 - F2: [████████████████████] 100% ✅
@@ -29,13 +29,14 @@ Progress:
 - F4: [████████████████████] 100% ✅
 - F5: [████████████████████] 100% ✅
 - F6: [████████████████████] 100% ✅ — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅ 06-05 ✅
-- F7: [█████████████░░░░░░░] ~67% — 07-01 ✅ 07-02 ✅ 07-03 ○
+- F7: [████████████████████] 100% ✅ — 07-01 ✅ 07-02 ✅ 07-03 ✅
+- F8: [░░░░░░░░░░░░░░░░░░░░] 0% — pending plan
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [07-03 plan created, awaiting approval]
+  ○        ○        ○     [F8 not yet planned]
 ```
 
 ## Accumulated context
@@ -90,10 +91,10 @@ None.
 
 ## Session continuity
 
-Last session: 2026-05-19
-Stopped at: 07-03-PLAN.md created — awaiting approval
-Next action: /paul:apply .paul/phases/07-release/07-03-PLAN.md
-Resume context: F7 plan 3 of 3. Two auto tasks (BUILD.md edits + git tag creation) then checkpoint for git push origin v1.0.0-beta.1. After push: /paul:unify to close F7.
+Last session: 2026-05-20
+Stopped at: F7 fully unified — all 3 plans complete, v1.0.0-beta.1 tagged and pushed
+Next action: /paul:plan F8 (QA + Manual Acceptance Testing)
+Resume context: F8 is the final phase. No plans exist yet. Create the first F8 plan to build TESTING.md and run acceptance tests on Windows + macOS.
 
 ## Phase history
 
@@ -117,3 +118,4 @@ Resume context: F7 plan 3 of 3. Two auto tasks (BUILD.md edits + git tag creatio
 | F6e — CurveEditor + Multi-slot UI | 5/5 | 2026-05-19 | 827a4b9 |
 | F7-01 — CI hardening (pluginval-10) | 1/3 | 2026-05-19 | (multiple) |
 | F7-02 — RELEASE_NOTES + presets + README | 2/3 | 2026-05-19 | e6724ad |
+| F7-03 — BUILD.md fixes + v1.0.0-beta.1 tag | 3/3 | 2026-05-20 | 7ec136a |
