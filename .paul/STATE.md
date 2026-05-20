@@ -6,8 +6,8 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F8-qa
-loop_position: IDLE
-current_plan: null
+loop_position: PLAN
+current_plan: .paul/phases/08-qa/08-01-PLAN.md
 last_unified: .paul/phases/07-release/07-03-SUMMARY.md
 session_start: 2026-05-20
 ```
@@ -15,10 +15,10 @@ session_start: 2026-05-20
 ## Current position
 
 Milestone: v1.0 Initial Release
-Phase: F8 — QA and Manual Acceptance Testing — Pending
-Plan: none (F8 not yet planned)
-Status: F7 complete ✅ — awaiting /paul:plan F8
-Last activity: 2026-05-20 — F7 unified; v1.0.0-beta.1 tagged and pushed
+Phase: F8 — QA and Manual Acceptance Testing — In Progress
+Plan: 08-01 — TESTING.md reformat + Windows test pass (created, awaiting approval)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-05-20 — 08-01-PLAN.md created; 2 auto tasks + 1 checkpoint (Windows testing)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -30,13 +30,13 @@ Progress:
 - F5: [████████████████████] 100% ✅
 - F6: [████████████████████] 100% ✅ — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅ 06-05 ✅
 - F7: [████████████████████] 100% ✅ — 07-01 ✅ 07-02 ✅ 07-03 ✅
-- F8: [░░░░░░░░░░░░░░░░░░░░] 0% — pending plan
+- F8: [████░░░░░░░░░░░░░░░░] ~20% — 08-01 ○ 08-02 ○
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ○        ○        ○     [F8 not yet planned]
+  ✓        ○        ○     [08-01 plan created, awaiting approval]
 ```
 
 ## Accumulated context
@@ -92,9 +92,9 @@ None.
 ## Session continuity
 
 Last session: 2026-05-20
-Stopped at: F7 fully unified — all 3 plans complete, v1.0.0-beta.1 tagged and pushed
-Next action: /paul:plan F8 (QA + Manual Acceptance Testing)
-Resume context: F8 is the final phase. No plans exist yet. Create the first F8 plan to build TESTING.md and run acceptance tests on Windows + macOS.
+Stopped at: 08-01-PLAN.md created — awaiting approval
+Next action: /paul:apply .paul/phases/08-qa/08-01-PLAN.md
+Resume context: F8 plan 1 of 2. T1 reformats TESTING.md (sed pass). Checkpoint: Windows test execution (human). T2: triage failures. After unify: 08-02 for macOS + bug fixes.
 
 ## Phase history
 
