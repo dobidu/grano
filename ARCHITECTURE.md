@@ -237,7 +237,7 @@ Subclasses `juce::LookAndFeel_V4`. Overrides:
 - `drawRotarySlider` — replaced with a custom knob render.
 - `drawLinearSlider` — replaced with the slider render.
 - `drawButtonBackground`, `drawToggleButton`.
-- `getLabelFont`, `getPopupMenuFont` — return `Inter` (embedded via `BinaryData`).
+- `getLabelFont`, `getPopupMenuFont` — return `Inter`. Font embedding via `BinaryData` is planned for v1.0.0 stable; until then, the implementation falls back to `juce::Font::getDefaultSansSerifFontName()`.
 - `drawPopupMenuBackground`, `drawComboBox` — match the carbon palette.
 
 Halo glow on active controls: implemented via `Graphics::drawDropShadow` with the control's accent color, at low opacity, with small radius. Sutil, not loud.

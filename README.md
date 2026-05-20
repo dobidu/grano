@@ -444,7 +444,7 @@ LFO 1 at 0.07 Hz modulates LFO 2's rate between roughly 0.25 Hz and 0.75 Hz on a
 
 ### Snapshot performance technique
 
-Snapshots A, B, C, and D each store a complete state of all 74 parameters. The intended live use is to prepare two or more contrasting configurations and switch between them at performance time with a single click or MIDI trigger.
+Snapshots A, B, C, and D each store a complete state of all 79 parameters. The intended live use is to prepare two or more contrasting configurations and switch between them at performance time with a single click or MIDI trigger.
 
 **Setting up an A/B contrast for live switching:**
 
@@ -744,7 +744,7 @@ cp -R build/Grano_artefacts/Release/VST3/Grano.vst3 ~/.vst3/
 
 ```bash
 # Install pluginval from https://github.com/Tracktion/pluginval/releases
-pluginval --strictness-level 5 build/Grano_artefacts/Debug/VST3/Grano.vst3
+pluginval --strictness-level 10 build/Grano_artefacts/Debug/VST3/Grano.vst3
 
 # macOS AU
 auval -v aumu Gran Bidu
@@ -754,7 +754,7 @@ auval -v aumu Gran Bidu
 
 ## Parameter reference
 
-Complete list of all 74 automatable parameters.
+Complete list of all 79 automatable parameters.
 
 ### Granular engine
 
@@ -829,12 +829,24 @@ Complete list of all 74 automatable parameters.
 |----|------|-------|---------|
 | `subGrainDepth` | Sub-grain Depth | Int 0–2 | 0 |
 | `stochasticDist` | Stochastic Distribution | Choice (Uniform / Gaussian / Poisson / Exponential / Pareto / 1/f) | Uniform |
+| `envelopeShape` | Envelope Shape | Int 0–4 (0=Hann 1=Tukey 2=Gaussian 3=Triangle 4=Rectangle) | 0 |
 | `feedbackEnabled` | Feedback | Bool | Off |
 | `feedbackGain` | Feedback Gain | 0–0.95 | 0.5 |
 | `feedbackDamp` | Feedback Damp | 0–1 | 0.3 |
 | `spectralEnabled` | Spectral | Bool | Off |
 | `spectralMode` | Spectral Mode | Choice (Freeze / Blur) | Freeze |
 | `spectralBlurAmount` | Spectral Blur | 0–1 | 0.5 |
+
+### Multi-sample bank (4 slot weights)
+
+| ID | Name | Range | Default |
+|----|------|-------|---------|
+| `slot0Weight` | Slot 0 Weight | 0–1 | 1.0 |
+| `slot1Weight` | Slot 1 Weight | 0–1 | 0.0 |
+| `slot2Weight` | Slot 2 Weight | 0–1 | 0.0 |
+| `slot3Weight` | Slot 3 Weight | 0–1 | 0.0 |
+
+Per-grain source selection is weighted random across loaded slots. Slots with weight 0 are never selected. Default (slot 0 = 1.0, others = 0) is backward-compatible single-source behaviour.
 
 ### Modulation matrix (8 slots × 3 params = 24)
 
@@ -897,7 +909,7 @@ All core features complete. Release (F7) in progress.
 | F4 MOTION + COLOR + PATTERN | ✅ Complete |
 | F5 LFOs + Modulation Matrix + Snapshots | ✅ Complete |
 | F6 UI Polish + Advanced Engine | ✅ Complete |
-| F7 Release | 🔄 In progress |
+| F7 Release | 🔄 In progress (v1.0.0-beta.1 tagged) |
 | F8 QA + Manual Acceptance | Pending |
 
 ---

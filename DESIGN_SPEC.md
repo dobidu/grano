@@ -353,15 +353,17 @@ The plugin should look like it belongs in a production studio in 2030, not 2015.
 
 ---
 
-## Asset checklist (to be produced)
+## Asset checklist
 
-Owned by F6 polish:
+F6 shipped without font embedding. Status as of v1.0.0-beta.1:
 
-- [ ] Inter Variable Font (single file, ~ 200 KB) embedded.
-- [ ] JetBrains Mono Variable Font (~ 200 KB) embedded.
-- [ ] Tabler icon SVG subset (6 icons, ~ 4 KB) embedded.
-- [ ] Plugin window favicon for standalone (`.icns`, `.ico`, `.png`).
-- [ ] Splash screen art (loading state, ~ 800 ms max).
-- [ ] Cursor icons (default, fine-edit crosshair).
+- [ ] Inter Variable Font (single file, ~ 200 KB) embedded via BinaryData — **deferred to v1.0.0 stable**
+- [ ] JetBrains Mono Variable Font (~ 200 KB) embedded via BinaryData — **deferred to v1.0.0 stable**
+- [ ] Tabler icon SVG subset (6 icons, ~ 4 KB) embedded — **deferred to v1.0.0 stable**
+- [ ] Plugin window favicon for standalone (`.icns`, `.ico`, `.png`) — **post-v1.0**
+- [ ] Splash screen art (loading state, ~ 800 ms max) — **post-v1.0**
+- [ ] Cursor icons (default, fine-edit crosshair) — **post-v1.0**
 
 All assets respect their licenses; SIL OFL fonts allow embedding without attribution display.
+
+Until Inter and JetBrains Mono are embedded, `GranoLAF` falls back to `juce::Font::getDefaultSansSerifFontName()` for labels and `juce::Font::getDefaultMonospacedFontName()` for numeric values.
