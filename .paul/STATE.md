@@ -16,9 +16,10 @@ session_start: 2026-05-20
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-01 — TESTING.md reformat + Windows test pass (created, awaiting approval)
+Plan: 08-02 — ModuleTabPanel UX restructure (created, awaiting approval)
 Status: PLAN created, ready for APPLY
-Last activity: 2026-05-20 — 08-01-PLAN.md created; 2 auto tasks + 1 checkpoint (Windows testing)
+Last activity: 2026-05-22 — 08-01 applied (T1 done, checkpoint pending); 08-02 plan created for UX
+Note: 08-01 checkpoint (Windows testing) is still pending. 08-02 must be applied first.
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -93,8 +94,10 @@ None.
 
 Last session: 2026-05-20
 Stopped at: 08-01-PLAN.md created — awaiting approval
-Next action: /paul:apply .paul/phases/08-qa/08-01-PLAN.md
-Resume context: F8 plan 1 of 2. T1 reformats TESTING.md (sed pass). Checkpoint: Windows test execution (human). T2: triage failures. After unify: 08-02 for macOS + bug fixes.
+Next action: /paul:apply .paul/phases/08-qa/08-02-PLAN.md (UX fix — do this before Windows testing)
+Resume context: F8 plan 2 (UX). T1 creates ModuleTabPanel, T2 wires it into PluginEditor,
+checkpoint verifies the layout. After unify: resume 08-01 Windows testing checkpoint,
+then plan 08-03 for macOS + sign-off.
 
 ## Phase history
 
