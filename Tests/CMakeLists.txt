@@ -55,6 +55,8 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/UI/ModulationMatrixView.cpp
     # F6e — CurveEditor (PluginEditor.h includes it)
     ${CMAKE_SOURCE_DIR}/Source/UI/CurveEditor.cpp
+    # F8-UX — ModuleTabPanel (PluginEditor.h includes it)
+    ${CMAKE_SOURCE_DIR}/Source/UI/ModuleTabPanel.cpp
     test_modulation.cpp
     test_subgrain.cpp
     test_stochastic.cpp

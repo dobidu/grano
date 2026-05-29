@@ -98,12 +98,9 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     positionSlider_.setGrainExtent(
         apvts.getRawParameterValue(ParamIDs::grainSize), 0.0f);
 
-    // F5 panels
-    lfoPanel_.init(apvts);
-    addAndMakeVisible(lfoPanel_);
-
-    modMatrixView_.init(apvts);
-    addAndMakeVisible(modMatrixView_);
+    // Module tab panel — ENGINE / MOTION / COLOR / PATTERN / LFO / MOD
+    moduleTabPanel_.init(apvts);
+    addAndMakeVisible(moduleTabPanel_);
 
     // Snapshot buttons A/B/C/D
     static const char* kSnapLabels[] = { "A", "B", "C", "D" };
@@ -171,7 +168,7 @@ void GranoAudioProcessorEditor::resized()
     constexpr int kKnobH        = 100;
     constexpr int kSpreadH      = 44;
     constexpr int kSlotStripH   = 80;
-    constexpr int kBottomPanelH = 200;
+    constexpr int kBottomPanelH = 240;
     constexpr int kFooterH      = 24;
     constexpr int kSlotBtnW     = 28;
     constexpr int kSlotBtnH     = 24;
@@ -249,10 +246,8 @@ void GranoAudioProcessorEditor::resized()
     }
     y += kSlotStripH + kSectionGap;
 
-    // Bottom panel — LfoPanel left half, ModulationMatrixView right half
-    const int halfW = contentW / 2;
-    lfoPanel_     .setBounds(contentX,         y, halfW,            kBottomPanelH);
-    modMatrixView_.setBounds(contentX + halfW, y, contentW - halfW, kBottomPanelH);
+    // Bottom panel — ModuleTabPanel (ENGINE|MOTION|COLOR|PATTERN|LFO|MOD)
+    moduleTabPanel_.setBounds(contentX, y, contentW, kBottomPanelH);
 
     // Error label — docked to bottom edge
     errorLabel_.setBounds(0, h - kFooterH, w, kFooterH);

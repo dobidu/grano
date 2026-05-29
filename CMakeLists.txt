@@ -96,6 +96,8 @@ target_sources(Grano
         Source/UI/ModulationMatrixView.cpp
         # F6e — Envelope shape selector UI
         Source/UI/CurveEditor.cpp
+        # F8-UX — module tab panel (exposes all F4/F6 module controls)
+        Source/UI/ModuleTabPanel.cpp
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────
