@@ -176,6 +176,9 @@ void ModuleTabPanel::showTab(int idx)
 {
     activeTab_ = idx;
 
+    for (int i = 0; i < kTabCount; ++i)
+        tabBtns_[i].setToggleState(i == idx, juce::dontSendNotification);
+
     juce::Component* engineControls[] = {
         &subGrainDepthBox_,  &subGrainLabel_,
         &stochasticDistBox_, &stochasticLabel_,
