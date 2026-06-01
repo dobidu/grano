@@ -51,8 +51,8 @@ juce_add_plugin(Grano
     IS_SYNTH                FALSE        # sample-based effect instrument; revisit for MIDI triggering
     NEEDS_MIDI_INPUT        TRUE         # required for MIDI learn in F5; harmless for now
     EDITOR_WANTS_KEYBOARD_FOCUS TRUE
-    VST3_CATEGORIES         "Instrument" "Sampler"
-    AU_MAIN_TYPE            "kAudioUnitType_MusicDevice"
+    VST3_CATEGORIES         "Fx"
+    AU_MAIN_TYPE            "kAudioUnitType_Effect"
 )
 
 # ── Source files ──────────────────────────────────────────────────────────────
