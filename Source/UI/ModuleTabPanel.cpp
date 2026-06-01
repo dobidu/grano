@@ -256,27 +256,32 @@ void ModuleTabPanel::resized()
         constexpr int comboH = 22;
         constexpr int labelH = 14;
         constexpr int knobH  = 68;
+        constexpr int gap    = 8;
         const int halfW = content.getWidth() / 2;
         const int cx    = content.getX();
         const int cy    = content.getY();
+        const int rx    = cx + halfW;
 
-        subGrainLabel_.setBounds   (cx,           cy,            halfW - pad, labelH);
-        subGrainDepthBox_.setBounds(cx,           cy + labelH,   halfW - pad, comboH);
+        // Left column — sub-grain depth + stochastic distribution
+        subGrainLabel_.setBounds   (cx, cy,                          halfW - pad, labelH);
+        subGrainDepthBox_.setBounds(cx, cy + labelH,                 halfW - pad, comboH);
 
-        const int stocY = cy + labelH + comboH + pad;
-        stochasticLabel_.setBounds   (cx,         stocY,          halfW - pad, labelH);
-        stochasticDistBox_.setBounds (cx,          stocY + labelH, halfW - pad, comboH);
+        const int stocY = cy + labelH + comboH + gap;
+        stochasticLabel_.setBounds   (cx, stocY,          halfW - pad, labelH);
+        stochasticDistBox_.setBounds (cx, stocY + labelH, halfW - pad, comboH);
 
-        const int rx = cx + halfW;
-        feedbackEnableBtn_.setBounds(rx,           cy, halfW / 2 - pad, comboH);
-        feedbackGainKnob_.setBounds (rx,           cy + comboH + pad, halfW / 2, knobH);
-        feedbackDampKnob_.setBounds (rx + halfW/2, cy + comboH + pad, halfW / 2, knobH);
+        // Right column — Feedback: toggle (full width) then two equal knobs below
+        feedbackEnableBtn_.setBounds(rx,              cy,                halfW - pad,     comboH);
+        feedbackGainKnob_.setBounds (rx,              cy + comboH + gap, halfW / 2,       knobH);
+        feedbackDampKnob_.setBounds (rx + halfW / 2,  cy + comboH + gap, halfW / 2 - pad, knobH);
 
-        const int spY = cy + comboH + pad + knobH + pad;
-        spectralEnableBtn_.setBounds(rx,              spY,           halfW / 3 - pad, comboH);
-        spectralModeLabel_.setBounds(rx + halfW / 3,  spY,           halfW / 4,       labelH);
-        spectralModeBox_.setBounds  (rx + halfW / 3,  spY + labelH,  halfW / 3 - pad, comboH - labelH);
-        spectralBlurKnob_.setBounds (rx + halfW*2/3,  spY,           halfW / 3,       knobH);
+        // Right column — Spectral: toggle + mode combo on same row, blur knob below
+        // Row height = labelH + comboH so both toggle and mode fit flush
+        const int spY = cy + comboH + gap + knobH + gap;
+        spectralEnableBtn_.setBounds(rx,              spY,           halfW / 2 - pad,   labelH + comboH);
+        spectralModeLabel_.setBounds(rx + halfW / 2,  spY,           halfW / 2 - pad,   labelH);
+        spectralModeBox_.setBounds  (rx + halfW / 2,  spY + labelH,  halfW / 2 - pad,   comboH);
+        spectralBlurKnob_.setBounds (rx,  spY + labelH + comboH + gap, halfW - pad,     knobH);
     }
     else if (activeTab_ == 1)  // MOTION
     {
@@ -284,10 +289,12 @@ void ModuleTabPanel::resized()
         const int cy    = content.getY();
         motionEnableBtn_.setBounds(cx, cy, 100, 22);
 
-        const int knobH = (content.getHeight() - 22 - pad) / 2;
-        const int knobW = content.getWidth() / 4;
-        const int row1Y = cy + 22 + pad;
-        const int row2Y = row1Y + knobH;
+        // Two rows with gap between them
+        const int availH = content.getHeight() - 22 - pad;
+        const int knobH  = (availH - pad) / 2;
+        const int knobW  = content.getWidth() / 4;
+        const int row1Y  = cy + 22 + pad;
+        const int row2Y  = row1Y + knobH + pad;
 
         wowDepthKnob_.setBounds    (cx + knobW * 0, row1Y, knobW, knobH);
         wowRateKnob_.setBounds     (cx + knobW * 1, row1Y, knobW, knobH);
@@ -327,9 +334,9 @@ void ModuleTabPanel::resized()
         const int knobW = cw / 6;
 
         triggerModeLabel_.setBounds (cx,           cmbY,           cw / 4,       labelH);
-        triggerModeBox_.setBounds   (cx,           cmbY + labelH,  cw / 4 - pad, comboH - labelH);
+        triggerModeBox_.setBounds   (cx,           cmbY + labelH,  cw / 4 - pad, comboH);
         quantizeLabel_.setBounds    (cx + cw / 4,  cmbY,           cw / 4,       labelH);
-        quantizeScaleBox_.setBounds (cx + cw / 4,  cmbY + labelH,  cw / 4 - pad, comboH - labelH);
+        quantizeScaleBox_.setBounds (cx + cw / 4,  cmbY + labelH,  cw / 4 - pad, comboH);
 
         const int knobY = cmbY + comboH + pad;
         probabilityKnob_.setBounds  (cx + knobW * 0, knobY, knobW, knobH);

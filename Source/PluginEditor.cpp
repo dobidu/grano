@@ -229,7 +229,7 @@ void GranoAudioProcessorEditor::resized()
     densityKnob_   .setBounds(contentX + knobW,     y, knobW,                kKnobH);
     posJitterKnob_ .setBounds(contentX + knobW * 2, y, knobW,                kKnobH);
     pitchShiftKnob_.setBounds(contentX + knobW * 3, y, knobW,                kKnobH);
-    masterVolKnob_ .setBounds(contentX + knobW * 4, y, contentW - knobW * 4, kKnobH);
+    masterVolKnob_ .setBounds(contentX + knobW * 4, y, knobW,                kKnobH);
     y += kKnobH + kSectionGap;
 
     // Spread slider
