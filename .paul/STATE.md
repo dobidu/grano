@@ -6,20 +6,19 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F8-qa
-loop_position: PLAN
-current_plan: .paul/phases/08-qa/08-01-PLAN.md
-last_unified: .paul/phases/07-release/07-03-SUMMARY.md
-session_start: 2026-05-20
+loop_position: UNIFY
+current_plan: .paul/phases/08-qa/08-02-PLAN.md
+last_unified: .paul/phases/08-qa/08-02-SUMMARY.md
+session_start: 2026-06-01
 ```
 
 ## Current position
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-02 — ModuleTabPanel UX restructure (created, awaiting approval)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-05-22 — 08-01 applied (T1 done, checkpoint pending); 08-02 plan created for UX
-Note: 08-01 checkpoint (Windows testing) is still pending. 08-02 must be applied first.
+Plan: 08-02 ✅ unified; 08-01 checkpoint (Windows testing) still pending
+Status: Loop closed — ready for Windows testing (08-01 checkpoint) then 08-03
+Last activity: 2026-06-01 — 08-02 unified (ModuleTabPanel complete, human verified)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -31,13 +30,13 @@ Progress:
 - F5: [████████████████████] 100% ✅
 - F6: [████████████████████] 100% ✅ — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅ 06-05 ✅
 - F7: [████████████████████] 100% ✅ — 07-01 ✅ 07-02 ✅ 07-03 ✅
-- F8: [████░░░░░░░░░░░░░░░░] ~20% — 08-01 ○ 08-02 ○
+- F8: [████████░░░░░░░░░░░░] ~40% — 08-01 ○ (checkpoint pending) 08-02 ✅
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [08-01 plan created, awaiting approval]
+  ✓        ✓        ✓     [08-02 complete — ready for 08-01 Windows checkpoint]
 ```
 
 ## Accumulated context
@@ -92,12 +91,11 @@ None.
 
 ## Session continuity
 
-Last session: 2026-05-20
-Stopped at: 08-01-PLAN.md created — awaiting approval
-Next action: /paul:apply .paul/phases/08-qa/08-02-PLAN.md (UX fix — do this before Windows testing)
-Resume context: F8 plan 2 (UX). T1 creates ModuleTabPanel, T2 wires it into PluginEditor,
-checkpoint verifies the layout. After unify: resume 08-01 Windows testing checkpoint,
-then plan 08-03 for macOS + sign-off.
+Last session: 2026-06-01
+Stopped at: 08-02 unified — ModuleTabPanel complete and human-verified
+Next action: Resume 08-01 Windows testing checkpoint — load VST3 in Windows DAW, run TESTING.md suite
+Resume context: 08-01 checkpoint is the Windows manual testing pass (all 88 TESTING.md cases).
+After Windows pass: plan 08-03 for macOS + sign-off.
 
 ## Phase history
 
