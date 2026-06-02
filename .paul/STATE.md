@@ -16,9 +16,9 @@ session_start: 2026-06-01
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-03 ✅ unified; 08-01 checkpoint (Windows testing) still pending
-Status: Loop closed — UI layout fixes complete; ready for Windows testing
-Last activity: 2026-06-01 — 08-03 unified (ENGINE 3-col layout, MOTION gap, masterVol, PATTERN combos)
+Plan: 08-04 ✅ unified; 08-01 checkpoint (Windows testing) still pending
+Status: Loop closed — audio smoke tests added; ready for Windows testing
+Last activity: 2026-06-02 — 08-04 unified (audio smoke tests: RMS + finite + no-clip)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -30,13 +30,13 @@ Progress:
 - F5: [████████████████████] 100% ✅
 - F6: [████████████████████] 100% ✅ — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅ 06-05 ✅
 - F7: [████████████████████] 100% ✅ — 07-01 ✅ 07-02 ✅ 07-03 ✅
-- F8: [████████████░░░░░░░░] ~55% — 08-01 ○ (checkpoint pending) 08-02 ✅ 08-03 ✅
+- F8: [██████████████░░░░░░] ~65% — 08-01 ○ (checkpoint pending) 08-02 ✅ 08-03 ✅ 08-04 ✅
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [08-03 complete — ready for 08-01 Windows checkpoint]
+  ✓        ✓        ✓     [08-04 complete — ready for 08-01 Windows checkpoint]
 ```
 
 ## Accumulated context
@@ -91,11 +91,11 @@ None.
 
 ## Session continuity
 
-Last session: 2026-06-01
-Stopped at: 08-03 unified — UI layout fixes complete, human verified
-Next action: Windows testing — load CI artifact VST3 in DAW, run TESTING.md suite (08-01 checkpoint)
-Resume context: Push 08-03 commit, then Windows tester loads Grano VST3, runs all 88 TESTING.md cases.
-After Windows pass: plan 08-04 for macOS + sign-off.
+Last session: 2026-06-02
+Stopped at: 08-04 unified — audio smoke tests added, 121/121 pass
+Next action: Windows testing — load CI VST3 artifact in DAW, run TESTING.md suite (08-01 checkpoint)
+Resume context: 08-01 checkpoint = 88 TESTING.md cases on Windows VST3.
+After Windows pass: plan 08-05 for macOS + sign-off.
 
 ## Phase history
 
