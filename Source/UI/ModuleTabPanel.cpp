@@ -251,37 +251,39 @@ void ModuleTabPanel::resized()
     const juce::Rectangle<int> content { pad, contentY + pad,
                                           w - 2 * pad, contentH - 2 * pad };
 
-    if (activeTab_ == 0)  // ENGINE
+    if (activeTab_ == 0)  // ENGINE — 3-column layout
     {
         constexpr int comboH = 22;
         constexpr int labelH = 14;
-        constexpr int knobH  = 68;
+        constexpr int knobH  = 80;
         constexpr int gap    = 8;
-        const int halfW = content.getWidth() / 2;
-        const int cx    = content.getX();
-        const int cy    = content.getY();
-        const int rx    = cx + halfW;
+        const int cw   = content.getWidth();
+        const int colW = cw / 3 - pad;   // usable width per column
+        const int cx   = content.getX();
+        const int cy   = content.getY();
+        const int c1   = cx;
+        const int c2   = cx + cw / 3;
+        const int c3   = cx + cw * 2 / 3;
 
-        // Left column — sub-grain depth + stochastic distribution
-        subGrainLabel_.setBounds   (cx, cy,                          halfW - pad, labelH);
-        subGrainDepthBox_.setBounds(cx, cy + labelH,                 halfW - pad, comboH);
-
+        // Column 1: Selectors (sub-grain depth + stochastic distribution)
+        subGrainLabel_.setBounds   (c1, cy,                       colW, labelH);
+        subGrainDepthBox_.setBounds(c1, cy + labelH,              colW, comboH);
         const int stocY = cy + labelH + comboH + gap;
-        stochasticLabel_.setBounds   (cx, stocY,          halfW - pad, labelH);
-        stochasticDistBox_.setBounds (cx, stocY + labelH, halfW - pad, comboH);
+        stochasticLabel_.setBounds   (c1, stocY,          colW, labelH);
+        stochasticDistBox_.setBounds (c1, stocY + labelH, colW, comboH);
 
-        // Right column — Feedback: toggle (full width) then two equal knobs below
-        feedbackEnableBtn_.setBounds(rx,              cy,                halfW - pad,     comboH);
-        feedbackGainKnob_.setBounds (rx,              cy + comboH + gap, halfW / 2,       knobH);
-        feedbackDampKnob_.setBounds (rx + halfW / 2,  cy + comboH + gap, halfW / 2 - pad, knobH);
+        // Column 2: Feedback (toggle + gain/damp knobs side by side)
+        feedbackEnableBtn_.setBounds(c2, cy, colW, comboH);
+        const int halfCol = colW / 2;
+        feedbackGainKnob_.setBounds(c2,            cy + comboH + gap, halfCol,          knobH);
+        feedbackDampKnob_.setBounds(c2 + halfCol,  cy + comboH + gap, colW - halfCol,   knobH);
 
-        // Right column — Spectral: toggle + mode combo on same row, blur knob below
-        // Row height = labelH + comboH so both toggle and mode fit flush
-        const int spY = cy + comboH + gap + knobH + gap;
-        spectralEnableBtn_.setBounds(rx,              spY,           halfW / 2 - pad,   labelH + comboH);
-        spectralModeLabel_.setBounds(rx + halfW / 2,  spY,           halfW / 2 - pad,   labelH);
-        spectralModeBox_.setBounds  (rx + halfW / 2,  spY + labelH,  halfW / 2 - pad,   comboH);
-        spectralBlurKnob_.setBounds (rx,  spY + labelH + comboH + gap, halfW - pad,     knobH);
+        // Column 3: Spectral (toggle + mode combo + blur knob stacked)
+        spectralEnableBtn_.setBounds(c3, cy,                       colW, comboH);
+        spectralModeLabel_.setBounds(c3, cy + comboH + gap,        colW, labelH);
+        spectralModeBox_.setBounds  (c3, cy + comboH + gap + labelH, colW, comboH);
+        const int blurY = cy + comboH + gap + labelH + comboH + gap;
+        spectralBlurKnob_.setBounds (c3, blurY, colW, knobH);
     }
     else if (activeTab_ == 1)  // MOTION
     {
