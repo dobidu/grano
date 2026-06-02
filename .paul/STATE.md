@@ -16,9 +16,9 @@ session_start: 2026-06-01
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-02 ✅ unified; 08-01 checkpoint (Windows testing) still pending
-Status: Loop closed — ready for Windows testing (08-01 checkpoint) then 08-03
-Last activity: 2026-06-01 — 08-02 unified (ModuleTabPanel complete, human verified)
+Plan: 08-03 ✅ unified; 08-01 checkpoint (Windows testing) still pending
+Status: Loop closed — UI layout fixes complete; ready for Windows testing
+Last activity: 2026-06-01 — 08-03 unified (ENGINE 3-col layout, MOTION gap, masterVol, PATTERN combos)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -30,13 +30,13 @@ Progress:
 - F5: [████████████████████] 100% ✅
 - F6: [████████████████████] 100% ✅ — 06-01 ✅ 06-02 ✅ 06-03 ✅ 06-04 ✅ 06-05 ✅
 - F7: [████████████████████] 100% ✅ — 07-01 ✅ 07-02 ✅ 07-03 ✅
-- F8: [████████░░░░░░░░░░░░] ~40% — 08-01 ○ (checkpoint pending) 08-02 ✅
+- F8: [████████████░░░░░░░░] ~55% — 08-01 ○ (checkpoint pending) 08-02 ✅ 08-03 ✅
 
 ## Loop position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [08-02 complete — ready for 08-01 Windows checkpoint]
+  ✓        ✓        ✓     [08-03 complete — ready for 08-01 Windows checkpoint]
 ```
 
 ## Accumulated context
@@ -92,10 +92,10 @@ None.
 ## Session continuity
 
 Last session: 2026-06-01
-Stopped at: 08-02 unified — ModuleTabPanel complete and human-verified
-Next action: Resume 08-01 Windows testing checkpoint — load VST3 in Windows DAW, run TESTING.md suite
-Resume context: 08-01 checkpoint is the Windows manual testing pass (all 88 TESTING.md cases).
-After Windows pass: plan 08-03 for macOS + sign-off.
+Stopped at: 08-03 unified — UI layout fixes complete, human verified
+Next action: Windows testing — load CI artifact VST3 in DAW, run TESTING.md suite (08-01 checkpoint)
+Resume context: Push 08-03 commit, then Windows tester loads Grano VST3, runs all 88 TESTING.md cases.
+After Windows pass: plan 08-04 for macOS + sign-off.
 
 ## Phase history
 
