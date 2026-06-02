@@ -92,10 +92,13 @@ None.
 ## Session continuity
 
 Last session: 2026-06-02
-Stopped at: 08-04 unified — audio smoke tests added, 121/121 pass
-Next action: Windows testing — load CI VST3 artifact in DAW, run TESTING.md suite (08-01 checkpoint)
-Resume context: 08-01 checkpoint = 88 TESTING.md cases on Windows VST3.
-After Windows pass: plan 08-05 for macOS + sign-off.
+Stopped at: Session paused — all loops closed cleanly
+Next action: Windows testing (08-01 checkpoint) — run 88 TESTING.md cases against CI VST3 artifact
+Resume file: .paul/HANDOFF-2026-06-02.md
+Resume context:
+- Artifact at D:\temp\grano-windows\Grano.vst3 (or re-download from CI)
+- Load sample into Grano's OWN waveform display (not host track) before testing
+- After Windows pass: plan 08-05 for macOS + AU sign-off
 
 ## Phase history
 
