@@ -13,6 +13,7 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(GranoTests
     test_main.cpp
     test_engine.cpp
+    test_audio_smoke.cpp
     test_sample_io.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginProcessor.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginEditor.cpp
