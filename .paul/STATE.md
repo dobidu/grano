@@ -16,9 +16,9 @@ session_start: 2026-06-01
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-05 ✅ unified; 08-06 ready for APPLY
-Status: Loop closed — ready for 08-06
-Last activity: 2026-06-03 — 08-05 unified (tab dots + knob value readout)
+Plan: 08-06 ✅ unified; mockup cosmetic polish complete
+Status: Loop closed — ready for Windows testing (08-01 checkpoint)
+Last activity: 2026-06-03 — 08-06 unified (footer + SNAP label + MASTER dB)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -36,7 +36,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [08-05 complete — ready for 08-06]
+  ✓        ✓        ✓     [08-06 complete — cosmetic polish done]
 ```
 
 ## Accumulated context
