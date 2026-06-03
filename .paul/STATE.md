@@ -16,9 +16,9 @@ session_start: 2026-06-01
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-04 ✅ unified; 08-01 checkpoint (Windows testing) still pending
-Status: Loop closed — audio smoke tests added; ready for Windows testing
-Last activity: 2026-06-02 — 08-04 unified (audio smoke tests: RMS + finite + no-clip)
+Plan: 08-05 — UI cosmetic polish (created, awaiting approval)
+Status: PLAN created, ready for APPLY
+Last activity: 2026-06-03 — 08-05 + 08-06 plans created (mockup-based cosmetic polish)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -36,7 +36,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [08-04 complete — ready for 08-01 Windows checkpoint]
+  ✓        ○        ○     [08-05 plan created, awaiting approval]
 ```
 
 ## Accumulated context
