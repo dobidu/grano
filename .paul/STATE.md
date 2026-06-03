@@ -16,9 +16,9 @@ session_start: 2026-06-01
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-05 — UI cosmetic polish (created, awaiting approval)
-Status: PLAN created, ready for APPLY
-Last activity: 2026-06-03 — 08-05 + 08-06 plans created (mockup-based cosmetic polish)
+Plan: 08-05 ✅ unified; 08-06 ready for APPLY
+Status: Loop closed — ready for 08-06
+Last activity: 2026-06-03 — 08-05 unified (tab dots + knob value readout)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -36,7 +36,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [08-05 plan created, awaiting approval]
+  ✓        ✓        ✓     [08-05 complete — ready for 08-06]
 ```
 
 ## Accumulated context
