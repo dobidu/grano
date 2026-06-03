@@ -15,6 +15,7 @@ public:
 private:
     juce::Slider slider_;
     juce::Label  nameLabel_;
+    juce::Label  valueLabel_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Knob)
 };

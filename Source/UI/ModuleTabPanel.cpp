@@ -235,6 +235,24 @@ void ModuleTabPanel::paint(juce::Graphics& g)
     const int tabW = b.getWidth() / kTabCount;
     g.setColour(kMint);
     g.fillRect(activeTab_ * tabW, kTabBarH - 2, tabW, 2);
+
+    // Per-tab accent dot — colour identifies module type
+    static const juce::Colour kTabDots[] = {
+        juce::Colour{ 0xff7cf5c4u },  // ENGINE  — mint
+        juce::Colour{ 0xffffb347u },  // MOTION  — amber
+        juce::Colour{ 0xffff6b9du },  // COLOR   — magenta
+        juce::Colour{ 0xffc77cffu },  // PATTERN — violet
+        juce::Colour{ 0xff7cf5c4u },  // LFO     — mint
+        juce::Colour{ 0xffff6b9du },  // MOD     — magenta
+    };
+    for (int i = 0; i < kTabCount; ++i)
+    {
+        const bool active = (i == activeTab_);
+        const float cx = i * tabW + 10.0f;      // left edge of tab
+        const float cy = kTabBarH * 0.5f;       // vertically centred in tab bar
+        g.setColour(kTabDots[i].withAlpha(active ? 1.0f : 0.35f));
+        g.fillEllipse(cx - 4.0f, cy - 4.0f, 8.0f, 8.0f);
+    }
 }
 
 void ModuleTabPanel::resized()
