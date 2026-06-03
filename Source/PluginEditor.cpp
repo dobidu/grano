@@ -118,11 +118,49 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
         };
         addAndMakeVisible(snapButtons_[i]);
     }
+
+    // Header — SNAP label
+    snapLabel_.setText("SNAP", juce::dontSendNotification);
+    snapLabel_.setJustificationType(juce::Justification::centredRight);
+    snapLabel_.setFont(juce::Font(juce::FontOptions{}.withHeight(9.0f)));
+    snapLabel_.setColour(juce::Label::textColourId, juce::Colour{ 0xff6b7280u });
+    addAndMakeVisible(snapLabel_);
+
+    // Header — MASTER dB readout
+    masterDbLabel_.setJustificationType(juce::Justification::centredLeft);
+    masterDbLabel_.setFont(juce::Font(juce::FontOptions{}.withName(
+        juce::Font::getDefaultMonospacedFontName()).withHeight(9.0f)));
+    masterDbLabel_.setColour(juce::Label::textColourId, juce::Colour{ 0xff7cf5c4u });
+    addAndMakeVisible(masterDbLabel_);
+
+    // Footer — grain count
+    footerGrainLabel_.setJustificationType(juce::Justification::centredLeft);
+    footerGrainLabel_.setFont(juce::Font(juce::FontOptions{}.withHeight(10.0f)));
+    footerGrainLabel_.setColour(juce::Label::textColourId, juce::Colour{ 0xff6b7280u });
+    addAndMakeVisible(footerGrainLabel_);
+
+    startTimerHz(10);
 }
 
 GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
 {
+    stopTimer();
     setLookAndFeel(nullptr);
+}
+
+void GranoAudioProcessorEditor::timerCallback()
+{
+    // Grain count
+    std::array<GranularEngine::GrainSnapshot, GranularEngine::MaxActiveGrains> snaps;
+    const int grains = processorRef.getEngine()
+                           .getGrainSnapshots(snaps.data(), GranularEngine::MaxActiveGrains);
+    footerGrainLabel_.setText(juce::String(grains) + " grains",
+                               juce::dontSendNotification);
+
+    // MASTER volume (param is already in dB, range -60..+6)
+    const float dB = processorRef.getAPVTS()
+                         .getRawParameterValue(ParamIDs::masterVolume)->load();
+    masterDbLabel_.setText(juce::String(dB, 1) + " dB", juce::dontSendNotification);
 }
 
 void GranoAudioProcessorEditor::paint(juce::Graphics& g)
@@ -183,9 +221,12 @@ void GranoAudioProcessorEditor::resized()
     const int contentW = w - 2 * kMargin;
     const int btnY     = (kHeaderH - kSnapBtnH) / 2;
 
-    // Snap buttons A/B/C/D — header left, after logo (~128 px)
+    // SNAP label + A/B/C/D buttons — header left, after logo
     {
+        constexpr int kSnapLabelW = 36;
         int sx = contentX + 128;
+        snapLabel_.setBounds(sx, btnY, kSnapLabelW, kSnapBtnH);
+        sx += kSnapLabelW + kItemGap;
         for (int i = 0; i < 4; ++i)
         {
             snapButtons_[i].setBounds(sx, btnY, kSnapBtnW, kSnapBtnH);
@@ -249,8 +290,10 @@ void GranoAudioProcessorEditor::resized()
     // Bottom panel — ModuleTabPanel (ENGINE|MOTION|COLOR|PATTERN|LFO|MOD)
     moduleTabPanel_.setBounds(contentX, y, contentW, kBottomPanelH);
 
-    // Error label — docked to bottom edge
-    errorLabel_.setBounds(0, h - kFooterH, w, kFooterH);
+    // Footer — grain count left, error centred, MASTER dB right
+    footerGrainLabel_.setBounds(contentX, h - kFooterH, contentW / 3, kFooterH);
+    errorLabel_.setBounds      (contentX + contentW / 3, h - kFooterH, contentW / 3, kFooterH);
+    masterDbLabel_.setBounds   (contentX + contentW * 2 / 3, h - kFooterH, contentW / 3, kFooterH);
 }
 
 bool GranoAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)

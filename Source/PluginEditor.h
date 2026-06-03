@@ -19,7 +19,8 @@
 // See DESIGN_SPEC.md for the complete visual identity specification.
 
 class GranoAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                   public juce::FileDragAndDropTarget
+                                   public juce::FileDragAndDropTarget,
+                                   private juce::Timer
 {
 public:
     explicit GranoAudioProcessorEditor(GranoAudioProcessor&);
@@ -41,6 +42,7 @@ private:
     void showError(const juce::String& message);
     void clearError();
     void openFileChooser(int slot);
+    void timerCallback() override;
 
     juce::uint32 errorGen_{ 0 };
 
@@ -79,6 +81,13 @@ private:
 
     ModuleTabPanel       moduleTabPanel_;
     juce::TextButton     snapButtons_[4];
+
+    // ── Header extras ─────────────────────────────────────────────────────────
+    juce::Label          snapLabel_;
+    juce::Label          masterDbLabel_;
+
+    // ── Footer status bar ─────────────────────────────────────────────────────
+    juce::Label          footerGrainLabel_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessorEditor)
 };
