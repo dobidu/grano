@@ -2,6 +2,15 @@
 #include "Parameters.h"
 
 #if JUCE_WINDOWS
+ // JUCE public headers don't pull windows.h into user TUs (only unity builds get it).
+ // Include it explicitly so shellapi.h has the types it needs.
+ #ifndef NOMINMAX
+  #define NOMINMAX
+ #endif
+ #ifndef WIN32_LEAN_AND_MEAN
+  #define WIN32_LEAN_AND_MEAN
+ #endif
+ #include <windows.h>
  #include <shellapi.h>
 #endif
 
