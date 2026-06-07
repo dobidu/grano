@@ -91,15 +91,16 @@ None.
 
 ## Session continuity
 
-Last session: 2026-06-03
-Stopped at: 08-06 unified — cosmetic polish complete (tab dots, value readouts, footer, SNAP label)
-Next action: Windows testing (08-01 checkpoint) — run 88 TESTING.md cases against CI VST3 artifact
-Resume file: .paul/HANDOFF-2026-06-03.md
+Last session: 2026-06-07
+Stopped at: 08-01 T1 done; blocked on human Windows test run (109 cases)
+Next action: Pull latest on Windows, run TESTING.md cases, type "windows-done" after git push
+Resume file: .paul/HANDOFF-2026-06-07.md
 Resume context:
-- Download Windows VST3: gh run download <latest> -n Grano-VST3-Windows
-- Load sample into Grano's OWN waveform display (drag WAV onto dark area, or S0-S3 buttons)
-- masterVolume is already dB — never call gainToDecibels() on it
-- After Windows pass: plan remaining F8 macOS + sign-off
+- Pitch crash (+24st) fixed — Grain.sourceLen + renderGrain bounds check
+- Windows drag-drop fixed — tryRegisterWindowDrop() via timerCallback + ChangeWindowMessageFilterEx
+- LOAD button added to header (left of LOOP, calls openFileChooser(0))
+- TESTING.md already reformatted with per-platform columns (T1 done)
+- Scripts/windows-test.bat auto-marks ~8 structural tests; run it first
 
 ## Phase history
 
