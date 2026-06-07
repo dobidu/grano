@@ -44,6 +44,9 @@ private:
     void clearError();
     void openFileChooser(int slot);
     void timerCallback() override;
+#if JUCE_WINDOWS
+    void tryRegisterWindowDrop();
+#endif
 
     juce::uint32 errorGen_{ 0 };
 
@@ -53,8 +56,10 @@ private:
 
     WaveformDisplay                    waveformDisplay_;
     juce::TextButton                   slotButtons_[4];
+    juce::TextButton                   loadButton_;
     std::unique_ptr<juce::FileChooser> fileChooser_;
     int                                pendingSlot_{ 0 };
+    bool                               dragAcceptRegistered_{ false };
     juce::Label                        errorLabel_;
     CurveEditor                        curveEditor_;
     Knob                               slotWeightKnobs_[4] = { Knob{"W0"}, Knob{"W1"}, Knob{"W2"}, Knob{"W3"} };

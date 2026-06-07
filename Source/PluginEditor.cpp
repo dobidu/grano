@@ -59,6 +59,10 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
         addAndMakeVisible(slotButtons_[i]);
     }
 
+    loadButton_.setButtonText("LOAD");
+    loadButton_.onClick = [this] { openFileChooser(0); };
+    addAndMakeVisible(loadButton_);
+
     curveEditor_.setAPVTS(&p.getAPVTS());
     addAndMakeVisible(curveEditor_);
 
@@ -163,6 +167,10 @@ GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
 
 void GranoAudioProcessorEditor::timerCallback()
 {
+#if JUCE_WINDOWS
+    tryRegisterWindowDrop(); // no-op once dragAcceptRegistered_ = true
+#endif
+
     // Grain count
     std::array<GranularEngine::GrainSnapshot, GranularEngine::MaxActiveGrains> snaps;
     const int grains = processorRef.getEngine()
@@ -265,6 +273,14 @@ void GranoAudioProcessorEditor::resized()
                               btnY, kLoopBtnW, kLoopBtnH);
     }
 
+    // LOAD button — header right, left of LOOP
+    {
+        constexpr int kLoadBtnW = 40;
+        const int totalSlotW = 4 * kSlotBtnW + 3 * kItemGap;
+        const int loopX = w - kMargin - totalSlotW - kItemGap - kLoopBtnW;
+        loadButton_.setBounds(loopX - kItemGap - kLoadBtnW, btnY, kLoadBtnW, kLoopBtnH);
+    }
+
     // Waveform — variable height filling space between header and controls
     const int waveformH = h - kHeaderH
                             - 6 * kSectionGap
@@ -312,15 +328,32 @@ void GranoAudioProcessorEditor::resized()
 void GranoAudioProcessorEditor::parentHierarchyChanged()
 {
 #if JUCE_WINDOWS
-    // OLE IDropTarget registration fails silently when the DAW has initialised COM
-    // with COINIT_MULTITHREADED (Audacity, some others). Enable WM_DROPFILES as a
-    // fallback — JUCE's Win32ComponentPeer already handles that message and routes
-    // it to FileDragAndDropTarget::filesDropped.
-    if (auto* peer = getPeer())
-        if (auto* hwnd = peer->getNativeHandle())
-            ::DragAcceptFiles(static_cast<HWND>(hwnd), TRUE);
+    tryRegisterWindowDrop();
 #endif
 }
+
+#if JUCE_WINDOWS
+void GranoAudioProcessorEditor::tryRegisterWindowDrop()
+{
+    if (dragAcceptRegistered_)
+        return;
+    auto* peer = getPeer();
+    if (peer == nullptr)
+        return;
+    auto* hwnd = static_cast<HWND>(peer->getNativeHandle());
+    if (hwnd == nullptr)
+        return;
+
+    // OLE IDropTarget registration fails silently when the DAW initialises COM
+    // with COINIT_MULTITHREADED. Enable WM_DROPFILES as a fallback; JUCE's
+    // Win32ComponentPeer routes that message to FileDragAndDropTarget::filesDropped.
+    ::DragAcceptFiles(hwnd, TRUE);
+    // ChangeWindowMessageFilterEx lets WM_DROPFILES through UIPI in UAC-elevated DAWs.
+    ::ChangeWindowMessageFilterEx(hwnd, WM_DROPFILES, MSGFLT_ALLOW, nullptr);
+    ::ChangeWindowMessageFilterEx(hwnd, 0x0049u, MSGFLT_ALLOW, nullptr); // WM_COPYGLOBALDATA
+    dragAcceptRegistered_ = true;
+}
+#endif
 
 bool GranoAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
 {
