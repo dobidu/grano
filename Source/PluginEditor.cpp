@@ -11,7 +11,9 @@
   #define WIN32_LEAN_AND_MEAN
  #endif
  #include <windows.h>
- #include <shellapi.h>
+ #include <shellapi.h> // DragQueryFileW
+ #include <ole2.h>     // RegisterDragDrop / RevokeDragDrop / IDropTarget
+ #include <shlobj.h>   // CF_HDROP
 #endif
 
 // Design constants from DESIGN_SPEC.md
@@ -34,6 +36,97 @@ namespace
 
     constexpr float kLogoFontSize = 18.0f;
 }
+
+#if JUCE_WINDOWS
+namespace
+{
+    // Minimal OLE IDropTarget. Windows Explorer drags are OLE-based, and the
+    // drag cursor (copy vs. no-drop) is decided entirely by the DROPEFFECT a
+    // registered IDropTarget returns — WM_DROPFILES does not drive it on modern
+    // Windows. We register one of these so the cursor shows "copy" and the drop
+    // routes files to the editor. Lives on the STA message thread.
+    class GranoDropTarget final : public IDropTarget
+    {
+    public:
+        explicit GranoDropTarget(GranoAudioProcessorEditor& e) : editor_(e) {}
+
+        // ── IUnknown ──────────────────────────────────────────────────────────
+        HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override
+        {
+            if (riid == IID_IUnknown || riid == IID_IDropTarget)
+            {
+                *ppv = static_cast<IDropTarget*>(this);
+                AddRef();
+                return S_OK;
+            }
+            *ppv = nullptr;
+            return E_NOINTERFACE;
+        }
+        ULONG STDMETHODCALLTYPE AddRef() override { return (ULONG) ++refCount_; }
+        ULONG STDMETHODCALLTYPE Release() override
+        {
+            const auto n = --refCount_;
+            if (n == 0) delete this;
+            return (ULONG) n;
+        }
+
+        // ── IDropTarget ───────────────────────────────────────────────────────
+        HRESULT STDMETHODCALLTYPE DragEnter(IDataObject* obj, DWORD, POINTL, DWORD* effect) override
+        {
+            hasFiles_ = dataHasFiles(obj);
+            *effect = hasFiles_ ? DROPEFFECT_COPY : DROPEFFECT_NONE;
+            return S_OK;
+        }
+        HRESULT STDMETHODCALLTYPE DragOver(DWORD, POINTL, DWORD* effect) override
+        {
+            *effect = hasFiles_ ? DROPEFFECT_COPY : DROPEFFECT_NONE;
+            return S_OK;
+        }
+        HRESULT STDMETHODCALLTYPE DragLeave() override { hasFiles_ = false; return S_OK; }
+        HRESULT STDMETHODCALLTYPE Drop(IDataObject* obj, DWORD, POINTL, DWORD* effect) override
+        {
+            const juce::StringArray files = extractFiles(obj);
+            *effect = DROPEFFECT_COPY;
+            if (! files.isEmpty() && editor_.isInterestedInFileDrag(files))
+                editor_.filesDropped(files, 0, 0);
+            return S_OK;
+        }
+
+    private:
+        static bool dataHasFiles(IDataObject* obj)
+        {
+            FORMATETC fmt { CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+            return obj != nullptr && obj->QueryGetData(&fmt) == S_OK;
+        }
+        static juce::StringArray extractFiles(IDataObject* obj)
+        {
+            juce::StringArray out;
+            FORMATETC fmt { CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+            STGMEDIUM med {};
+            if (obj != nullptr && obj->GetData(&fmt, &med) == S_OK)
+            {
+                if (auto* hDrop = static_cast<HDROP>(::GlobalLock(med.hGlobal)))
+                {
+                    const UINT n = ::DragQueryFileW(hDrop, 0xFFFFFFFFu, nullptr, 0);
+                    for (UINT i = 0; i < n; ++i)
+                    {
+                        WCHAR path[MAX_PATH] = {};
+                        if (::DragQueryFileW(hDrop, i, path, MAX_PATH) > 0)
+                            out.add(juce::String(path));
+                    }
+                    ::GlobalUnlock(med.hGlobal);
+                }
+                ::ReleaseStgMedium(&med);
+            }
+            return out;
+        }
+
+        GranoAudioProcessorEditor& editor_;
+        int  refCount_ { 1 };
+        bool hasFiles_ { false };
+    };
+}
+#endif
 
 GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     : AudioProcessorEditor(&p), processorRef(p),
@@ -162,6 +255,12 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
 GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
 {
     stopTimer();
+#if JUCE_WINDOWS
+    if (droppedHwnd_ != nullptr)
+        ::RevokeDragDrop(static_cast<HWND>(droppedHwnd_));
+    if (dropTarget_ != nullptr)
+        static_cast<IDropTarget*>(dropTarget_)->Release();
+#endif
     setLookAndFeel(nullptr);
 }
 
@@ -344,13 +443,20 @@ void GranoAudioProcessorEditor::tryRegisterWindowDrop()
     if (hwnd == nullptr)
         return;
 
-    // OLE IDropTarget registration fails silently when the DAW initialises COM
-    // with COINIT_MULTITHREADED. Enable WM_DROPFILES as a fallback; JUCE's
-    // Win32ComponentPeer routes that message to FileDragAndDropTarget::filesDropped.
-    ::DragAcceptFiles(hwnd, TRUE);
-    // ChangeWindowMessageFilterEx lets WM_DROPFILES through UIPI in UAC-elevated DAWs.
-    ::ChangeWindowMessageFilterEx(hwnd, WM_DROPFILES, MSGFLT_ALLOW, nullptr);
-    ::ChangeWindowMessageFilterEx(hwnd, 0x0049u, MSGFLT_ALLOW, nullptr); // WM_COPYGLOBALDATA
+    // JUCE registers its own OLE IDropTarget on the peer, but it routes through
+    // the component hit-test and was not delivering drops here. Replace it with
+    // our own target so the cursor shows "copy" and dropped files reach us.
+    // RegisterDragDrop needs an STA thread — JUCE's message thread is STA, and
+    // this runs on it (timer / parentHierarchyChanged callbacks).
+    ::RevokeDragDrop(hwnd); // remove JUCE's target (ignored if none)
+    auto* target = new GranoDropTarget(*this);
+    if (::RegisterDragDrop(hwnd, target) != S_OK)
+    {
+        target->Release(); // registration failed — drop our ref; timer retries next tick
+        return;
+    }
+    dropTarget_  = target; // system holds its own ref; we keep ours for cleanup
+    droppedHwnd_ = hwnd;
     dragAcceptRegistered_ = true;
 }
 #endif

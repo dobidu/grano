@@ -60,6 +60,8 @@ private:
     std::unique_ptr<juce::FileChooser> fileChooser_;
     int                                pendingSlot_{ 0 };
     bool                               dragAcceptRegistered_{ false };
+    void*                              droppedHwnd_{ nullptr }; // HWND with our OLE drop target (Win32)
+    void*                              dropTarget_{ nullptr };  // IDropTarget* we registered (Win32)
     juce::Label                        errorLabel_;
     CurveEditor                        curveEditor_;
     Knob                               slotWeightKnobs_[4] = { Knob{"W0"}, Knob{"W1"}, Knob{"W2"}, Knob{"W3"} };
