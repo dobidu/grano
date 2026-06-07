@@ -99,10 +99,11 @@ TEST_CASE("Grain is trivially copyable", "[grain]")
 TEST_CASE("Grain stores all fields correctly via aggregate init", "[grain]")
 {
     float buf[64] = {};
-    Grain g{ buf, 10, 2048, 1.5f, -0.3f, EnvelopeShape::Triangle, 0.25f };
+    Grain g{ buf, 10, 64, 2048, 1.5f, -0.3f, EnvelopeShape::Triangle, 0.25f };
 
     REQUIRE(g.source        == buf);
     REQUIRE(g.startPos      == 10);
+    REQUIRE(g.sourceLen     == 64);
     REQUIRE(g.lengthSamples == 2048);
     REQUIRE(g.pitchRatio    == Catch::Approx(1.5f));
     REQUIRE(g.pan           == Catch::Approx(-0.3f));
@@ -115,6 +116,7 @@ TEST_CASE("Grain default init is zero/null", "[grain]")
     Grain g{};
     REQUIRE(g.source        == nullptr);
     REQUIRE(g.startPos      == 0);
+    REQUIRE(g.sourceLen     == 0);
     REQUIRE(g.lengthSamples == 0);
     REQUIRE(g.pitchRatio    == Catch::Approx(1.0f));
     REQUIRE(g.pan           == Catch::Approx(0.0f));

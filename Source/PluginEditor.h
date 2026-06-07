@@ -26,8 +26,9 @@ public:
     explicit GranoAudioProcessorEditor(GranoAudioProcessor&);
     ~GranoAudioProcessorEditor() override;
 
-    void paint(juce::Graphics&) override;
-    void resized()              override;
+    void paint(juce::Graphics&)      override;
+    void resized()                   override;
+    void parentHierarchyChanged()    override;
 
     // ── FileDragAndDropTarget ─────────────────────────────────────────────────
     bool isInterestedInFileDrag(const juce::StringArray& files) override;

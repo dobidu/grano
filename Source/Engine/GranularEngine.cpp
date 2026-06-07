@@ -167,6 +167,7 @@ void GranularEngine::scheduleGrain() noexcept
     const int baseLen = std::min(grainLen, srcLen - startPos);
 
     g->source        = srcData;
+    g->sourceLen     = srcLen;
     g->startPos      = startPos;
     g->lengthSamples = std::min((int)((float)baseLen * durMult), srcLen - startPos);
     g->pitchRatio    = pitchRatio;
@@ -320,13 +321,17 @@ bool GranularEngine::renderGrain(Grain* g, float* L, float* R, int numSamples) n
         const float phase     = g->currentPhase;
         // Reversed: read from end of grain region back to start.
         const float readPhase = g->reversed ? (1.0f - phase) : phase;
-        const float srcPosF   = (float)g->startPos
-                              + readPhase * (float)g->lengthSamples * g->pitchRatio;
+        const float srcPosF = (float)g->startPos
+                            + readPhase * (float)g->lengthSamples * g->pitchRatio;
         const int   srcInt  = (int)srcPosF;
         const float frac    = srcPosF - (float)srcInt;
 
-        // Linear interpolation — +2 guard samples in testSample_ prevent OOB
-        // for pitchRatio ≤ 2 when startPos=0 and lengthSamples ≤ sampleRate.
+        // Pitch ratios > 2 push srcPosF past the +2 guard region at high position/size.
+        // Treat out-of-source-bounds as grain completion rather than OOB read.
+        // srcInt <= sourceLen is safe: guards sit at [sourceLen] and [sourceLen+1].
+        if (srcInt < 0 || srcInt > g->sourceLen)
+            return true;
+
         const float s = g->source[srcInt] + frac * (g->source[srcInt + 1] - g->source[srcInt]);
 
         const float env   = applyEnvelope(g->shape, phase);

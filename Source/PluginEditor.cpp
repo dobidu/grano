@@ -1,6 +1,10 @@
 #include "PluginEditor.h"
 #include "Parameters.h"
 
+#if JUCE_WINDOWS
+ #include <shellapi.h>
+#endif
+
 // Design constants from DESIGN_SPEC.md
 namespace
 {
@@ -294,6 +298,19 @@ void GranoAudioProcessorEditor::resized()
     footerGrainLabel_.setBounds(contentX, h - kFooterH, contentW / 3, kFooterH);
     errorLabel_.setBounds      (contentX + contentW / 3, h - kFooterH, contentW / 3, kFooterH);
     masterDbLabel_.setBounds   (contentX + contentW * 2 / 3, h - kFooterH, contentW / 3, kFooterH);
+}
+
+void GranoAudioProcessorEditor::parentHierarchyChanged()
+{
+#if JUCE_WINDOWS
+    // OLE IDropTarget registration fails silently when the DAW has initialised COM
+    // with COINIT_MULTITHREADED (Audacity, some others). Enable WM_DROPFILES as a
+    // fallback — JUCE's Win32ComponentPeer already handles that message and routes
+    // it to FileDragAndDropTarget::filesDropped.
+    if (auto* peer = getPeer())
+        if (auto* hwnd = peer->getNativeHandle())
+            ::DragAcceptFiles(static_cast<HWND>(hwnd), TRUE);
+#endif
 }
 
 bool GranoAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)

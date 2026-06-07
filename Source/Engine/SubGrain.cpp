@@ -15,6 +15,7 @@ static Grain* spawnOne(const Grain& parent, int subIdx, int numSubs,
     const int offset    = (int)(rng.nextFloat() * (float)maxOffset);
 
     g->source        = parent.source;
+    g->sourceLen     = parent.sourceLen;
     g->startPos      = parent.startPos + offset;
     g->lengthSamples = subLen;
     g->pitchRatio    = parent.pitchRatio * (0.9f + rng.nextFloat() * 0.2f);

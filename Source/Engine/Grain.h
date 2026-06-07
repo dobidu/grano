@@ -13,6 +13,7 @@ struct Grain
 {
     const float*  source        = nullptr;           // non-owning pointer into sample buffer
     int           startPos      = 0;                 // sample index within source
+    int           sourceLen     = 0;                 // audio samples in source (guards excluded)
     int           lengthSamples = 0;                 // grain duration in samples
     float         pitchRatio    = 1.0f;              // 1.0 = original pitch; >1 = up, <1 = down
     float         pan           = 0.0f;              // -1 (L) .. 0 (centre) .. +1 (R)
