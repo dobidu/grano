@@ -1,5 +1,40 @@
 # Grano — Release Notes
 
+## v1.0.0-beta.2 (2026-06-07)
+
+Second public beta, focused on Windows fixes and exposing every module control in the UI.
+Now in wider testing — please file issues for anything rough.
+
+### Fixes
+
+- **Crash at +24 st pitch** — extreme upward pitch shifts pushed the grain read position past
+  the source buffer guard samples and crashed. The renderer now bounds-checks and ends the
+  grain cleanly instead of reading out of bounds.
+- **Windows file drag-and-drop** — dropping audio files onto the window now works in both the
+  Standalone and DAW (VST3) hosts. The plugin registers its own OLE `IDropTarget`, so the
+  cursor shows the copy affordance and the drop is delivered regardless of the host's COM
+  initialisation.
+- **VST3 / AU category** — plugin now reports as an effect (VST3 `Fx`, AU `Effect`) so hosts
+  list and load it in the expected place.
+
+### Additions
+
+- **LOAD button** in the header — reliable file-chooser fallback for loading a sample without
+  drag-and-drop.
+- **Module tab panel** — a 6-tab rack (Engine, Motion, Color, Pattern, LFO, Mod) exposes every
+  module parameter directly in the UI; previously many were automation-only.
+- UI polish — footer grain count, SNAP label, master level in dB, coloured tab indicators, and
+  per-knob value readouts.
+
+### Other
+
+- Added audio-output smoke tests (RMS, finite-sample, no-clip) to the suite.
+
+> Upgrading from beta.1: settings and DAW projects remain compatible — all 79 parameters and the
+> saved-state format are unchanged.
+
+---
+
 ## v1.0.0-beta.1 (2026-05-19)
 
 This is the first public beta release of Grano. All core features are implemented and validated.
