@@ -6,9 +6,9 @@ This file is managed by PAUL. Do not edit manually.
 
 ```yaml
 phase: F8-qa
-loop_position: UNIFY
-current_plan: .paul/phases/08-qa/08-02-PLAN.md
-last_unified: .paul/phases/08-qa/08-02-SUMMARY.md
+loop_position: APPLY
+current_plan: .paul/phases/08-qa/08-01-PLAN.md
+last_unified: .paul/phases/08-qa/08-04-SUMMARY.md
 session_start: 2026-06-01
 ```
 
@@ -16,9 +16,9 @@ session_start: 2026-06-01
 
 Milestone: v1.0 Initial Release
 Phase: F8 — QA and Manual Acceptance Testing — In Progress
-Plan: 08-06 ✅ unified; mockup cosmetic polish complete
-Status: Loop closed — ready for Windows testing (08-01 checkpoint)
-Last activity: 2026-06-03 — 08-06 unified (footer + SNAP label + MASTER dB)
+Plan: 08-01 — Windows acceptance checkpoint — human test run ongoing
+Status: v1.0.0-beta.2 released (prerelease) for beta testers; GPLv3 licensed; awaiting test results
+Last activity: 2026-06-07 — beta.2 release + GPLv3 + Windows drag-drop fixed (OLE IDropTarget)
 
 Progress:
 - Milestone: [███████████████████░] ~98%
@@ -36,7 +36,7 @@ Progress:
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [08-06 complete — cosmetic polish done]
+  ✓        ◐        ○     [08-01 in apply — human Windows + beta testing]
 ```
 
 ## Accumulated context
@@ -71,6 +71,10 @@ PLAN ──▶ APPLY ──▶ UNIFY
 | EnvelopeShape::Gaussian (not Gauss) | F6e | Enum value in EnvelopeShapes.h is Gaussian; any future UI or test code must use ::Gaussian |
 | CurveEditor uses applyEnvelope() | F6e | Visual thumbnails use same code path as engine — no drift between UI and audio |
 | openFileChooser captures slot in lambda | F6e | Avoids pendingSlot_ race; correct slot guaranteed even if user rapidly clicks multiple slot buttons |
+| Windows drag-drop via custom OLE IDropTarget | F8 | JUCE's IDropTarget needs shared STA; WM_DROPFILES is a no-op (JUCE wndproc ignores it). Register own GranoDropTarget returning DROPEFFECT_COPY; revoke JUCE's first. Controls cursor + delivery |
+| Project version is 1.0.0 (not 0.1.0) | F8 | Bumped for beta.2; CMake VERSION can't carry -beta suffix, so binary version is 1.0.0, tag is v1.0.0-beta.N |
+| GPLv3 license | F8 | JUCE open-source grant is AGPLv3 which permits combining with GPLv3; network clause irrelevant for desktop plugin |
+| Re-cut a release tag = delete release + move tag | F8 | gh release create fails if release exists; must gh release delete, delete tag local+remote, re-tag at new commit, push |
 
 ### Deferred issues
 | Issue | Origin | Effort | Revisit |
@@ -92,15 +96,17 @@ None.
 ## Session continuity
 
 Last session: 2026-06-07
-Stopped at: 08-01 T1 done; blocked on human Windows test run (109 cases)
-Next action: Pull latest on Windows, run TESTING.md cases, type "windows-done" after git push
+Stopped at: v1.0.0-beta.2 released for beta testers; 08-01 Windows acceptance run ongoing (OK so far)
+Next action: Gather Windows + beta-tester results; type "windows-done" after TESTING.md pass + push to trigger 08-01 T2 (triage → unify)
 Resume file: .paul/HANDOFF-2026-06-07.md
+Git strategy: main
 Resume context:
-- Pitch crash (+24st) fixed — Grain.sourceLen + renderGrain bounds check
-- Windows drag-drop fixed — tryRegisterWindowDrop() via timerCallback + ChangeWindowMessageFilterEx
-- LOAD button added to header (left of LOOP, calls openFileChooser(0))
-- TESTING.md already reformatted with per-platform columns (T1 done)
-- Scripts/windows-test.bat auto-marks ~8 structural tests; run it first
+- Windows drag-drop properly fixed — custom OLE IDropTarget (GranoDropTarget) in PluginEditor.cpp; verified working (WAV+MP3). Prior WM_DROPFILES approach was a no-op.
+- v1.0.0-beta.2 RELEASED (prerelease) — version bumped 0.1.0→1.0.0; tag at commit 2bb88b0
+- GPLv3 license added — LICENSE (gnu.org canonical) + README section; GitHub shows GPL-3.0
+- Release zips now bundle LICENSE + README (ci.yml package step); re-cut via delete-release + move-tag
+- Release mechanism: push v* tag → CI builds Win+macOS, pluginval-10, packages zips, gh release --prerelease. Linux not packaged. AU unsigned.
+- To re-cut a tag: gh release delete, delete tag local+remote, re-tag at new commit, push tag
 
 ## Phase history
 
