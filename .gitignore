@@ -98,3 +98,6 @@ venv/
 # Node (for PAUL / Caveman)
 node_modules/
 .npm/
+
+# Personal demo recording script (not part of the repo)
+DEMO_SCRIPT.md
