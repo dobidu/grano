@@ -101,3 +101,7 @@ node_modules/
 
 # Personal demo recording script (not part of the repo)
 DEMO_SCRIPT.md
+
+# PAUL state + Claude tooling (local-only, not versioned)
+.claude/
+.paul/
