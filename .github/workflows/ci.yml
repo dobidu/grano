@@ -248,17 +248,22 @@ jobs:
           name: Grano-Standalone-macOS
           path: release/macOS/Standalone
 
+      - name: Stage docs into release dirs
+        run: |
+          cp LICENSE README.md release/Windows/
+          cp LICENSE README.md release/macOS/
+
       - name: Package Windows zip
         run: |
           cd release/Windows
-          zip -r ../../Grano-${{ github.ref_name }}-Windows.zip VST3/ Standalone/
+          zip -r ../../Grano-${{ github.ref_name }}-Windows.zip VST3/ Standalone/ LICENSE README.md
           echo "Windows zip contents:"
           zipinfo ../../Grano-${{ github.ref_name }}-Windows.zip
 
       - name: Package macOS zip
         run: |
           cd release/macOS
-          zip -r ../../Grano-${{ github.ref_name }}-macOS.zip VST3/ AU/ Standalone/
+          zip -r ../../Grano-${{ github.ref_name }}-macOS.zip VST3/ AU/ Standalone/ LICENSE README.md
           echo "macOS zip contents:"
           zipinfo ../../Grano-${{ github.ref_name }}-macOS.zip
 
