@@ -95,10 +95,10 @@ None.
 
 ## Session continuity
 
-Last session: 2026-06-07
+Last session: 2026-06-08
 Stopped at: v1.0.0-beta.2 released for beta testers; 08-01 Windows acceptance run ongoing (OK so far)
 Next action: Gather Windows + beta-tester results; type "windows-done" after TESTING.md pass + push to trigger 08-01 T2 (triage → unify)
-Resume file: .paul/HANDOFF-2026-06-07.md
+Resume file: .paul/HANDOFF-2026-06-08.md
 Git strategy: main
 Resume context:
 - Windows drag-drop properly fixed — custom OLE IDropTarget (GranoDropTarget) in PluginEditor.cpp; verified working (WAV+MP3). Prior WM_DROPFILES approach was a no-op.
@@ -107,6 +107,7 @@ Resume context:
 - Release zips now bundle LICENSE + README (ci.yml package step); re-cut via delete-release + move-tag
 - Release mechanism: push v* tag → CI builds Win+macOS, pluginval-10, packages zips, gh release --prerelease. Linux not packaged. AU unsigned.
 - To re-cut a tag: gh release delete, delete tag local+remote, re-tag at new commit, push tag
+- DEMO_SCRIPT.md (repo root) = video walkthrough guide; gitignored (personal, local-only)
 
 ## Phase history
 
