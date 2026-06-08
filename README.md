@@ -6,6 +6,10 @@ A granular synthesis instrument for experimental sound design.
 
 `VST3` · `AU` · `Standalone` &nbsp;·&nbsp; Windows · macOS · Linux
 
+![Grano user interface](screenshot.png)
+
+*The Grano interface: waveform display with live grain particles up top, the core granular controls (Size, Density, Jitter, Pitch, Volume) below, multi-sample slot weights, and the module rack (Engine, Motion, Color, Pattern, LFO, Mod) along the bottom.*
+
 ---
 
 ## Contents
@@ -898,7 +902,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: 29 desti
 
 ## Status
 
-All core features complete. Release (F7) in progress.
+All core features complete. QA and manual acceptance testing (F8) in progress.
 
 | Phase | Status |
 |-------|--------|
@@ -909,8 +913,8 @@ All core features complete. Release (F7) in progress.
 | F4 MOTION + COLOR + PATTERN | ✅ Complete |
 | F5 LFOs + Modulation Matrix + Snapshots | ✅ Complete |
 | F6 UI Polish + Advanced Engine | ✅ Complete |
-| F7 Release | 🔄 In progress (v1.0.0-beta.1 tagged) |
-| F8 QA + Manual Acceptance | Pending |
+| F7 Release | ✅ Complete (v1.0.0-beta.1 tagged) |
+| F8 QA + Manual Acceptance | 🔄 In progress |
 
 ---
 
