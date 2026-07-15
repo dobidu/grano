@@ -60,7 +60,7 @@ A subtle radial vignette darkens the corners of `surface.base` by ~6%. Implement
 
 | Token | Hex | Use |
 |-------|-----|-----|
-| `accent.vital` | `#7CF5C4` | Active values, master output, playhead, "OK" indicators, modulation destinations confirmed. Mint green. |
+| `accent.primary` | `#7CF5C4` | Active values, master output, playhead, "OK" indicators, modulation destinations confirmed. Mint green. |
 | `accent.grain` | `#C77CFF` | Grain particles on waveform, active-grain count display. Violet. |
 | `accent.modulation` | `#FF6B9D` | LFO waveforms, mod matrix routing visualization. Magenta. |
 | `accent.motion` | `#FFB347` | MOTION module visual tag and active state. Amber. |
@@ -85,7 +85,7 @@ Implemented in JUCE via `Graphics::drawDropShadow` with the accent color, low al
 | Token | Color | Radius | Alpha |
 |-------|-------|--------|-------|
 | `halo.modulating` | `accent.modulation` | 6 px | 0.35 |
-| `halo.active` | `accent.vital` | 4 px | 0.25 |
+| `halo.active` | `accent.primary` | 4 px | 0.25 |
 | `halo.warning` | `accent.clipping` | 8 px | 0.50 |
 
 Halos are deliberately sutil. They communicate state, not decoration.
@@ -167,12 +167,12 @@ Layout implemented via `juce::FlexBox` per row. Modules and modulation panels re
 
 - **Diameter**: 64 px (default), scales to 72 px in compact layouts (none in F3, may apply in F5/F6).
 - **Track**: 2 px outer ring, `stroke.default`.
-- **Indicator**: 2 px wide, 18 px tall, centered, rotates from -135° (min) to +135° (max). Color: `accent.vital`.
+- **Indicator**: 2 px wide, 18 px tall, centered, rotates from -135° (min) to +135° (max). Color: `accent.primary`.
 - **Center value display**: JetBrains Mono 11 px, `text.primary`.
 - **Label below**: Inter 9 px UPPERCASE letter-spaced, `text.secondary`.
 
 **States**:
-- Idle: indicator `accent.vital`, no halo.
+- Idle: indicator `accent.primary`, no halo.
 - Hover: stroke becomes `stroke.strong`, indicator subtly brighter.
 - Focused (keyboard or fine-edit mode): `halo.active` applied.
 - Modulating: `halo.modulating` applied; indicator color shifts toward `accent.modulation` proportional to mod amount.
@@ -187,8 +187,8 @@ Layout implemented via `juce::FlexBox` per row. Modules and modulation panels re
 ### Slider
 
 - **Track**: 4 px tall, full available width, rounded ends (2 px radius), `stroke.default` background.
-- **Fill**: from min to current value, `accent.vital`.
-- **Thumb**: 12 × 12 px square with 2 px radius, `accent.vital`.
+- **Fill**: from min to current value, `accent.primary`.
+- **Thumb**: 12 × 12 px square with 2 px radius, `accent.primary`.
 - **Value displayed**: above the slider, JetBrains Mono 11 px, right-aligned.
 - **Label**: above the slider, Inter 10 px UPPERCASE, left-aligned.
 
@@ -201,7 +201,7 @@ Layout implemented via `juce::FlexBox` per row. Modules and modulation panels re
 
 ### Toggle switch
 
-- **Track**: 32 × 16 px rounded (8 px radius), background `stroke.default` when off, `accent.vital` when on.
+- **Track**: 32 × 16 px rounded (8 px radius), background `stroke.default` when off, `accent.primary` when on.
 - **Thumb**: 12 × 12 px circle, `surface.mid`, slides 16 px on toggle.
 - **Animation**: 120 ms ease-out.
 - **Label**: positioned to the left, Inter 10 px UPPERCASE, `text.secondary`.
@@ -210,8 +210,8 @@ Layout implemented via `juce::FlexBox` per row. Modules and modulation panels re
 
 - **Size**: 22 × 22 px.
 - **Background**: `surface.mid` when inactive, `surface.base` when active.
-- **Border**: 1 px, `stroke.default` inactive, `accent.vital` active.
-- **Text**: JetBrains Mono 11 px, `text.secondary` inactive, `accent.vital` active.
+- **Border**: 1 px, `stroke.default` inactive, `accent.primary` active.
+- **Text**: JetBrains Mono 11 px, `text.secondary` inactive, `accent.primary` active.
 - **Layout**: four buttons side-by-side with 4 px gaps.
 
 **Interaction**:
@@ -232,7 +232,7 @@ Layout implemented via `juce::FlexBox` per row. Modules and modulation panels re
 - **Background**: `surface.shaft`.
 - **Border**: 1 px `stroke.default`, radius 4 px.
 - **Waveform**: rendered by `juce::AudioThumbnail`, color `text.tertiary` (`#4A4946`).
-- **Playhead**: vertical line, 1.5 px wide, `accent.vital`, with a 3 px circle at the current position's vertical midpoint.
+- **Playhead**: vertical line, 1.5 px wide, `accent.primary`, with a 3 px circle at the current position's vertical midpoint.
 - **Grain particles**: 2-3 px translucent dots, `accent.grain`. Alpha equals current grain envelope amplitude. Y-coordinate distributed across the waveform's height with a small per-grain random offset for visual depth (deterministic from grain ID). Particles fade over 60 ms after the grain ends (motion trail).
 - **Top-left label**: filename in Inter 10 px, `text.secondary`.
 - **Top-right label**: duration · sample rate · channel count in JetBrains Mono 11 px, `text.secondary`.
@@ -244,7 +244,7 @@ Layout implemented via `juce::FlexBox` per row. Modules and modulation panels re
 - Click on waveform: sets `position` parameter to that point.
 - Click + drag: scrub.
 - Cmd/Ctrl + click + drag: place a marker.
-- Drag file from OS: loads sample (drop target highlight in `accent.vital` at 0.15 alpha while dragging).
+- Drag file from OS: loads sample (drop target highlight in `accent.primary` at 0.15 alpha while dragging).
 - Right click: menu (clear sample, load file dialog, save current state, etc.).
 
 ### LFO visualization
@@ -263,7 +263,7 @@ A 6 px circle to the left of a module's section header, colored per the module's
 |--------|-------|---|
 | MOTION | Amber | `accent.motion` |
 | COLOR | Violet | `accent.grain` |
-| PATTERN | Mint | `accent.vital` |
+| PATTERN | Mint | `accent.primary` |
 | MODULATION | Magenta | `accent.modulation` |
 
 ---
@@ -281,7 +281,7 @@ granular v0.1                                    ▼
 - **Subtitle**: "granular · v<version>" in Inter 9 px UPPERCASE letter-spaced, `text.tertiary`.
 - **Snapshots**: as specified above.
 - **Loop**: toggle switch with "LOOP" label.
-- **Master volume**: small vertical slider with numeric readout, JetBrains Mono 11 px in `accent.vital`. Range -∞ to +6 dB.
+- **Master volume**: small vertical slider with numeric readout, JetBrains Mono 11 px in `accent.primary`. Range -∞ to +6 dB.
 
 ---
 
@@ -294,7 +294,7 @@ cpu 8.2% · voices 12/64 · grains 42      midi learn · drag sample · ⌘+clic
 ```
 
 - Labels in `text.tertiary`.
-- Numeric values in their semantic accent (`accent.vital` for CPU and voices, `accent.grain` for grain count).
+- Numeric values in their semantic accent (`accent.primary` for CPU and voices, `accent.grain` for grain count).
 - Right side: contextual hints in `text.tertiary`. The hints rotate based on the most recently hovered control.
 
 ---

@@ -325,6 +325,44 @@ TEST_CASE("ModMatrix null LFOs do not crash and return zero")
     REQUIRE(matrix.getModOffset(ModMatrix::kPitchShift) == Catch::Approx(0.0f));
 }
 
+TEST_CASE("Lfo rate is independent of host buffer size (UAT-001 regression)")
+{
+    // Drive the LFO the way the plugin does: once per block via ModMatrix.
+    // A 1 Hz sine sampled at block boundaries must complete ~2 cycles in 2 s
+    // of blocks (4 zero crossings), regardless of buffer size. Before the fix
+    // the phase advanced one sample per block (512x too slow) and this saw 0.
+    for (const int blockSize : { 64, 512, 2048 })
+    {
+        std::atomic<float> rate{1.0f}, wf{0.0f} /*Sine*/, sync{0.0f}, phase{0.0f}, depth{1.0f};
+        std::atomic<float> src{1.0f}, dst{(float)ModMatrix::kPositionJitter}, amt{1.0f};
+
+        Lfo lfo;
+        lfo.setParamPointers(&rate, &wf, &sync, &phase, &depth);
+        lfo.prepare(44100.0);
+
+        ModMatrix matrix;
+        matrix.setLfos(&lfo, nullptr);
+        matrix.setSlotParams(0, &src, &dst, &amt);
+        matrix.prepare(44100.0);
+
+        const int blocksFor2s = (int)std::ceil(2.0 * 44100.0 / blockSize);
+        int zeroCrossings = 0;
+        matrix.processBlock(blockSize, 120.0);
+        float prev = matrix.getModOffset(ModMatrix::kPositionJitter);
+        for (int i = 1; i < blocksFor2s; ++i)
+        {
+            matrix.processBlock(blockSize, 120.0);
+            const float cur = matrix.getModOffset(ModMatrix::kPositionJitter);
+            if ((prev >= 0.0f && cur < 0.0f) || (prev < 0.0f && cur >= 0.0f))
+                ++zeroCrossings;
+            prev = cur;
+        }
+        INFO("blockSize=" << blockSize);
+        REQUIRE(zeroCrossings >= 3);
+        REQUIRE(zeroCrossings <= 5);
+    }
+}
+
 // ─── Snapshots ────────────────────────────────────────────────────────────────
 
 TEST_CASE("Snapshots round-trip: save, modify, recall restores value")
@@ -391,4 +429,37 @@ TEST_CASE("ModMatrix cross-mod LFO1->kLfo2Rate accelerates LFO2")
     }
     // At ~8001 Hz, ~181 crossings per 1000 samples; baseline 1 Hz would give ~0
     REQUIRE(crossings > 10);
+}
+
+TEST_CASE("ModMatrix getModOffset is clamped to [-1, +1] with stacked slots")
+{
+    // 8 slots routed to the same destination sum to +/-8 raw; consumers scale
+    // by full parameter range, so the offset must be clamped (UAT-008).
+    std::atomic<float> rate{1.0f}, wf{3.0f} /*Square*/, sync{0.0f}, phase{0.0f}, depth{1.0f};
+    Lfo lfo;
+    lfo.setParamPointers(&rate, &wf, &sync, &phase, &depth);
+    lfo.prepare(44100.0);
+
+    ModMatrix matrix;
+    matrix.setLfos(&lfo, nullptr);
+    std::array<std::atomic<float>, 8> src, dst, amt;
+    for (int i = 0; i < 8; ++i)
+    {
+        src[i].store(1.0f);
+        dst[i].store((float)ModMatrix::kPitchShift);
+        amt[i].store(1.0f);
+        matrix.setSlotParams(i, &src[i], &dst[i], &amt[i]);
+    }
+    matrix.prepare(44100.0);
+
+    float maxAbs = 0.0f;
+    for (int b = 0; b < 200; ++b)
+    {
+        matrix.processBlock(512, 120.0);
+        const float v = matrix.getModOffset(ModMatrix::kPitchShift);
+        REQUIRE(v >= -1.0f);
+        REQUIRE(v <=  1.0f);
+        maxAbs = std::max(maxAbs, std::abs(v));
+    }
+    REQUIRE(maxAbs > 0.99f); // clamp engages (raw sum is 8x the limit)
 }

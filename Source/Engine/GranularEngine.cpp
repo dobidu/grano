@@ -60,8 +60,11 @@ void GranularEngine::SchedulerThread::run()
         }
         else
         {
-            const float density = engine_.pDensity_
+            float density = engine_.pDensity_
                 ? engine_.pDensity_->load(std::memory_order_relaxed) : 10.0f;
+            if (engine_.modMatrix_)
+                density = juce::jlimit(1.0f, 100.0f,
+                    density + engine_.modMatrix_->getModOffset(ModMatrix::kDensity) * 99.0f);
             const float meanMs = 1000.0f / std::max(density, 0.1f);
             const int distIdx = engine_.pStochasticDist_
                 ? (int)engine_.pStochasticDist_->load(std::memory_order_relaxed) : 0;
@@ -70,6 +73,18 @@ void GranularEngine::SchedulerThread::run()
             waitMs = (int)StochasticTiming::nextIntervalMs(meanMs, dist, engine_.grainRng_);
         }
         wait(std::max(waitMs, 1));
+
+        // Loop sweep clock — advances even when the fire gate skips a grain,
+        // so the playhead keeps moving during pattern rests.
+        {
+            const bool loopOn = engine_.pLoop_ != nullptr &&
+                engine_.pLoop_->load(std::memory_order_relaxed) > 0.5f;
+            if (loopOn && !engine_.prevLoopOn_)
+                engine_.loopTimeSec_ = 0.0; // restart sweep on rising edge
+            engine_.prevLoopOn_ = loopOn;
+            if (loopOn)
+                engine_.loopTimeSec_ += (double)std::max(waitMs, 1) / 1000.0;
+        }
 
         // Pattern fire gate: probability, Euclidean step, or audio-driven transient.
         if (engine_.pattern_ && !engine_.pattern_->shouldFireGrain())
@@ -128,10 +143,18 @@ void GranularEngine::scheduleGrain() noexcept
     if (g == nullptr)
         return; // pool exhausted — drop
 
-    const float grainSizeMs = pGrainSize_
+    // Mod-matrix offsets scale by the destination's full parameter range,
+    // then the result is clamped back into that range.
+    float grainSizeMs = pGrainSize_
         ? pGrainSize_->load(std::memory_order_relaxed) : 100.0f;
-    const float position = pPosition_
+    if (modMatrix_)
+        grainSizeMs = std::clamp(
+            grainSizeMs + modMatrix_->getModOffset(ModMatrix::kGrainSize) * 495.0f,
+            5.0f, 500.0f);
+    float position = pPosition_
         ? pPosition_->load(std::memory_order_relaxed) : 0.0f;
+    if (modMatrix_)
+        position += modMatrix_->getModOffset(ModMatrix::kPosition);
     const float posJitter = juce::jlimit(0.0f, 1.0f,
         (pPositionJitter_ ? pPositionJitter_->load(std::memory_order_relaxed) : 0.0f)
         + (modMatrix_ ? modMatrix_->getModOffset(ModMatrix::kPositionJitter) : 0.0f));
@@ -139,14 +162,29 @@ void GranularEngine::scheduleGrain() noexcept
         ? pPitchShift_->load(std::memory_order_relaxed) : 0.0f;
     const float pitchModSt = (pitchMod_ ? pitchMod_->getPitchModSemitones() : 0.0f)
         + (modMatrix_ ? modMatrix_->getModOffset(ModMatrix::kPitchShift) * 24.0f : 0.0f);
-    const float stereoSpread = pStereoSpread_
+    float stereoSpread = pStereoSpread_
         ? pStereoSpread_->load(std::memory_order_relaxed) : 0.5f;
+    if (modMatrix_)
+        stereoSpread = std::clamp(
+            stereoSpread + modMatrix_->getModOffset(ModMatrix::kStereoSpread), 0.0f, 1.0f);
 
     const int grainLen = std::max(1, (int)(grainSizeMs * 0.001 * sampleRate_));
 
-    // Position with jitter — clamped to valid source range.
+    // Loop sweep: advance the base position in real time, wrapping once per
+    // source duration (README: "continuously loops the Position sweep").
+    const bool loopOn = pLoop_ != nullptr &&
+        pLoop_->load(std::memory_order_relaxed) > 0.5f;
+    if (loopOn && srcLen > 0)
+    {
+        const double srcDurSec = (double)srcLen / sampleRate_;
+        position = (float)((double)position + loopTimeSec_ / std::max(srcDurSec, 0.001));
+        position -= std::floor(position); // wrap into [0, 1)
+    }
+
+    // Position with jitter — jitter is linear in the knob value (a setting of
+    // J scatters +/- J), clamped to valid source range.
     const float jitter = posJitter * (grainRng_.nextFloat() - 0.5f) * 2.0f;
-    const float posFrac = std::clamp(position + jitter * posJitter, 0.0f, 1.0f);
+    const float posFrac = std::clamp(position + jitter, 0.0f, 1.0f);
     const int startPos = (int)(posFrac * (float)(srcLen - 1));
 
     // Pattern: quantize + spray pitch; bypass returns basePitch unchanged.
@@ -280,11 +318,19 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
         }
     }
 
-    // Apply master volume.
-    const float volDb  = pMasterVolume_
+    // Apply master volume (mod-matrix destination scales over the full
+    // -60..+6 dB range, clamped).
+    float volDb  = pMasterVolume_
         ? pMasterVolume_->load(std::memory_order_relaxed) : 0.0f;
+    if (modMatrix_)
+        volDb = std::clamp(
+            volDb + modMatrix_->getModOffset(ModMatrix::kMasterVol) * 66.0f,
+            -60.0f, 6.0f);
     const float volGain = juce::Decibels::decibelsToGain(volDb, -60.0f);
-    for (int n = 0; n < N; ++n) { L[n] *= volGain; R[n] *= volGain; }
+    // R aliases L on mono layouts — multiplying both would square the gain.
+    for (int n = 0; n < N; ++n) L[n] *= volGain;
+    if (R != L)
+        for (int n = 0; n < N; ++n) R[n] *= volGain;
 
     // Write snapshot for UI particle rendering (read by getGrainSnapshots on UI thread).
     const int snapLen   = bankSource_ != nullptr ? bankSource_->getNumSamples(0) : 0;
@@ -295,7 +341,13 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
         const float srcFrac = snapLen > 0
             ? std::clamp((float)g->startPos / (float)snapLen, 0.0f, 1.0f)
             : 0.0f;
-        grainSnapshots_[static_cast<std::size_t>(i)] = { srcFrac, applyEnvelope(g->shape, g->currentPhase) };
+        // Vertical scatter derived from the grain itself (Knuth hash of its
+        // start position), not the array index — stable per grain and uniform
+        // over [0,1) on every stdlib (std::hash<int> is identity on GCC/Clang).
+        const float yFrac = (float)(((unsigned)g->startPos * 2654435761u) & 0xFFFFu)
+                            / 65536.0f;
+        grainSnapshots_[static_cast<std::size_t>(i)] =
+            { srcFrac, applyEnvelope(g->shape, g->currentPhase), yFrac };
     }
     grainSnapshotCount_.store(snapCount, std::memory_order_release);
 }
@@ -327,10 +379,21 @@ bool GranularEngine::renderGrain(Grain* g, float* L, float* R, int numSamples) n
         const float frac    = srcPosF - (float)srcInt;
 
         // Pitch ratios > 2 push srcPosF past the +2 guard region at high position/size.
-        // Treat out-of-source-bounds as grain completion rather than OOB read.
         // srcInt <= sourceLen is safe: guards sit at [sourceLen] and [sourceLen+1].
+        // Forward grains: out-of-bounds means the rest of the grain is also OOB
+        // (read position increases) — end the grain (truncation).
+        // Reversed grains: read position DEcreases with phase, so an OOB start
+        // (pitchRatio > 1) enters bounds later — skip silently instead of dying
+        // at phase 0, mirroring the forward truncation behavior.
         if (srcInt < 0 || srcInt > g->sourceLen)
+        {
+            if (g->reversed)
+            {
+                g->currentPhase += 1.0f / (float)g->lengthSamples;
+                continue;
+            }
             return true;
+        }
 
         const float s = g->source[srcInt] + frac * (g->source[srcInt + 1] - g->source[srcInt]);
 

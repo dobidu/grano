@@ -57,7 +57,7 @@ The design goes beyond a standard granular engine with:
 - **Six stochastic timing distributions** — Uniform, Gaussian, Poisson, Exponential, Pareto, 1/f (fractal). The inter-grain interval is sampled from the chosen distribution, giving you everything from metronomic precision to heavy-tailed bursts.
 - **Internal feedback path** — the engine's own audio output is re-injected as a grain source. Sustained tones accumulate, degrade, and self-modulate over time.
 - **Spectral processor** — Freeze and Blur modes transform the loaded sample in the frequency domain before granulation begins. Freeze crystallises the spectrum; Blur smears phases to create evolving shimmer textures.
-- **Audio-rate LFOs** — two LFOs running up to 8 kHz, routeable to any parameter, capable of FM, AM, tremolo, and noise-spectrum modulation.
+- **Two LFOs** — rates from 0.01 Hz up to 8 kHz, routable to the core engine parameters via an 8-slot modulation matrix. LFOs are evaluated once per audio block, so very high rates read as textural randomization rather than true per-sample FM.
 - **Four parameter snapshots** — instant morph between four complete states during performance.
 
 ---
@@ -102,7 +102,7 @@ Copy `Grano.component` to `~/Library/Audio/Plug-Ins/Components/`.
 
 After copying, you can verify registration:
 ```bash
-auval -v aumu Gran Bidu
+auval -v aufx Gran Bidu
 ```
 > **Note (macOS 14+ Sonoma/Sequoia):** `auval` requires the component to be code-signed with an
 > Apple Developer certificate. Unsigned builds will report a load error. The AU loads correctly
@@ -411,9 +411,9 @@ Slowly sweeps the granular read position across the loaded sample, producing a c
 
 At 0.02 Hz the position completes a full sweep every 50 seconds — slow enough to sound organic, fast enough to hear clear timbral progression. Use a `loop`-enabled sample so the scan wraps smoothly. Raise Amount to +100% for a full-sample sweep; reduce it to +30% to confine scanning to a narrower region centred on the current `position` value.
 
-#### Example 2 — LFO to Pitch Shift at audio rate (FM synthesis)
+#### Example 2 — Fast LFO to Pitch Shift (per-grain scatter)
 
-Sets LFO 1 into the audio-rate range and routes it to `pitchShift`, creating frequency modulation sidebands from the granular source.
+Sets LFO 1 to a fast rate and routes it to `pitchShift`. The LFO is sampled once per audio block, so each newly scheduled grain picks up a different pitch offset — a scattering, cluster-like texture rather than true FM sidebands.
 
 | Slot field | Value |
 |------------|-------|
@@ -481,7 +481,7 @@ MOTION introduces organic instability to the granular stream. Enable with the **
 | **Flutter Rate** | 3–20 Hz | 8 Hz | Speed of the flutter oscillation. |
 | **Drift Amount** | 0–100% | 0% | Slow random walk of the pitch center. Makes sustained tones gradually migrate. |
 | **Crackle Level** | −60 to 0 dB | −60 dB | Adds broadband noise impulses (vinyl/tape crackle). −60 dB = off. |
-| **Crackle Color** | 0–100% | 50% | Spectral tilt of the crackle noise. 0% = white, 100% = dark/brown. |
+| **Crackle Color** | 0–100% | 50% | Spectral tilt of the crackle noise. 0% = dark/warm (low-passed), 100% = bright (high-passed). |
 
 MOTION is bypassed by default — at 0% depth all parameters have no effect even when enabled.
 
@@ -495,7 +495,7 @@ COLOR applies spectral processing to the engine output. Enable with the **COLOR*
 |-----------|-------|---------|-------------|
 | **Saturate** | 0–100% | 0% | Harmonic saturation / soft-clip. Adds warmth and compression. |
 | **Decimate** | 0–100% | 0% | Bit-crush and sample-rate reduction. Adds digital grit. |
-| **Tilt EQ** | −1 to +1 | 0 | Spectral tilt. Negative = low-pass emphasis, positive = high-pass. |
+| **Tilt EQ** | −1 to +1 | 0 | Spectral tilt around 1 kHz. Positive = warmer (boost lows, cut highs), negative = brighter (cut lows, boost highs). |
 | **Verb Mix** | 0–100% | 0% | Reverb wet/dry. Adds spatial depth. |
 
 ---
@@ -530,7 +530,7 @@ PATTERN controls how grains are triggered over time. It replaces or modifies the
 | **Probability** | 0–100% | 100% | Per-trigger probability. At 100% every trigger fires; lower values drop random triggers. |
 | **Reverse Prob** | 0–100% | 0% | Per-grain probability of reversing playback direction. |
 | **Quantize Scale** | Chromatic / Major / Minor / Dorian / Phrygian / Lydian / Mixolydian / Pent Maj / Pent Min / Whole Tone / Octatonic | Chromatic | Locks Pitch Shift to scale degrees. |
-| **Spray** | 0–100% | 0% | Random pitch scatter per grain, within the selected scale. |
+| **Spray** | 0–100% | 0% | Randomness macro: continuous pitch scatter per grain (±12 st, applied after scale quantization, so sprayed pitches can leave the scale) plus grain-duration randomization up to 3×. |
 
 ---
 
@@ -542,9 +542,9 @@ Two LFOs, freely routable to any parameter via the Modulation Matrix.
 
 | Parameter | Range | Default | Description |
 |-----------|-------|---------|-------------|
-| **Rate** | 0.01–8000 Hz | 1 Hz | LFO frequency. Above ~20 Hz enters audio-rate territory (FM/AM). |
+| **Rate** | 0.01–8000 Hz | 1 Hz | LFO frequency. The LFO is evaluated once per audio block, so rates above ~20 Hz read as per-grain/per-block randomization rather than smooth audio-rate FM. |
 | **Waveform** | Sine / Triangle / Saw / Square / Random / S&H / Drawable | Sine | LFO waveform. *Drawable* lets you sketch a custom one-cycle shape. |
-| **Sync** | On / Off | Off | When on, Rate locks to DAW BPM subdivisions. |
+| **Sync** | On / Off | Off | When on, Rate locks to the DAW tempo (one cycle per quarter note). |
 | **Phase** | 0–360° | 0° | Start phase offset. Useful for stereo LFO pairs. |
 | **Depth** | 0–100% | 50% | LFO output amplitude (before the modulation matrix amount scaling). |
 
@@ -558,13 +558,13 @@ Eight routing slots, each with three settings:
 | **Dest** | Any automatable parameter | Modulation destination. |
 | **Amount** | −100% to +100% | Modulation depth. Negative inverts polarity. |
 
-Available destinations include all core parameters, all module parameters, and LFO rates/phases/depths themselves (LFO → LFO creates complex modulation shapes).
+Destinations active in v1.0: **Grain Size, Density, Position, Position Jitter, Pitch Shift, Stereo Spread, Master Volume**, plus the LFO 1 → LFO 2 Rate cross-mod. The remaining module and LFO destinations appear in the menu but are reserved for a post-v1.0 release — routing to them currently has no effect.
 
 ### Snapshots A/B/C/D
 
 Four complete parameter states that can be stored and recalled instantly.
 
-- **Save:** right-click a Snapshot button and select "Save current state".
+- **Save:** Ctrl+click (Cmd+click on macOS) a Snapshot button to store the current state.
 - **Recall:** click a Snapshot button to instantly switch all parameters to that stored state.
 - **Persist:** snapshots are saved with the plugin state and reload with your DAW project.
 
@@ -655,7 +655,9 @@ The engine's grain generation runs on background worker threads, not the audio t
 
 **Buffer size:** tested at 128 to 1024 samples at 44.1 and 48 kHz. 64-sample buffers may produce xruns on slower machines with high grain counts.
 
-**Memory:** approximately 8 MB per second of loaded audio (mono). A 60-second sample uses ~480 MB. The plugin pool pre-allocates grain slots at startup and performs no heap allocation on the audio thread.
+**Sample rate:** loaded files are not resampled. A file whose sample rate differs from the session rate plays proportionally sharp or flat (e.g. a 44.1 kHz file in a 48 kHz session reads ~1.5 semitones sharp). Convert files to the session rate for pitch-accurate playback; automatic resampling is planned post-v1.0.
+
+**Memory:** loaded audio is stored as mono 32-bit float — about 0.2 MB per second at 48 kHz; a 60-second sample uses ~11.5 MB per slot. The plugin pool pre-allocates grain slots at startup and performs no heap allocation on the audio thread.
 
 ---
 
@@ -751,7 +753,7 @@ cp -R build/Grano_artefacts/Release/VST3/Grano.vst3 ~/.vst3/
 pluginval --strictness-level 10 build/Grano_artefacts/Debug/VST3/Grano.vst3
 
 # macOS AU
-auval -v aumu Gran Bidu
+auval -v aufx Gran Bidu
 ```
 
 ---
@@ -854,7 +856,7 @@ Per-grain source selection is weighted random across loaded slots. Slots with we
 
 ### Modulation matrix (8 slots × 3 params = 24)
 
-Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: 29 destinations), `slotNAmount` (Float −1 to +1).
+Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 28 destinations; the core engine destinations are active in v1.0, module/LFO destinations reserved), `slotNAmount` (Float −1 to +1).
 
 ---
 
@@ -871,7 +873,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: 29 desti
 
 **Audio output is very quiet with Spectral enabled:**
 - Spectral output amplitude depends on the source sample level. If the loaded sample is very quiet, the spectral source is too. Load a louder sample or raise Master Volume.
-- Ensure the spectral buffer is initialised: load a sample and re-enable Spectral, or verify that spectral processing re-runs after each file load.
+- The spectral source recomputes automatically on file load, on any spectral parameter change, and after project reload. If output is silent, check that a sample is actually loaded (empty slots fall back to the test tone only with Spectral off).
 
 **Feedback diverges to silence or noise:**
 - Feedback Gain near 0.95 with no damping on a loud source can ring. Reduce Gain to 0.5–0.7 first, then add Damp.
@@ -891,12 +893,12 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: 29 desti
 - Force a plugin rescan in your DAW.
 
 **Plugin not appearing on macOS:**
-- Run `auval -v aumu Gran Bidu` to check AU registration.
+- Run `auval -v aufx Gran Bidu` to check AU registration.
 - Clear the component cache: `sudo killall -9 AudioComponentRegistrar` and relaunch your DAW.
 - Remove the quarantine attribute: `sudo xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Grano.vst3`
 
 **DAW reports non-zero latency even with Spectral disabled:**
-- If you enabled and then disabled Spectral, some DAWs cache the reported latency. Reload the plugin instance to reset.
+- Grano re-reports latency whenever the Spectral toggle changes. If your DAW still shows stale delay compensation, force a graph rebuild (toggle bypass) or reload the plugin instance.
 
 ---
 

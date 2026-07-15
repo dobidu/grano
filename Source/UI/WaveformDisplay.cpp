@@ -4,7 +4,7 @@ namespace WD {
     const juce::Colour kBg       { 0xff050608u }; // surface.shaft
     const juce::Colour kBorder   { 0xff2a2e36u }; // stroke.default
     const juce::Colour kWaveform { 0xff4a4946u }; // text.tertiary
-    const juce::Colour kVital    { 0xff7cf5c4u }; // accent.vital  (playhead)
+    const juce::Colour kAccent    { 0xff7cf5c4u }; // accent.primary (playhead)
     const juce::Colour kGrain    { 0xffc77cffu }; // accent.grain  (particles)
     const juce::Colour kTextSec  { 0xff8b8985u }; // text.secondary
     const juce::Colour kTextTert { 0xff4a4946u }; // text.tertiary
@@ -115,8 +115,7 @@ void WaveformDisplay::paintParticles(juce::Graphics& g, juce::Rectangle<float> b
         for (int i = 0; i < n; ++i)
         {
             const float x = bounds.getX() + s[i].srcFraction * bounds.getWidth();
-            const float yFrac = static_cast<float>(std::hash<int>{}(i) % 1000) / 1000.0f;
-            const float y = bounds.getY() + yFrac * bounds.getHeight();
+            const float y = bounds.getY() + s[i].yFraction * bounds.getHeight();
             g.setColour(WD::kGrain.withAlpha(s[i].envelopeAmp * alphaScale));
             g.fillEllipse(x - 1.5f, y - 1.5f, 3.0f, 3.0f);
         }
@@ -154,7 +153,7 @@ void WaveformDisplay::paintPlayhead(juce::Graphics& g, juce::Rectangle<float> bo
     const float bot   = bounds.getBottom();
     const float midY  = (top + bot) * 0.5f;
 
-    g.setColour(WD::kVital);
+    g.setColour(WD::kAccent);
     g.drawLine(x, top, x, bot, 1.5f);
     g.fillEllipse(x - 1.5f, midY - 1.5f, 3.0f, 3.0f);
 }
@@ -219,6 +218,6 @@ void WaveformDisplay::paintLabels(juce::Graphics& g, juce::Rectangle<float> boun
 
 void WaveformDisplay::paintDragHighlight(juce::Graphics& g, juce::Rectangle<float> bounds)
 {
-    g.setColour(WD::kVital.withAlpha(0.15f));
+    g.setColour(WD::kAccent.withAlpha(0.15f));
     g.fillRoundedRectangle(bounds, WD::kRadius);
 }

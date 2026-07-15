@@ -144,8 +144,8 @@ void Pattern::processBlock(const juce::AudioBuffer<float>& inputBuffer, double b
     const int mode = pTriggerMode_
         ? (int)pTriggerMode_->load(std::memory_order_relaxed) : 0;
 
-    // ── Sync interval ────────────────────────────────────────────────────────
-    if (mode == 1 && bpm > 0.0)
+    // ── Sync interval (Sync mode; Euclidean uses it as its step clock) ───────
+    if ((mode == 1 || mode == 2) && bpm > 0.0)
     {
         const int divIdx = pSyncDivision_
             ? (int)pSyncDivision_->load(std::memory_order_relaxed) : 1;
@@ -220,15 +220,13 @@ float Pattern::getNextIntervalSec() noexcept
         case 1: // Sync
             return syncIntervalAtomic_.load(std::memory_order_relaxed);
 
-        case 2: // Euclidean — poll at step rate anchored to density
+        case 2: // Euclidean — one pattern step per sync division, tempo-locked
         {
-            const int s = pEuclidSteps_ ? (int)pEuclidSteps_->load(std::memory_order_relaxed) : 8;
-            // Default step rate: one full 8-step pattern = 1 second → 0.125s/step.
-            // When density is wired via GranularEngine, the density param controls
-            // the grain rate; here we use a fixed 10 grains/sec baseline divided
-            // by step count to give a stable rhythmic grid.
-            constexpr float kBaseGrainsPerSec = 10.0f;
-            return (float)s / (kBaseGrainsPerSec * (float)std::max(s, 1));
+            // syncIntervalAtomic_ is updated from host BPM + syncDivision in
+            // processBlock (shared with Sync mode). Fallback to 0.125 s/step
+            // (8 steps/s) when the host provides no usable tempo.
+            const float stepSec = syncIntervalAtomic_.load(std::memory_order_relaxed);
+            return stepSec > 0.0f ? stepSec : 0.125f;
         }
 
         case 3: // Audio-driven — poll at fixed short interval

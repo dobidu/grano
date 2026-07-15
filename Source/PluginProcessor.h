@@ -28,7 +28,8 @@
 // Never allocate, lock, throw, or make syscalls inside processBlock.
 
 class GranoAudioProcessor : public juce::AudioProcessor,
-                             private juce::Timer
+                             private juce::Timer,
+                             private juce::AudioProcessorValueTreeState::Listener
 {
 public:
     GranoAudioProcessor();
@@ -38,6 +39,14 @@ public:
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
+    // v1.0 is stereo-only (CLAUDE.md); rejecting mono avoids the aliased
+    // L/R double-processing paths in the engine and COLOR module.
+    bool isBusesLayoutSupported(const BusesLayout& layouts) const override
+    {
+        return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo()
+            && layouts.getMainInputChannelSet()  == juce::AudioChannelSet::stereo();
+    }
 
     // ── Editor ────────────────────────────────────────────────────────────────
     juce::AudioProcessorEditor* createEditor() override;
@@ -52,7 +61,9 @@ public:
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
 
-    double getTailLengthSeconds() const override { return 0.0; }
+    // COLOR verb tail + the 4 s feedback ring keep producing audio after
+    // input stops; 0.0 here truncated offline bounces.
+    double getTailLengthSeconds() const override { return 4.0; }
 
     // ── Programs ──────────────────────────────────────────────────────────────
     // Full preset system via APVTS in F3; stubs satisfy the pure-virtual contract.
@@ -77,14 +88,30 @@ public:
     const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
 
     SampleBuffer&              getSampleBuffer()  noexcept { return sampleBank_.getSlot(0); }
+    MultiSampleBank&           getSampleBank()    noexcept { return sampleBank_; }
     GranularEngine&            getEngine()        noexcept { return engine_; }
     juce::AudioFormatManager&  getFormatManager() noexcept { return formatManager_; }
 
     double getLastLoadedSampleRate() const noexcept { return lastLoadedSampleRate_; }
     int    getLastLoadedNumFrames()  const noexcept { return lastLoadedNumFrames_; }
 
+    // Message thread: if a spectral parameter changed since the last call,
+    // recompute the spectral source and re-report latency. Serviced by the
+    // 30 Hz timer; public so tests (no MessageManager) can drive it directly.
+    void applyPendingSpectralUpdate();
+
 private:
-    void timerCallback() override { sampleBank_.processRetiredAll(); }
+    void timerCallback() override
+    {
+        sampleBank_.processRetiredAll();
+        applyPendingSpectralUpdate();
+    }
+
+    // May be called from any thread (host automation) — only sets a flag.
+    void parameterChanged(const juce::String&, float) override
+    {
+        spectralDirty_.store(true, std::memory_order_release);
+    }
 
     // Trigger spectral processing from slot 0 of the sample bank.
     // Call from message thread when spectral is enabled or source changes.
@@ -106,6 +133,20 @@ private:
     juce::String               lastLoadError_;
     double                     lastLoadedSampleRate_{ 0.0 };
     int                        lastLoadedNumFrames_ { 0 };
+
+    // Source file per bank slot — message thread only. Serialized in
+    // getStateInformation so samples reload with the DAW project.
+    std::array<juce::File, MultiSampleBank::kNumSlots> slotFiles_{};
+
+    // Set by parameterChanged (any thread), consumed on the message thread.
+    std::atomic<bool> spectralDirty_{ false };
+
+    // Cached APVTS atomics for the audio-thread feedback tap (hard rule 1:
+    // no string-keyed getRawParameterValue in processBlock).
+    std::atomic<float>* pFeedbackEnabled_{ nullptr };
+    std::atomic<float>* pFeedbackGain_   { nullptr };
+    std::atomic<float>* pFeedbackDamp_   { nullptr };
+    bool                feedbackWasOn_   { false }; // audio thread only
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessor)
 };

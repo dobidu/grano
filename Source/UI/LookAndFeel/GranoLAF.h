@@ -12,7 +12,7 @@ public:
     static const juce::Colour kBorderMuted;   // #2A2E36
     static const juce::Colour kTextPrimary;   // #E8E6E1
     static const juce::Colour kTextSecond;    // #8B8985
-    static const juce::Colour kVital;         // #7CF5C4  active/accent
+    static const juce::Colour kAccent;         // #7CF5C4  active/accent
     static const juce::Colour kGrain;         // #C77CFF  grain particles
     static const juce::Colour kClip;          // #FF5252  clipping only
 

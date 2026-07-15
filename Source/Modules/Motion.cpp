@@ -110,8 +110,10 @@ void Motion::processBlock(juce::AudioBuffer<float>& buffer) noexcept
 
     const float gain      = juce::Decibels::decibelsToGain(crackLevelDb, -60.0f);
     const float crackColor = pCrackColor_ ? pCrackColor_->load(std::memory_order_relaxed) : 0.5f;
-    // color=0 → LPF (warm), color=1 → HPF (bright)
-    const float lpfCoeff  = 1.0f - crackColor * 0.97f;
+    // color=0 → LPF (warm), color=1 → HPF (bright).
+    // Coefficient stays strictly below 1.0: at exactly 1.0 the filter state
+    // freezes at its zero init and crackle is silent at color=0 (UAT-011).
+    const float lpfCoeff  = juce::jmap(crackColor, 0.98f, 0.02f);
 
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {

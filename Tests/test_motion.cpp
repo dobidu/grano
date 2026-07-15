@@ -106,3 +106,29 @@ TEST_CASE("Motion prepare resets state each time")
     m.prepare(48000.0);
     CHECK(m.getPitchModSemitones() == Catch::Approx(0.0f));
 }
+
+// ── UAT-011 regression: crackle is audible at color = 0 ──────────────────────
+
+TEST_CASE("Crackle produces output across the full color range", "[motion][crackle]")
+{
+    for (const float color : { 0.0f, 0.5f, 1.0f })
+    {
+        std::atomic<float> enabled{1.0f}, wowD{0.0f}, wowR{0.5f}, fltD{0.0f},
+                           fltR{8.0f}, drift{0.0f}, crackL{0.0f} /*0 dB*/,
+                           crackC{color};
+        Motion m;
+        m.setParamPointers(&enabled, &wowD, &wowR, &fltD, &fltR, &drift,
+                           &crackL, &crackC);
+        m.prepare(48000.0);
+
+        juce::AudioBuffer<float> buf(2, 4096);
+        buf.clear();
+        m.processBlock(buf);
+
+        float energy = 0.0f;
+        for (int n = 0; n < 4096; ++n)
+            energy += std::abs(buf.getSample(0, n));
+        INFO("color=" << color);
+        REQUIRE(energy > 0.0f);
+    }
+}

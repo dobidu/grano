@@ -321,3 +321,25 @@ TEST_CASE("Pattern spray=1 getDurMultiplier exceeds 1.0")
 
     REQUIRE(maxMult > 1.0f);
 }
+
+// ── UAT-010 regression: Euclidean step clock is tempo-locked ──────────────────
+
+TEST_CASE("Euclidean step interval follows host BPM and sync division", "[pattern][euclid]")
+{
+    PatternFixture f;
+    f.triggerMode.store(2.0f);  // Euclidean
+    f.syncDivision.store(0.0f); // 1/4 note
+
+    juce::AudioBuffer<float> buf(1, 512);
+    buf.clear();
+
+    f.p.processBlock(buf, 60.0);  // 60 BPM → quarter note = 1.0 s
+    REQUIRE(f.p.getNextIntervalSec() == Catch::Approx(1.0f).margin(0.001f));
+
+    f.p.processBlock(buf, 120.0); // 120 BPM → 0.5 s
+    REQUIRE(f.p.getNextIntervalSec() == Catch::Approx(0.5f).margin(0.001f));
+
+    f.syncDivision.store(1.0f);   // 1/8 note at 120 BPM → 0.25 s
+    f.p.processBlock(buf, 120.0);
+    REQUIRE(f.p.getNextIntervalSec() == Catch::Approx(0.25f).margin(0.001f));
+}

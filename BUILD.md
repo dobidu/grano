@@ -102,7 +102,7 @@ cp -R build/Grano_artefacts/Debug/AU/Grano.component ~/Library/Audio/Plug-Ins/Co
 Validate AU:
 
 ```bash
-auval -v aumu Gran Bidu
+auval -v aufx Gran Bidu
 ```
 
 ### Linux (Ubuntu 22.04+)
@@ -231,10 +231,10 @@ host simulation; do not lower it without a documented reason.
 ### auval (macOS, AU only)
 
 ```bash
-auval -v aumu Gran Bidu
+auval -v aufx Gran Bidu
 ```
 
-The four-letter codes (`aumu`, `Gran`, `Bidu`) come from the AU bundle's manifest, set in `CMakeLists.txt`. `auval -a` lists all registered Audio Units; verify Grano appears.
+The four-letter codes (`aufx`, `Gran`, `Bidu`) come from the AU bundle's manifest, set in `CMakeLists.txt`. `auval -a` lists all registered Audio Units; verify Grano appears.
 
 `auval` exit code 0 = pass. Investigate any warnings before release.
 

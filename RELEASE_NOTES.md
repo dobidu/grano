@@ -43,7 +43,7 @@ Expect rough edges; filing issues is welcome.
 ### What's in this release
 
 - **Granular engine** — GranularEngine with SPSC FIFO, 1024-slot GrainPool, grain scheduler
-  thread running at configurable density (0.1–200 grains/sec)
+  thread running at configurable density (1–100 grains/sec)
 - **Sub-grain recursion** — depth 0/1/2 selector; each grain spawns up to 4 child grains
 - **Six stochastic timing distributions** — Uniform, Gaussian, Poisson, Exponential, Pareto, 1/f
 - **Internal feedback path** — audio output re-injected as grain source with gain + dampening

@@ -3,6 +3,7 @@
 #include "Engine/SampleBuffer.h"
 #include "Engine/MultiSampleBank.h"
 #include "Engine/GranularEngine.h"
+#include "PluginProcessor.h"
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -195,4 +196,128 @@ TEST_CASE("GranularEngine handles null SampleBuffer gracefully", "[GranularEngin
 
     engine.reset();
     SUCCEED("No crash with null SampleBuffer");
+}
+
+// ── State persistence — sample paths (UAT-002 regression) ────────────────────
+
+static juce::File writeTestWav(const juce::String& name, int numFrames)
+{
+    auto file = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                    .getChildFile(name);
+    file.deleteFile();
+
+    juce::AudioBuffer<float> buf(1, numFrames);
+    for (int i = 0; i < numFrames; ++i)
+        buf.setSample(0, i, std::sin(0.05f * (float)i) * 0.5f);
+
+    juce::WavAudioFormat format;
+    std::unique_ptr<juce::AudioFormatWriter> writer(format.createWriterFor(
+        new juce::FileOutputStream(file), 44100.0, 1, 16, {}, 0));
+    REQUIRE(writer != nullptr);
+    writer->writeFromAudioSampleBuffer(buf, 0, numFrames);
+    writer.reset(); // flush
+    return file;
+}
+
+TEST_CASE("Plugin state round-trip restores loaded samples", "[State][MultiSampleBank]")
+{
+    const auto f0 = writeTestWav("grano_uat002_slot0.wav", 1000);
+    const auto f2 = writeTestWav("grano_uat002_slot2.wav", 2000);
+
+    juce::MemoryBlock state;
+    {
+        GranoAudioProcessor proc;
+        proc.loadSampleFile(f0, 0);
+        proc.loadSampleFile(f2, 2);
+        REQUIRE(proc.getLastLoadError().isEmpty());
+        proc.getStateInformation(state);
+    }
+
+    GranoAudioProcessor restored;
+    restored.setStateInformation(state.getData(), (int)state.getSize());
+    (void)restored.getSampleBank().trySwapAll(); // audio-thread step
+
+    REQUIRE(restored.getSampleBank().getNumSamples(0) == 1000);
+    REQUIRE(restored.getSampleBank().getNumSamples(2) == 2000);
+    REQUIRE(restored.getSampleBank().getReadPointer(0) != nullptr);
+    REQUIRE(restored.getSampleBank().getReadPointer(2) != nullptr);
+    REQUIRE(restored.getSampleBank().getReadPointer(1) == nullptr);
+    REQUIRE(restored.getSampleBank().getReadPointer(3) == nullptr);
+
+    f0.deleteFile();
+    f2.deleteFile();
+}
+
+TEST_CASE("Plugin state restore degrades gracefully on missing sample file", "[State][MultiSampleBank]")
+{
+    const auto f0 = writeTestWav("grano_uat002b_slot0.wav", 500);
+    const auto f1 = writeTestWav("grano_uat002b_slot1.wav", 600);
+
+    juce::MemoryBlock state;
+    {
+        GranoAudioProcessor proc;
+        proc.loadSampleFile(f0, 0);
+        proc.loadSampleFile(f1, 1);
+        proc.getStateInformation(state);
+    }
+
+    f1.deleteFile(); // simulate moved/deleted file
+
+    GranoAudioProcessor restored;
+    restored.setStateInformation(state.getData(), (int)state.getSize());
+    (void)restored.getSampleBank().trySwapAll();
+
+    // Present file loads; missing file reports an error without aborting restore.
+    REQUIRE(restored.getSampleBank().getNumSamples(0) == 500);
+    REQUIRE(restored.getSampleBank().getReadPointer(1) == nullptr);
+    REQUIRE(restored.getLastLoadError().contains("not found"));
+
+    f0.deleteFile();
+}
+
+TEST_CASE("Enabling spectral at runtime reprocesses source and updates latency",
+          "[State][Spectral]")
+{
+    // UAT-006: before the fix, enabling spectral after load made the engine
+    // granulate a zeroed buffer (silence) and never re-reported latency.
+    const auto f0 = writeTestWav("grano_uat006.wav", 8192);
+
+    GranoAudioProcessor proc;
+    proc.prepareToPlay(48000.0, 512);
+    proc.loadSampleFile(f0, 0);
+    REQUIRE(proc.getLatencySamples() == 0);
+
+    // Flip spectralEnabled the way a host would; listener flags the change.
+    auto* param = proc.getAPVTS().getParameter(ParamIDs::spectralEnabled);
+    REQUIRE(param != nullptr);
+    param->setValueNotifyingHost(1.0f);
+    proc.applyPendingSpectralUpdate(); // timer surrogate (headless: no MessageManager)
+
+    REQUIRE(proc.getLatencySamples() == SpectralProcessor::kFFTSize);
+
+    // Engine now sources from the spectral buffer — output must not be silent.
+    juce::AudioBuffer<float> buf(2, 512);
+    juce::MidiBuffer midi;
+    buf.clear();
+    proc.processBlock(buf, midi); // trySwapAll makes the loaded slot visible
+    proc.applyPendingSpectralUpdate(); // retry now that the source is swapped in
+    juce::Thread::sleep(400);
+
+    float energy = 0.0f;
+    for (int b = 0; b < 100; ++b)
+    {
+        buf.clear();
+        proc.processBlock(buf, midi);
+        for (int s = 0; s < 512; ++s)
+            energy += std::abs(buf.getSample(0, s));
+    }
+    REQUIRE(energy > 0.0f);
+
+    // Disabling clears the reported latency again.
+    param->setValueNotifyingHost(0.0f);
+    proc.applyPendingSpectralUpdate();
+    REQUIRE(proc.getLatencySamples() == 0);
+
+    proc.releaseResources();
+    f0.deleteFile();
 }

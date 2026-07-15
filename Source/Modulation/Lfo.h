@@ -24,8 +24,13 @@ public:
                           std::atomic<float>* phase,
                           std::atomic<float>* depth) noexcept;
 
+    // Audio thread: compute value at current phase (scaled by depth), then
+    // advance phase by numSamples periods. Called once per block with the
+    // block size so the LFO rate is independent of host buffer size.
+    float advance(int numSamples) noexcept;
+
     // Audio thread: advance phase by one sample, return value scaled by depth.
-    float advanceSample() noexcept;
+    float advanceSample() noexcept { return advance(1); }
 
     // Audio thread: return last computed value (no phase advance).
     float currentValue() const noexcept { return lastValue_; }

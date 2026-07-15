@@ -70,10 +70,12 @@ void ModulationMatrixView::resized()
 {
     const int w    = getWidth();
     const int pad  = 4;
-    const int rowH = 22;
+    // 8 rows must fit the ~196 px the ModuleTabPanel provides:
+    // 28 + 8*(19+2) - 2 = 194. At rowH 22 row 8 was clipped out of view.
+    const int rowH = 19;
     const int gap  = 2;
 
-    int y = 30; // header area (title + column labels)
+    int y = 28; // header area (title + column labels)
 
     for (int i = 0; i < kNumSlots; ++i)
     {

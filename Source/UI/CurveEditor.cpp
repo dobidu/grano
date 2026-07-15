@@ -50,8 +50,11 @@ void CurveEditor::paint(juce::Graphics& g)
 
         g.setColour(selected ? juce::Colour(0xff62ffc8) : juce::Colour(0xff444466));
         g.setFont(10.0f);
+        // Copy: removeFromBottom on the member rect would shrink it every
+        // repaint until thumbnails collapse and hit-testing dies.
+        auto labelArea = thumbnailBounds_[i];
         g.drawText(shapeLabels_[i],
-                   thumbnailBounds_[i].removeFromBottom(14).toFloat(),
+                   labelArea.removeFromBottom(14).toFloat(),
                    juce::Justification::centred);
 
         if (selected)

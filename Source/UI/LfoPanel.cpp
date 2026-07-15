@@ -44,7 +44,10 @@ void LfoPanel::init(juce::AudioProcessorValueTreeState& apvts)
     waveformBox_.addItem("Square",   4);
     waveformBox_.addItem("Random",   5);
     waveformBox_.addItem("S&H",      6);
-    waveformBox_.addItem("Drawable", 7);
+    // "Drawable" (choice index 6) is intentionally not listed: the drag-editor
+    // is post-v1.0, so the option had nothing to edit. The parameter keeps all
+    // 7 choices for state/automation compatibility (item indices 0-5 still map
+    // 1:1 onto the first 6 choices).
 
     lfo1Tab_.onClick = [this] { showLfo(0); };
     lfo2Tab_.onClick = [this] { showLfo(1); };

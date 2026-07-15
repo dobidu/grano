@@ -51,10 +51,12 @@ void Color::applySaturate(float* L, float* R, int N, float amount) noexcept
     const float tanhDrive = std::tanh(drive);
     if (tanhDrive < 1e-6f) return;
     const float norm = 1.0f / tanhDrive;
+    // L == R on mono layouts — writing R would apply the shaper twice.
     for (int n = 0; n < N; ++n)
     {
         L[n] = std::tanh(L[n] * drive) * norm;
-        R[n] = std::tanh(R[n] * drive) * norm;
+        if (R != L)
+            R[n] = std::tanh(R[n] * drive) * norm;
     }
 }
 
@@ -80,7 +82,8 @@ void Color::applyDecimate(float* L, float* R, int N, float amount) noexcept
             decimateHeld_[1] = R[n];
         }
         L[n] = std::round(decimateHeld_[0] * levels) / levels;
-        R[n] = std::round(decimateHeld_[1] * levels) / levels;
+        if (R != L) // aliased on mono layouts
+            R[n] = std::round(decimateHeld_[1] * levels) / levels;
     }
 }
 
@@ -102,8 +105,11 @@ void Color::applyTilt(float* L, float* R, int N, float tiltParam) noexcept
         tiltState_[0] = a * tiltState_[0] + oneMinA * L[n];
         L[n] = tiltState_[0] * lowGain + (L[n] - tiltState_[0]) * highGain;
 
-        tiltState_[1] = a * tiltState_[1] + oneMinA * R[n];
-        R[n] = tiltState_[1] * lowGain + (R[n] - tiltState_[1]) * highGain;
+        if (R != L) // aliased on mono layouts — cascading would filter twice
+        {
+            tiltState_[1] = a * tiltState_[1] + oneMinA * R[n];
+            R[n] = tiltState_[1] * lowGain + (R[n] - tiltState_[1]) * highGain;
+        }
     }
 }
 
@@ -121,7 +127,10 @@ void Color::applyVerb(float* L, float* R, int N, float mix) noexcept
     p.width      = 1.0f;
     p.freezeMode = 0.0f;
     reverb_.setParameters(p);
-    reverb_.processStereo(L, R, N);
+    if (R != L)
+        reverb_.processStereo(L, R, N);
+    else // mono layout — processStereo on aliased pointers corrupts the mix
+        reverb_.processMono(L, N);
 }
 
 // ── processBlock ─────────────────────────────────────────────────────────────

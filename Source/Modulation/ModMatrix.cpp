@@ -1,4 +1,5 @@
 #include "ModMatrix.h"
+#include <algorithm>
 
 void ModMatrix::setLfos(Lfo* lfo1, Lfo* lfo2) noexcept
 {
@@ -26,14 +27,18 @@ void ModMatrix::reset() noexcept
 float ModMatrix::getModOffset(Dest d) const noexcept
 {
     if (d <= kNone || d >= kNumDests) return 0.0f;
-    return modSums_[static_cast<int>(d)].load(std::memory_order_relaxed);
+    // Clamp: up to 8 slots can stack on one destination (raw sum ±8); consumers
+    // scale by their full parameter range, so an unclamped sum produces absurd
+    // values (e.g. ±192 semitones of pitch — instantly-dying grains).
+    return std::clamp(
+        modSums_[static_cast<int>(d)].load(std::memory_order_relaxed), -1.0f, 1.0f);
 }
 
 void ModMatrix::processBlock(int numSamples, double bpm) noexcept
 {
-    // Step 1: advance LFO1 (sync tick + one sample value for this block)
+    // Step 1: advance LFO1 (sync tick + one value per block, phase advanced by block size)
     if (lfo1_) lfo1_->processBlock(numSamples, bpm);
-    const float lfo1Val = lfo1_ ? lfo1_->advanceSample() : 0.0f;
+    const float lfo1Val = lfo1_ ? lfo1_->advance(numSamples) : 0.0f;
 
     // Step 2: scan for LFO1→kLfo2Rate cross-mod; apply before LFO2 advances
     float lfo2RateMod = 0.0f;
@@ -50,7 +55,7 @@ void ModMatrix::processBlock(int numSamples, double bpm) noexcept
 
     // Step 3: advance LFO2 (now with cross-mod rate offset)
     if (lfo2_) lfo2_->processBlock(numSamples, bpm);
-    const float lfo2Val = lfo2_ ? lfo2_->advanceSample() : 0.0f;
+    const float lfo2Val = lfo2_ ? lfo2_->advance(numSamples) : 0.0f;
 
     // Step 4: accumulate mod sums on the stack (no heap)
     float accum[kNumDests]{};

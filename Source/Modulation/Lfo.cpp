@@ -4,8 +4,13 @@
 
 Lfo::Lfo() noexcept
 {
-    for (auto& pt : drawable_)
-        pt.store(0.0f, std::memory_order_relaxed);
+    // Default the drawable table to one sine cycle. Until the drag-editor
+    // ships (post-v1.0) nothing writes this table, and an all-zero default
+    // made a restored "Drawable" state output constant 0 (silent modulation).
+    for (int i = 0; i < kDrawablePoints; ++i)
+        drawable_[(size_t)i].store(
+            std::sin(6.2831853f * (float)i / (float)kDrawablePoints),
+            std::memory_order_relaxed);
 }
 
 void Lfo::prepare(double sampleRate) noexcept
@@ -58,7 +63,7 @@ void Lfo::processBlock(int /*numSamples*/, double bpm) noexcept
         syncRateHz_ = static_cast<float>(bpm / 60.0);
 }
 
-float Lfo::advanceSample() noexcept
+float Lfo::advance(int numSamples) noexcept
 {
     const float rateHz  = pRate_    ? pRate_->load(std::memory_order_relaxed)     : 1.0f;
     const int   wfIdx   = pWaveform_? (int)pWaveform_->load(std::memory_order_relaxed) : 0;
@@ -68,7 +73,8 @@ float Lfo::advanceSample() noexcept
 
     const float effectiveRate = std::max(0.01f,
         (synced ? syncRateHz_ : rateHz) + rateModOffset_.load(std::memory_order_relaxed));
-    const double increment = effectiveRate / sampleRate_;
+    const double increment = effectiveRate * static_cast<double>(std::max(1, numSamples))
+                             / sampleRate_;
 
     // Apply phase offset (degrees → normalized)
     const float normPhase = static_cast<float>(

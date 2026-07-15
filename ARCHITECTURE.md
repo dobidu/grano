@@ -59,7 +59,7 @@ Three classes of threads cooperate. None ever blocks another.
 - Reads APVTS parameter atomics via `getRawParameterValue()`.
 - Drains the **incoming grain FIFO** (worker → audio) for any grains ready to mix.
 - Mixes active grains into the output buffer.
-- Updates lock-free telemetry counters (active grain count, current position, CPU sample).
+- Updates lock-free telemetry (grain snapshot array + atomic count for the UI particles).
 - **Forbidden**: allocation (`new`, `malloc`, container resize), locks, system calls, exceptions, virtual calls through unbounded chains.
 
 ### Message thread / UI thread (JUCE-owned)
@@ -70,22 +70,32 @@ Three classes of threads cooperate. None ever blocks another.
 - Drives a `juce::Timer` at 30 Hz that triggers `WaveformDisplay::repaint()` and updates particle positions.
 - Allocates freely. Slow operations (sample loading) are dispatched to worker threads, never run inline.
 
-### Worker thread pool (our `juce::ThreadPool`, 3-4 workers)
+### Scheduler thread (single `juce::Thread`, "GrainScheduler")
 
-- Runs **grain generation tasks**: given a grain request descriptor (source pointer, position, length, pitch, envelope), produces a fully-rendered grain buffer (pitch-shifted, windowed, panned) and pushes it onto the incoming-grain FIFO.
-- Runs **sample loading**: when the user drops a file, a worker reads it via `juce::AudioFormatManager`, decodes into a `juce::AudioBuffer<float>`, and atomically swaps the engine's `SampleBuffer` pointer.
-- Runs **spectral FFT** (F6): when Spectral Freeze/Blur is engaged, a worker computes FFT, modifies bins, IFFTs back, and writes to a buffer that future grains can sample from.
-- May allocate, may take ms-to-tens-of-ms, may call into the OS. Cannot block on the audio thread.
+As shipped, there is **one** scheduler thread, not a worker pool. (A `juce::ThreadPool`
+upgrade was considered in F1 and deferred; the SPSC FIFO requires a single producer,
+and one scheduler comfortably meets the grain-rate budget.)
+
+- Runs **grain scheduling**: waits out the stochastic/pattern-derived interval, then
+  fills a lightweight `Grain` descriptor (source pointer, position, length, pitch,
+  pan, envelope shape) and pushes it onto the SPSC FIFO. Grains are *rendered* on the
+  audio thread, not here — the descriptor is just bookkeeping, so scheduling is cheap.
+- **Sample loading** runs inline on the message thread (`loadSampleFile`), which
+  decodes via `juce::AudioFormatManager` and hands the buffer to `MultiSampleBank`
+  for an atomic pending→current swap on the audio thread.
+- **Spectral FFT** runs on the message thread (file load, parameter change, or state
+  restore via the 30 Hz timer), writing a 2048-sample source buffer.
+- May allocate (loading paths), may call into the OS (scheduler `wait`). Never blocks
+  the audio thread.
 
 ### Communication primitives
 
 | Direction | Mechanism | Reasoning |
 |---|---|---|
-| UI → Audio (parameter changes) | APVTS atomic load | Lock-free, sample-accurate, host automation works. |
-| UI → Workers (sample loading, grain spawn requests) | `juce::ThreadPool::addJob` | Standard JUCE pattern. |
-| Workers → Audio (ready grains) | SPSC `juce::AbstractFifo` carrying grain descriptors | Lock-free, predictable. Audio drains; never blocks. |
-| Audio → UI (telemetry) | `std::atomic<int/float>` counters | UI reads opportunistically at 30 Hz; staleness is fine. |
-| Workers → Workers | Independent; each worker writes to a private buffer pool then publishes via atomic exchange | No shared mutable state. |
+| UI → Audio (parameter changes) | APVTS atomic load | Lock-free, host automation works. |
+| Message thread → Audio (sample swap) | `SampleBuffer` pending/current/retired pointers + `AbstractFifo` of retired buffers | Atomic swap on the audio thread; retired buffers freed by the 30 Hz timer. |
+| Scheduler → Audio (scheduled grains) | SPSC `juce::AbstractFifo` carrying `Grain*` descriptors | Lock-free, predictable. Audio drains; never blocks. |
+| Audio → UI (telemetry) | Grain snapshot array + `std::atomic<int>` count | UI reads opportunistically at 30 Hz; visual tearing accepted. |
 
 ---
 
@@ -98,35 +108,41 @@ Represents one in-flight grain. Fields:
 ```cpp
 struct Grain
 {
-    const float* sourceLeft;        // pointer into SampleBuffer
-    const float* sourceRight;       // ditto, may equal sourceLeft for mono
-    int sourceLengthSamples;
-    float currentPhase;             // 0.0 to lengthSamples, accumulates
-    float pitchRatio;               // 1.0 = original speed
-    float pan;                      // -1.0 (L) to +1.0 (R)
-    int envelopeShape;              // enum index
-    float envelopeParam;            // shape-dependent (e.g. Tukey plateau)
-    int totalLengthSamples;         // grain length, not source length
-    bool reverse;
-    bool active;
+    const float* source;        // mono source pointer (+2 guard samples past sourceLen)
+    int   sourceLen;            // playable length, excluding guards
+    int   startPos;             // start index into source
+    int   lengthSamples;        // grain length in output samples
+    float pitchRatio;           // read-position multiplier; output duration is constant
+    float pan;                  // -1.0 (L) to +1.0 (R)
+    EnvelopeShape shape;        // enum
+    float currentPhase;         // normalized 0..1 across the grain's lifetime
+    bool  reversed;
 };
 ```
 
-No virtuals. No constructors that allocate. Pre-filled by workers, consumed by audio.
+No virtuals. No constructors that allocate. Filled by the scheduler thread, rendered
+by the audio thread. Note: phase is normalized and advances by `1/lengthSamples` per
+output sample — pitch changes the *read position* slope, not the grain duration.
 
 ### `GrainPool`
 
-Fixed-size array of `Grain` slots, pre-allocated. Capacity 1024 in default build. Slot allocation is via atomic index increment with modulo — no free-list, no lock.
+Fixed-size array of `Grain` slots, pre-allocated. Capacity 1024 in the default build.
+Slot allocation is a lock-free CAS scan with a rotating hint index — no free-list,
+no lock.
 
 ```cpp
 class GrainPool {
-    std::array<Grain, 1024> slots_;
-    std::atomic<int> writeIndex_{0};
+    std::array<Grain, 1024>             slots_;
+    std::array<std::atomic<bool>, 1024> inUse_;
+    std::atomic<int>                    hint_;
 public:
-    Grain* acquire();   // worker side
-    void release(Grain* g);  // audio side, marks inactive
+    Grain* acquire();        // scheduler side (CAS on inUse_ flags, hint-guided)
+    void   release(Grain*);  // audio side, marks slot free
 };
 ```
+
+The audio thread's *active* list is separately capped at `MaxActiveGrains = 256`;
+grains beyond that are dropped at the FIFO drain.
 
 ### Incoming grain FIFO
 
@@ -134,36 +150,44 @@ public:
 
 ### `GranularEngine`
 
-The heart of the audio thread side. Each `process(buffer)`:
+The heart of the audio thread side. Each `processBlock(buffer)`:
 
-1. Drains the incoming-grain FIFO into a local "active grains" linked list (intrusive, allocation-free).
-2. For each sample in the output buffer:
-   - For each active grain: read source at `currentPhase` (with fractional interpolation), apply envelope at `currentPhase / totalLengthSamples`, scale by pan, accumulate into L and R.
-   - Advance `currentPhase += pitchRatio`.
-   - If `currentPhase >= totalLengthSamples`: mark grain inactive, recycle to pool.
-3. Update telemetry (active grain count atomic).
-4. Schedule next grain spawn via the **trigger module** (see Pattern section below): when it's time to spawn, push a request onto the worker queue.
+1. `trySwapAll()` on the sample bank; if a new buffer swapped in, drains all active
+   grains (their source pointers are stale).
+2. Drains the incoming-grain FIFO into a fixed active-grain array (cap 256).
+3. For each active grain, renders the whole block: read source at
+   `startPos + phase * lengthSamples * pitchRatio` (fractional interpolation),
+   apply envelope at the normalized phase, scale by pan, accumulate into L and R.
+   Phase advances by `1/lengthSamples` per output sample; at phase ≥ 1 the grain
+   is released back to the pool.
+4. Applies master volume (with its mod-matrix offset) and writes the grain
+   snapshot telemetry.
 
-For grain counts up to ~200, this loop is single-pass per sample. For higher counts, we batch by SIMD-vectorizing the envelope and source-read steps (`juce::dsp::SIMDRegister<float>`).
+Grain *rendering* happens here, on the audio thread — the scheduler only produces
+descriptors. The per-grain loop is scalar; at the 256-grain cap it fits the CPU
+budget without SIMD batching.
 
 ### Grain spawning workflow
 
 ```
-Audio thread says "spawn now"  →  push GrainRequest to worker queue
+Scheduler thread wakes (stochastic interval or Pattern override)
         ↓
-Worker picks up GrainRequest
+Pattern fire gate (probability / Euclidean step / transient) — may skip
         ↓
-Worker reads from SampleBuffer at requested position
-Worker computes pitch ratio, applies pitch shift if needed
-Worker fills Grain slot from GrainPool
+Scheduler picks source (Spectral > Feedback > bank slot > 440 Hz sine),
+computes position (+ loop sweep + mod offsets + jitter), pitch, pan, envelope
         ↓
-Worker pushes ready Grain* onto SPSC FIFO to audio thread
+Scheduler acquires a Grain slot from GrainPool, fills the descriptor,
+spawns sub-grains if subGrainDepth > 0
         ↓
-Audio thread drains FIFO at start of next processBlock
+Scheduler pushes Grain* onto the SPSC FIFO
+        ↓
+Audio thread drains FIFO at the start of the next processBlock
 Audio thread renders the grain into the output
 ```
 
-Latency from "spawn now" to "audible" is typically 1-2 audio blocks (≤ 22 ms at 1024 samples / 48 kHz). For real-time-deadline grain spawning (the trigger module's pulse), this is acceptable; the FIFO size absorbs jitter.
+Latency from "spawn" to "audible" is typically ≤ 1 audio block plus the scheduler's
+wake granularity. The FIFO (512 slots) absorbs jitter.
 
 ---
 
@@ -173,7 +197,7 @@ Latency from "spawn now" to "audible" is typically 1-2 audio blocks (≤ 22 ms a
 
 ### Naming convention
 
-Parameter IDs are stable strings: `grainSize`, `density`, `position`, `positionJitter`, `pitchShift`, `stereoSpread`, `masterVolume`, `loopEnabled`, `motionEnabled`, `motionWow`, `motionFlutter`, etc. Use `juce::ParameterID` with version hint to allow future migrations.
+Parameter IDs are stable strings: `grainSize`, `density`, `position`, `positionJitter`, `pitchShift`, `stereoSpread`, `masterVolume`, `loop`, `motionEnabled`, `wowDepth`, `flutterDepth`, etc. (see `Source/Parameters.h` for the canonical list). Use `juce::ParameterID` with version hint to allow future migrations.
 
 ### Skewing
 
@@ -249,33 +273,47 @@ Halo glow on active controls: implemented via `Graphics::drawDropShadow` with th
 `ModMatrix` holds N=8 slots:
 
 ```cpp
-struct ModSlot {
-    int sourceIndex;       // 0=LFO1, 1=LFO2, -1=disabled
-    juce::String destParamId;
-    float amount;          // -1.0 to +1.0
+struct SlotParams {                    // pointers into APVTS atomics
+    std::atomic<float>* pSource;       // 0=None, 1=LFO1, 2=LFO2
+    std::atomic<float>* pDest;         // index into the Dest enum (28 destinations)
+    std::atomic<float>* pAmount;       // -1.0 to +1.0
 };
 ```
 
-Per audio block:
+Per audio block (`ModMatrix::processBlock`, driven by the processor — ModMatrix is
+the sole LFO driver):
 
-1. For each LFO, compute its current value (at audio rate or block rate depending on destination).
-2. For each active slot: read the destination parameter's base value from APVTS, add `lfo * amount * range`, write to a per-parameter "effective value" cache. Audio thread reads this cache, not the raw APVTS, for modulated parameters.
+1. Advance LFO1 by the block size; apply any LFO1→LFO2-Rate cross-mod; advance LFO2.
+2. Sum `lfoValue × amount` per destination into an atomic `modSums_` array,
+   clamped to ±1 on read.
+3. Consumers pull offsets via `getModOffset(dest)` and scale by their own parameter
+   range: the engine consumes GrainSize, Density, Position, PositionJitter,
+   PitchShift (±24 st), StereoSpread, and MasterVol (±66 dB). Module destinations
+   (Motion/Color/Pattern) and LFO phase/depth destinations are **not yet consumed**
+   (deferred post-v1.0 — see STATE.md deferred issues).
 
-This avoids modulating APVTS directly (which would conflict with host automation and create unstable visual feedback).
+This avoids modulating APVTS directly (which would conflict with host automation and
+create unstable visual feedback).
 
 ---
 
 ## Sub-grain recursion (F6)
 
-When `subGrainDepth > 0`, each scheduled grain is replaced by 2-8 sub-grains:
+When `subGrainDepth > 0`, each scheduled grain additionally spawns sub-grains
+(the parent still plays — sub-grains are layered on top):
 
-1. The parent grain's `totalLengthSamples` is divided by N (N = 2..8, configurable as `subGrainCount`).
-2. Each sub-grain has a smaller `totalLengthSamples` and a slightly jittered position, pitch, and pan from the parent.
-3. If `subGrainDepth > 1`, each sub-grain may itself recurse.
+1. Depth 1: 2-4 sub-grains (`SubGrain::kMinSubs..kMaxSubs`), each at most half the
+   parent's length, positioned inside the parent's window with jittered pitch/pan.
+2. Depth 2: each depth-1 sub-grain spawns 2-3 sub-sub-grains.
+3. There is no user-facing sub-grain *count* parameter — only `subGrainDepth` (0/1/2).
 
-Implementation: in the worker, after building a `Grain`, if recursion is requested, the worker builds the children and pushes each onto the FIFO. The parent grain is **not** pushed (it's effectively replaced by its children).
+Implementation: the scheduler builds the parent, pushes it, then builds the children
+from a pre-push copy of the parent and pushes those (`SubGrain::spawnInto`). Sub-grains
+that don't fit the FIFO's first contiguous region are dropped (acceptable at normal
+densities).
 
-Limits: hard cap on total grain count regardless of recursion (1024 active). Depth capped at 2. Count per parent capped at 8. This bounds the recursion expansion to 64× and the hard pool cap prevents pathological cases.
+Limits: pool capacity 1024, audio-thread active cap 256, depth capped at 2. Worst-case
+expansion per parent is 1 + 4 + 4×3 = 17 grains.
 
 ---
 
@@ -283,16 +321,18 @@ Limits: hard cap on total grain count regardless of recursion (1024 active). Dep
 
 Six distributions for inter-grain timing intervals:
 
-| Name | Formula (delta in seconds) | Character |
+| Name | Formula (mean = 1/density seconds; shape constants are fixed, there is no user jitter parameter) | Character |
 |------|---|---|
-| Uniform | `1.0 / density` ± `jitter` | Even, predictable. |
-| Gaussian | `Normal(μ = 1/density, σ = jitter)` | Soft randomness. |
-| Poisson | `-ln(U) / density` | Memory-less, "natural" event timing. |
-| Exponential | `-ln(U) * jitter + 1/density` | Heavy-tailed clustering. |
-| Pareto | `(1 + jitter / U)^α` | Sparse clusters of rapid grains. |
-| 1/f (fractal) | Spectral synthesis via low-pass-filtered noise | Self-similar, musical. |
+| Uniform | `U(0.5, 1.5) × mean` | Even, predictable. |
+| Gaussian | `Normal(μ = mean, σ = 0.3 × mean)` | Soft randomness. |
+| Poisson | `-mean × ln(U)` (exponential inter-arrival — the mathematically correct Poisson-process spacing) | Memory-less, "natural" event timing. |
+| Exponential | `-mean × ln(U)` — **identical to Poisson as shipped**; the menu keeps both names for user familiarity | Memory-less clustering. |
+| Pareto | α = 1.5, clamped at 5× mean | Sparse clusters of rapid grains. |
+| 1/f (fractal) | Low-pass-filtered noise modulating the interval | Self-similar, musical. |
 
-All implemented in `Source/Engine/StochasticTiming.cpp`. Unit tests verify the distribution moments match the theoretical values within 5% over 10,000 samples.
+All implemented in `Source/Engine/StochasticTiming.cpp`. Unit tests verify distribution
+moments against theoretical values (Pareto at 20% tolerance — clamping shifts the mean;
+see STATE.md decision).
 
 The chosen distribution determines the next grain spawn time the engine schedules. The trigger module (Free / Sync / Euclidean / Audio-driven) determines the base rate; the distribution adds shape.
 
@@ -300,15 +340,21 @@ The chosen distribution determines the next grain spawn time the engine schedule
 
 ## Spectral processing (F6)
 
-`SpectralProcessor` runs on a worker thread:
+`SpectralProcessor` runs on the message thread (file load, spectral parameter change,
+or state restore) — it is a **one-shot source transformation**, not a streaming STFT:
 
-1. Buffer accumulates input until 2048 samples are available (`FFT_SIZE = 2048`, `HOP_SIZE = 512`, 75% overlap).
-2. Windowed (Hann), FFT'd via `juce::dsp::FFT`.
-3. Bins are modified per mode: `Freeze` holds the spectrum, `Blur` averages adjacent bins.
-4. IFFT, windowed again, overlap-added into the output buffer.
-5. Output buffer is exposed as a `SampleBuffer` source that grain workers can read from.
+1. The first 2048 samples of bank slot 0 are Hann-windowed and FFT'd
+   (`kFFTSize = 2048`, `juce::dsp::FFT`).
+2. Bins are modified per mode: `Freeze` zeroes all phases (static spectral texture);
+   `Blur` randomizes phases and jitters magnitudes by `blurAmount`.
+3. One IFFT back to time domain (JUCE normalises by 1/N internally — no manual
+   division; see STATE.md decision) into a 2048-sample output buffer.
+4. While spectral is enabled, the engine granulates this 2048-sample buffer instead
+   of the sample bank (source priority: Spectral > Feedback > bank > sine).
 
-Latency: 2048 samples ≈ 42 ms at 48 kHz. Reported to host via `setLatencySamples(2048)` when spectral mode is engaged. Bypass returns latency to 0.
+Latency: `setLatencySamples(2048)` is reported while enabled and returned to 0 when
+disabled (updated at runtime via the parameter listener + 30 Hz timer, and again in
+`prepareToPlay` / state restore).
 
 ---
 
@@ -337,8 +383,8 @@ Inviolable rules:
 
 1. **No allocation.** Use the grain pool, pre-allocated arrays, `std::array`. Any `new`/`malloc`/`std::vector::push_back` in audio-thread code is a bug.
 2. **No locks.** Use atomics for cross-thread state. Use lock-free FIFOs for handoff.
-3. **No syscalls.** No file I/O, no `printf`, no logging via OS-level handles. (We have a lock-free SPSC log buffer the UI drains; the audio thread writes to it non-blocking.)
-4. **No exceptions.** Compile with `-fno-exceptions` for audio-thread translation units (Engine/, Modulation/).
+3. **No syscalls.** No file I/O, no `printf`, no logging via OS-level handles. The audio thread does not log at all.
+4. **No exceptions.** Audio-thread code paths are written exception-free (`noexcept` throughout Engine/ and Modulation/); the project does not use a per-TU `-fno-exceptions` flag because JUCE headers require exceptions enabled at compile time.
 5. **No virtual dispatch through chains.** If polymorphism is needed (e.g., envelope shapes), prefer `enum + switch` or CRTP. Single virtual at the boundary is fine.
 6. **Bounded loop counts.** Every loop has a known upper bound. No `while (condition_from_external_state)`.
 
@@ -350,7 +396,7 @@ Code review and PAUL guardrails enforce these.
 
 | Layer | Tooling | What's tested |
 |---|---|---|
-| Pure utilities (DSPMath, EnvelopeShapes) | Catch2 unit tests | Numerical correctness, edge cases. |
+| Pure utilities (EnvelopeShapes, StochasticTiming) | Catch2 unit tests | Numerical correctness, edge cases. |
 | Engine classes (Grain, GrainPool, GranularEngine) | Catch2 + manual harness | Correctness of grain accumulation, pool overflow handling, FIFO behavior. |
 | Real-time safety | TSAN + custom static analysis | Race conditions, allocation in audio thread. Known JUCE 8 false positives suppressed via `Tests/tsan_suppressions.txt`. |
 | Plugin integration | pluginval, auval | Host compliance. |

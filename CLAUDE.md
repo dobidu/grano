@@ -87,8 +87,8 @@ Source/
 ├── PluginEditor.{h,cpp}        AudioProcessorEditor entry point
 ├── Parameters.{h,cpp}          APVTS parameter layout (added in F3)
 ├── Engine/
-│   ├── Grain.{h,cpp}           Single grain (added in F1)
-│   ├── GranularEngine.{h,cpp}  Engine, FIFO, worker pool (F1)
+│   ├── Grain.h                 Single grain descriptor, header-only (F1)
+│   ├── GranularEngine.{h,cpp}  Engine, FIFO, scheduler thread (F1)
 │   ├── GrainPool.{h,cpp}       Pre-allocated grain slots (F1)
 │   ├── EnvelopeShapes.{h,cpp}  Hann/Tukey/Gauss/etc (F1)
 │   ├── SampleBuffer.{h,cpp}    Atomic sample swap (F2)
@@ -111,16 +111,15 @@ Source/
 │   ├── Knob.{h,cpp}            Custom knob component (F3)
 │   ├── Slider.{h,cpp}          Custom slider component (F3)
 │   ├── WaveformDisplay.{h,cpp} Waveform + playhead + particles (F2+)
-│   ├── LfoPanel.{h,cpp}        LFO visualization + edit (F5)
+│   ├── LfoPanel.{h,cpp}        LFO controls, LFO1/LFO2 tabs (F5)
 │   ├── ModulationMatrixView.{h,cpp} Matrix editor (F5)
-│   ├── CurveEditor.{h,cpp}     Drawable pitch/envelope curves (F6)
-│   └── Spectrogram.{h,cpp}     Optional spectral display (F6)
-└── Utils/
-    ├── Constants.h             Magic numbers in one place
-    └── DSPMath.h               DSP helpers, conversions, lookup tables
+│   ├── ModuleTabPanel.{h,cpp}  ENGINE/MOTION/COLOR/PATTERN/LFO/MOD tabs (F6)
+│   └── CurveEditor.{h,cpp}     Envelope shape selector, 5 thumbnails (F6)
+└── Utils/                      (empty — constants live in their owning headers;
+                                 Spectrogram display deferred post-v1.0)
 
 Tests/                          Catch2 unit tests
-Resources/                      Fonts, presets, demo audio
+Resources/                      Presets/ (5 factory .gpreset files)
 graphify-out/                   Knowledge graph (consult before reads)
 .paul/                          PAUL state and plans
 ```
@@ -131,21 +130,21 @@ graphify-out/                   Knowledge graph (consult before reads)
 
 **Three classes of threads:**
 
-1. **Audio thread** (host-owned). Runs `processBlock`. Real-time safe.
-2. **Message thread / UI thread** (JUCE-owned). Runs editor paint/update. Can allocate freely.
-3. **Worker threads** (our pool, `juce::ThreadPool`, 3-4 workers). Generate grains, run spectral FFT, anything heavy and non-real-time-deadline.
+1. **Audio thread** (host-owned). Runs `processBlock`, renders grains. Real-time safe.
+2. **Message thread / UI thread** (JUCE-owned). Runs editor paint/update, sample loading, spectral FFT. Can allocate freely.
+3. **Scheduler thread** (single `juce::Thread`, "GrainScheduler"). Fills grain descriptors on stochastic/pattern timing. (A ThreadPool was planned in F1 and deferred; SPSC FIFO requires a single producer.)
 
 **Communication:**
 
 - UI → Audio: via APVTS atomics. UI sets parameter, audio reads atomically. Lock-free.
-- UI → Workers: via direct method calls (workers are thread-safe-by-construction internally).
-- Workers → Audio: via SPSC `juce::AbstractFifo` carrying ready grain descriptors. Audio drains the FIFO each block.
-- Audio → UI: via lock-free counters and atomics (grain count, CPU load) sampled by the UI's `Timer` callback at 30 Hz.
+- Message thread → Audio: sample buffers via `SampleBuffer` pending/current/retired atomic swap.
+- Scheduler → Audio: via SPSC `juce::AbstractFifo` carrying grain descriptors. Audio drains the FIFO each block.
+- Audio → UI: grain snapshot array + atomic count, sampled by UI `Timer` callbacks (WaveformDisplay 30 Hz, editor footer 10 Hz).
 
 **What never happens:**
 
-- Workers writing to memory the audio thread reads concurrently.
-- Audio thread waiting on workers (the FIFO is its only contact, drained non-blocking).
+- The scheduler writing to memory the audio thread reads concurrently (descriptors are handed off through the FIFO).
+- Audio thread waiting on the scheduler (the FIFO is its only contact, drained non-blocking).
 - UI thread blocking on audio thread.
 
 See `ARCHITECTURE.md` section "Threading model" for the diagram.
@@ -155,7 +154,7 @@ See `ARCHITECTURE.md` section "Threading model" for the diagram.
 ## Performance budget
 
 - Nominal: ≤ 15% CPU on a 2020 i7 with 200 grains, all modules enabled, default settings.
-- Worst case: ≤ 40% CPU on the same hardware with 1000 grains, sub-grain depth 2, feedback on, spectral on.
+- Worst case: ≤ 40% CPU on the same hardware at the 256 active-grain cap, sub-grain depth 2, feedback on, spectral on.
 - Latency: ≤ 64 samples @ 48 kHz (≈ 1.3 ms) excluding spectral. Spectral adds 2048 samples ≈ 42 ms, reported via `setLatencySamples`.
 - Memory: ≤ 200 MB resident with all 4 sample slots loaded.
 

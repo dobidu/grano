@@ -22,7 +22,10 @@ namespace
     constexpr int   kDefaultWidth  = 1000;
     constexpr int   kDefaultHeight = 820;
     constexpr int   kMinWidth      = 800;
-    constexpr int   kMinHeight     = 650;
+    // Fixed vertical budget in resized() is 632 px; the waveform gets the
+    // remainder and must stay >= 180 px (DESIGN_SPEC). 632 + 180 = 812.
+    // (The old 650 made waveformH negative — the display vanished.)
+    constexpr int   kMinHeight     = 812;
     constexpr int   kMaxWidth      = 2000;
     constexpr int   kMaxHeight     = 1640;
 
@@ -320,12 +323,15 @@ void GranoAudioProcessorEditor::paint(juce::Graphics& g)
 void GranoAudioProcessorEditor::resized()
 {
     // kMargin and kHeaderH live in the anonymous namespace (shared with paint())
-    constexpr int kSectionGap   = 12;
+    // Fixed vertical budget = kHeaderH(52) + 6*kSectionGap + kPosStripH +
+    // kKnobH + kSpreadH + kSlotStripH + kBottomPanelH + kFooterH = 632.
+    // Keep in sync with kMinHeight (= budget + 180 px min waveform).
+    constexpr int kSectionGap   = 10;
     constexpr int kItemGap      = 6;
     constexpr int kPosStripH    = 44;
-    constexpr int kKnobH        = 100;
+    constexpr int kKnobH        = 96;
     constexpr int kSpreadH      = 44;
-    constexpr int kSlotStripH   = 80;
+    constexpr int kSlotStripH   = 72;
     constexpr int kBottomPanelH = 240;
     constexpr int kFooterH      = 24;
     constexpr int kSlotBtnW     = 28;
@@ -475,6 +481,10 @@ bool GranoAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& 
 
 void GranoAudioProcessorEditor::filesDropped(const juce::StringArray& files, int /*x*/, int /*y*/)
 {
+    // JUCE delivers filesDropped without a trailing fileDragExit — clear the
+    // drag highlight here or it stays painted after a successful drop.
+    waveformDisplay_.setDragHighlightActive(false);
+
     if (files.isEmpty())
         return;
 
@@ -503,9 +513,14 @@ void GranoAudioProcessorEditor::showError(const juce::String& message)
 
     // Auto-dismiss after 3 s; generation counter cancels stale callbacks.
     // Both here and the lambda run on the message thread — no race.
+    // SafePointer: callAfterDelay outlives the editor, so the callback must
+    // not touch a destroyed component (close-within-3s use-after-free).
     const auto gen = ++errorGen_;
-    juce::Timer::callAfterDelay(3000, [this, gen] {
-        if (errorGen_ == gen) clearError();
+    juce::Component::SafePointer<GranoAudioProcessorEditor> safeThis(this);
+    juce::Timer::callAfterDelay(3000, [safeThis, gen] {
+        if (auto* ed = safeThis.getComponent())
+            if (ed->errorGen_ == gen)
+                ed->clearError();
     });
 }
 

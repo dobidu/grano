@@ -22,6 +22,8 @@ public:
     void processSource(const float* src, int srcLen,
                        Mode mode, float blurAmount) noexcept;
 
+    // getNumSamples() excludes the +2 guard samples (renderGrain contract:
+    // interpolation may read source[len] and source[len+1]).
     const float* getReadPointer() const noexcept { return output_.data(); }
     int          getNumSamples()  const noexcept { return kFFTSize; }
 
@@ -29,6 +31,8 @@ private:
     juce::dsp::FFT fft_;
     std::array<float, kFFTSize * 2> fftBuf_{}; // complex interleaved
     std::array<float, kFFTSize>     window_{};
-    std::array<float, kFFTSize>     output_{};
+    // +2 zero guard samples past kFFTSize for linear-interpolation safety
+    // (processSource only writes [0, kFFTSize); guards stay zero).
+    std::array<float, kFFTSize + 2> output_{};
     juce::Random                    rng_;
 };

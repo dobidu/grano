@@ -129,6 +129,7 @@ public:
     {
         float srcFraction;  // grain start position as [0..1] of loaded sample length
         float envelopeAmp;  // current envelope amplitude [0..1] for particle opacity
+        float yFraction;    // stable per-grain vertical scatter [0..1) for particles
     };
 
     // UI thread (30 Hz Timer): copy current active grain snapshot data.
@@ -215,6 +216,12 @@ private:
 
     // Used only from SchedulerThread — no synchronization needed.
     juce::Random grainRng_;
+
+    // Loop position sweep (scheduler thread only). When the loop param is on,
+    // the effective grain position advances in real time and wraps, sweeping
+    // the playhead across the source once per source duration.
+    double loopTimeSec_{ 0.0 };
+    bool   prevLoopOn_ { false };
 
     std::array<GrainSnapshot, MaxActiveGrains> grainSnapshots_{};
     std::atomic<int>                           grainSnapshotCount_{ 0 };

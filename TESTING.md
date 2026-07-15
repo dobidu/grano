@@ -6,7 +6,7 @@
 |----------------|-----------------------------|------------------------------|
 | Tester         |                             |                              |
 | Date           |                             |                              |
-| Build          | v1.0.0-beta.1               | v1.0.0-beta.1                |
+| Build          | v1.0.0-beta.2               | v1.0.0-beta.2                |
 | DAW / Host     |                             |                              |
 | OS Version     |                             |                              |
 | Plugin formats | VST3 in DAW, Standalone     | VST3, AU, Standalone         |
@@ -36,7 +36,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 1. Inspect all knobs and controls.
 
 **Expected result:**
-- Grain Size ≈ 100ms, Density ≈ 20 g/s, Position = 0%, Position Jitter = 0%.
+- Grain Size ≈ 100ms, Density ≈ 10 g/s, Position = 0%, Position Jitter = 0%.
 - Pitch Shift = 0st, Stereo Spread = 50%, Master Volume = 0dB, Loop = off.
 - MOTION, COLOR, PATTERN modules bypassed.
 - LFO 1 and LFO 2 Rate = 1Hz, Sine waveform, Depth = 0.
@@ -899,7 +899,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ## 10. Sub-Grain
 
 ### 10.1 Sub-grain Depth 0 (off)
-**Setup:** Default state + sample loaded. Density = 20 g/s.  
+**Setup:** Default state + sample loaded. Density = 10 g/s.  
 **Steps:**
 1. Set Sub-grain Depth = 0.
 2. Listen and note the texture.
@@ -934,7 +934,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ## 11. Stochastic Distribution
 
-> All tests: sample loaded, host playing, Density = 20 g/s, all modules bypassed.
+> All tests: sample loaded, host playing, Density = 10 g/s, all modules bypassed.
 
 ### 11.1 Uniform distribution
 **Setup:** Default state.  
@@ -1011,7 +1011,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ## 12. Feedback Path
 
 ### 12.1 Feedback toggle — on
-**Setup:** Default state + sample loaded. Grain Size = 150ms, Density = 20 g/s.  
+**Setup:** Default state + sample loaded. Grain Size = 150ms, Density = 10 g/s.  
 **Steps:**
 1. Enable Feedback.
 2. Set Feedback Gain = 0.5.
@@ -1232,7 +1232,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ## 16. Performance & Stability
 
 ### 16.1 CPU at nominal load (200 grains, all modules on)
-**Setup:** Sample loaded. Density = 200 g/s (if achievable), Grain Size = 50ms, MOTION + COLOR + PATTERN enabled, Feedback on (Gain = 0.5), Spectral off. Sub-grain Depth = 0.  
+**Setup:** Sample loaded. Density = 100 g/s (param max), Grain Size = 50ms, MOTION + COLOR + PATTERN enabled, Feedback on (Gain = 0.5), Spectral off. Sub-grain Depth = 0.  
 **Steps:**
 1. Run for 60 seconds.
 2. Monitor DAW CPU meter or system CPU usage.

@@ -28,10 +28,10 @@ GranoAudioProcessor::GranoAudioProcessor()
     engine_.setEnvelopeShapeParam(
         apvts_.getRawParameterValue(ParamIDs::envelopeShape));
     engine_.setFeedbackSource(&feedbackPath_);
-    engine_.setFeedbackParamPointers(
-        apvts_.getRawParameterValue(ParamIDs::feedbackEnabled),
-        apvts_.getRawParameterValue(ParamIDs::feedbackGain),
-        apvts_.getRawParameterValue(ParamIDs::feedbackDamp));
+    pFeedbackEnabled_ = apvts_.getRawParameterValue(ParamIDs::feedbackEnabled);
+    pFeedbackGain_    = apvts_.getRawParameterValue(ParamIDs::feedbackGain);
+    pFeedbackDamp_    = apvts_.getRawParameterValue(ParamIDs::feedbackDamp);
+    engine_.setFeedbackParamPointers(pFeedbackEnabled_, pFeedbackGain_, pFeedbackDamp_);
     engine_.setSpectralSource(&spectralProcessor_);
     engine_.setSpectralParamPointers(
         apvts_.getRawParameterValue(ParamIDs::spectralEnabled),
@@ -87,6 +87,12 @@ GranoAudioProcessor::GranoAudioProcessor()
         apvts_.getRawParameterValue(ParamIDs::driftAmount),
         apvts_.getRawParameterValue(ParamIDs::crackleLevel),
         apvts_.getRawParameterValue(ParamIDs::crackleColor));
+    // Spectral params take effect at runtime (UAT-006): flag-and-service via
+    // the 30 Hz timer so the FFT never runs on the audio thread.
+    apvts_.addParameterListener(ParamIDs::spectralEnabled, this);
+    apvts_.addParameterListener(ParamIDs::spectralMode, this);
+    apvts_.addParameterListener(ParamIDs::spectralBlurAmount, this);
+
     // Timer requires MessageManager; skip in headless test contexts.
     if (juce::MessageManager::getInstanceWithoutCreating() != nullptr)
         startTimerHz(30);
@@ -94,6 +100,9 @@ GranoAudioProcessor::GranoAudioProcessor()
 
 GranoAudioProcessor::~GranoAudioProcessor()
 {
+    apvts_.removeParameterListener(ParamIDs::spectralEnabled, this);
+    apvts_.removeParameterListener(ParamIDs::spectralMode, this);
+    apvts_.removeParameterListener(ParamIDs::spectralBlurAmount, this);
     if (isTimerRunning())
         stopTimer();
 }
@@ -143,13 +152,24 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     motion_.processBlock(buffer);
     color_.processBlock(buffer);
 
-    // Feed audio output back into FeedbackPath for re-injection as a grain source.
+    // Feed audio output back into FeedbackPath for re-injection as a grain
+    // source. Skipped entirely when feedback is off (README: zero CPU cost);
+    // ring is cleared on re-enable so stale audio doesn't burst back in.
+    // Cached atomic pointers — no string-keyed APVTS lookups on the audio thread.
     {
-        const float gain = *apvts_.getRawParameterValue(ParamIDs::feedbackGain);
-        const float damp = *apvts_.getRawParameterValue(ParamIDs::feedbackDamp);
-        const float* L = buffer.getReadPointer(0);
-        const float* R = buffer.getNumChannels() > 1 ? buffer.getReadPointer(1) : nullptr;
-        feedbackPath_.process(L, R, buffer.getNumSamples(), gain, damp);
+        const bool fbOn = pFeedbackEnabled_ != nullptr &&
+            pFeedbackEnabled_->load(std::memory_order_relaxed) > 0.5f;
+        if (fbOn)
+        {
+            if (!feedbackWasOn_)
+                feedbackPath_.reset();
+            const float gain = pFeedbackGain_ ? pFeedbackGain_->load(std::memory_order_relaxed) : 0.0f;
+            const float damp = pFeedbackDamp_ ? pFeedbackDamp_->load(std::memory_order_relaxed) : 0.0f;
+            const float* L = buffer.getReadPointer(0);
+            const float* R = buffer.getNumChannels() > 1 ? buffer.getReadPointer(1) : nullptr;
+            feedbackPath_.process(L, R, buffer.getNumSamples(), gain, damp);
+        }
+        feedbackWasOn_ = fbOn;
     }
 }
 
@@ -199,7 +219,27 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
     lastLoadError_        = {};
     lastLoadedSampleRate_ = reader->sampleRate;
     lastLoadedNumFrames_  = numFrames;
+    if (slot >= 0 && slot < MultiSampleBank::kNumSlots)
+        slotFiles_[static_cast<size_t>(slot)] = file;
     sampleBank_.loadSlot(slot, std::move(buf), numFrames);
+    triggerSpectralProcessIfEnabled();
+}
+
+void GranoAudioProcessor::applyPendingSpectralUpdate()
+{
+    if (!spectralDirty_.exchange(false, std::memory_order_acq_rel))
+        return;
+
+    const bool on = *apvts_.getRawParameterValue(ParamIDs::spectralEnabled) > 0.5f;
+    setLatencySamples(on ? SpectralProcessor::kFFTSize : 0);
+
+    // A freshly loaded slot stays pending until the audio thread's trySwapAll;
+    // if the source isn't visible yet, stay dirty and retry on the next tick.
+    if (on && sampleBank_.getReadPointer(0) == nullptr)
+    {
+        spectralDirty_.store(true, std::memory_order_release);
+        return;
+    }
     triggerSpectralProcessIfEnabled();
 }
 
@@ -222,6 +262,21 @@ void GranoAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     juce::ValueTree combined("GranoCombinedState");
     combined.addChild(apvts_.copyState(), -1, nullptr);
     combined.addChild(snapshots_.serialise(), -1, nullptr);
+
+    juce::ValueTree paths("SamplePaths");
+    for (int slot = 0; slot < MultiSampleBank::kNumSlots; ++slot)
+    {
+        const auto& f = slotFiles_[static_cast<size_t>(slot)];
+        if (f.getFullPathName().isNotEmpty())
+        {
+            juce::ValueTree entry("Slot");
+            entry.setProperty("index", slot, nullptr);
+            entry.setProperty("path", f.getFullPathName(), nullptr);
+            paths.addChild(entry, -1, nullptr);
+        }
+    }
+    combined.addChild(paths, -1, nullptr);
+
     if (auto xml = combined.createXml())
         copyXmlToBinary(*xml, destData);
 }
@@ -237,11 +292,36 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                 apvts_.replaceState(apvtsChild);
             if (auto snapChild = tree.getChildWithName("Snapshots"); snapChild.isValid())
                 snapshots_.deserialise(snapChild);
+
+            // Reload sample files so the project restores audibly, not just
+            // parameter-wise. Missing files surface via the error-label flow
+            // without aborting the rest of the restore.
+            if (auto pathsChild = tree.getChildWithName("SamplePaths"); pathsChild.isValid())
+            {
+                for (const auto& entry : pathsChild)
+                {
+                    const int  slot = entry.getProperty("index", -1);
+                    const auto path = entry.getProperty("path", juce::String()).toString();
+                    if (slot < 0 || slot >= MultiSampleBank::kNumSlots || path.isEmpty())
+                        continue;
+                    const juce::File f(path);
+                    if (f.existsAsFile())
+                        loadSampleFile(f, slot);
+                    else
+                        lastLoadError_ = "Sample not found: " + f.getFileName();
+                }
+            }
         }
         else if (tree.hasType(apvts_.state.getType()))
         {
             apvts_.replaceState(tree); // old format — no snapshots
         }
+
+        // Spectral source + latency must reflect restored spectralEnabled/Mode/
+        // Blur even when no sample reload happened (legacy state, samples
+        // already loaded). setStateInformation runs on the message thread.
+        spectralDirty_.store(true, std::memory_order_release);
+        applyPendingSpectralUpdate();
     }
 }
 
