@@ -98,6 +98,15 @@ TEST_CASE("Spectral Blur 0 reproduces the source, Blur 1 smears it", "[spectral]
     };
     sp.processSource(src.data(), (int)src.size(), SpectralProcessor::Mode::Blur, 0.0f);
     REQUIRE(corr(sp.getReadPointer()) > 0.99);
-    sp.processSource(src.data(), (int)src.size(), SpectralProcessor::Mode::Blur, 1.0f);
-    REQUIRE(corr(sp.getReadPointer()) < 0.9);
+
+    // Blur 1 on a broadband source: hundreds of bins with random phase
+    // offsets — correlation with the dry frame is ~0 (a sine would put its
+    // energy in ~2 bins, where one lucky phase draw could stay correlated).
+    juce::Random nr(9);
+    for (auto& v : src) v = nr.nextFloat() * 2.0f - 1.0f;
+    for (int run = 0; run < 20; ++run)
+    {
+        sp.processSource(src.data(), (int)src.size(), SpectralProcessor::Mode::Blur, 1.0f);
+        REQUIRE(std::abs(corr(sp.getReadPointer())) < 0.5);
+    }
 }
