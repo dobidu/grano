@@ -29,7 +29,7 @@ public:
     // Handles Sync BPM tracking and Audio-driven transient detection.
     void processBlock(const juce::AudioBuffer<float>& inputBuffer, double bpm) noexcept;
 
-    // ── Scheduler-thread API (called from GranularEngine::SchedulerThread) ────────
+    // ── Free-running scheduler API (audio thread, GranularEngine sample clock) ────
 
     // Returns false when patternEnabled=true and the grain should be skipped
     // (probability roll, Euclidean miss, or Audio-driven no transient).

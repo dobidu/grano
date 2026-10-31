@@ -1114,13 +1114,13 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-### 13.5 Spectral latency reported to host
+### 13.5 Spectral reports no latency
 **Setup:** DAW with latency compensation visible (check plug-in delay compensation readout).  
 **Steps:**
 1. Enable Spectral.
 2. Read the reported plugin latency in the DAW.
 
-**Expected result:** DAW reports a latency of approximately 2048 samples at the current sample rate (≈ 42ms at 48kHz). Latency compensation offsets other tracks accordingly.  
+**Expected result:** DAW reports 0 samples. (Spectral is an offline transform of the source; it adds no audio-path delay. beta.1/beta.2 reported 2048 samples, which shifted the track 42 ms early.)  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -1132,7 +1132,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 1. Disable Spectral.
 2. Check reported latency.
 
-**Expected result:** Reported latency drops back to the non-spectral value (≤ 64 samples). DAW adjusts compensation.  
+**Expected result:** Reported latency stays 0 samples.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 

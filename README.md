@@ -56,8 +56,8 @@ The design goes beyond a standard granular engine with:
 - **Sub-grain recursion** — each grain can spawn child grains of itself, recursively, creating fractal-density cloud structures no conventional granular plugin produces.
 - **Six stochastic timing distributions** — Uniform, Gaussian, Poisson, Exponential, Pareto, 1/f (fractal). The inter-grain interval is sampled from the chosen distribution, giving you everything from metronomic precision to heavy-tailed bursts.
 - **Internal feedback path** — the engine's own audio output is re-injected as a grain source. Sustained tones accumulate, degrade, and self-modulate over time.
-- **Spectral processor** — Freeze and Blur modes transform the loaded sample in the frequency domain before granulation begins. Freeze crystallises the spectrum; Blur smears phases to create evolving shimmer textures.
-- **Two LFOs** — rates from 0.01 Hz up to 8 kHz, routable to the core engine parameters via an 8-slot modulation matrix. LFOs are evaluated once per audio block, so very high rates read as textural randomization rather than true per-sample FM.
+- **Spectral processor** — Freeze and Blur modes transform the loaded sample in the frequency domain before granulation begins. Freeze holds the spectrum as a stationary texture; Blur smears phases to create evolving shimmer textures.
+- **Two LFOs** — rates from 0.01 Hz up to 8 kHz, routable to the core engine parameters via an 8-slot modulation matrix. LFOs are evaluated every 32 samples (independent of the host buffer size), so rates above a few hundred Hz read as textural randomization rather than true per-sample FM.
 - **Four parameter snapshots** — instant morph between four complete states during performance.
 
 ---
@@ -413,7 +413,7 @@ At 0.02 Hz the position completes a full sweep every 50 seconds — slow enough 
 
 #### Example 2 — Fast LFO to Pitch Shift (per-grain scatter)
 
-Sets LFO 1 to a fast rate and routes it to `pitchShift`. The LFO is sampled once per audio block, so each newly scheduled grain picks up a different pitch offset — a scattering, cluster-like texture rather than true FM sidebands.
+Sets LFO 1 to a fast rate and routes it to `pitchShift`. The LFO is sampled every 32 samples, so each newly scheduled grain picks up a different pitch offset — a scattering, cluster-like texture rather than true FM sidebands.
 
 | Slot field | Value |
 |------------|-------|
@@ -530,7 +530,7 @@ PATTERN controls how grains are triggered over time. It replaces or modifies the
 | **Probability** | 0–100% | 100% | Per-trigger probability. At 100% every trigger fires; lower values drop random triggers. |
 | **Reverse Prob** | 0–100% | 0% | Per-grain probability of reversing playback direction. |
 | **Quantize Scale** | Chromatic / Major / Minor / Dorian / Phrygian / Lydian / Mixolydian / Pent Maj / Pent Min / Whole Tone / Octatonic | Chromatic | Locks Pitch Shift to scale degrees. |
-| **Spray** | 0–100% | 0% | Randomness macro: continuous pitch scatter per grain (±12 st, applied after scale quantization, so sprayed pitches can leave the scale) plus grain-duration randomization up to 3×. |
+| **Spray** | 0–100% | 0% | Randomness macro: continuous pitch scatter per grain (±12 st, applied after scale quantization, so sprayed pitches can leave the scale) plus grain-duration randomization from ½× to 2×. |
 
 ---
 
@@ -542,7 +542,7 @@ Two LFOs, freely routable to any parameter via the Modulation Matrix.
 
 | Parameter | Range | Default | Description |
 |-----------|-------|---------|-------------|
-| **Rate** | 0.01–8000 Hz | 1 Hz | LFO frequency. The LFO is evaluated once per audio block, so rates above ~20 Hz read as per-grain/per-block randomization rather than smooth audio-rate FM. |
+| **Rate** | 0.01–8000 Hz | 1 Hz | LFO frequency. The LFO is evaluated every 32 samples (≈ 1500 times per second at 48 kHz) regardless of the host buffer size, so rates above a few hundred Hz alias into per-grain randomization rather than smooth audio-rate FM. |
 | **Waveform** | Sine / Triangle / Saw / Square / Random / S&H / Drawable | Sine | LFO waveform. *Drawable* lets you sketch a custom one-cycle shape. |
 | **Sync** | On / Off | Off | When on, Rate locks to the DAW tempo (one cycle per quarter note). |
 | **Phase** | 0–360° | 0° | Start phase offset. Useful for stereo LFO pairs. |
@@ -590,7 +590,7 @@ When Depth > 0, each triggered grain spawns additional child grains derived from
 
 Depth 2 with moderate density (5–15 g/s) creates dense particle clouds with organic internal motion — a texture rarely achievable with conventional granular engines.
 
-Sub-grain generation runs on the scheduler thread, not the audio thread. It is real-time safe.
+Sub-grains are scheduled on the audio thread's sample clock, placed in time inside the parent grain's window, and the whole family is level-normalised so depth adds texture rather than loudness. It is real-time safe (pre-allocated pool, no allocation).
 
 ### Stochastic timing
 
@@ -602,8 +602,8 @@ Controls the probability distribution of inter-grain time intervals. The mean in
 |-------------|-----------|
 | **Uniform** | Grains evenly jittered within a symmetric window. Predictable, slight humanisation. |
 | **Gaussian** | Bell-curve jitter around the mean. Natural-feeling variation. |
-| **Poisson** | Exponential inter-arrival (correct Poisson process). Bursts separated by longer silences. |
-| **Exponential** | Heavier-tailed than Gaussian. More extreme timing deviations, occasional large gaps. |
+| **Poisson** | Clustered Poisson process: bursts of closely spaced grains separated by longer pauses. Same average density, much burstier than Exponential. |
+| **Exponential** | Memoryless (classic Poisson-process) spacing. Heavier-tailed than Gaussian: irregular, occasional large gaps. |
 | **Pareto** | Very heavy tail (α = 1.5). Long quiet stretches punctuated by rapid grain bursts. Good for glitchy, intermittent textures. |
 | **1/f** | Fractal / pink-noise timing. Variation at all timescales simultaneously. Feels both organised and unpredictable. |
 
@@ -632,12 +632,12 @@ The spectral processor applies a 2048-point FFT transform to the loaded sample b
 
 | Mode | Description |
 |------|-------------|
-| **Freeze** | Analyses the sample, takes magnitude information, sets all phases to zero. IFFT produces a static, phaseless reconstruction — a harmonically preserved but time-frozen texture. Suitable for sustained drone generation. |
-| **Blur** | Randomises per-bin phases proportionally to Spectral Blur Amount. At Blur Amount = 0% no blurring occurs (equivalent to Freeze). At 100%, all phases are fully random — the output is noise-coloured by the sample's spectral envelope. Intermediate values create shimmering, evolving textures between the two extremes. |
+| **Freeze** | Analyses the sample, keeps the magnitude of every frequency bin and gives each bin a fixed random phase. The result is a stationary, harmonically preserved texture with no transients — suitable for sustained drones. The same sample always freezes to the same texture. |
+| **Blur** | Offsets each bin's original phase by a random amount proportional to Spectral Blur Amount, and jitters magnitudes slightly. At 0% the source frame passes unchanged; at 100% phases are fully random — noise coloured by the sample's spectral envelope. Intermediate values create shimmering, evolving textures. |
 
-**Spectral Blur Amount:** controls how far phases deviate from the original. 0% = Freeze-like, 100% = full phase noise. A setting of 30–60% often produces the most musical shimmer.
+**Spectral Blur Amount:** controls how far phases deviate from the original. 0% = dry source frame, 100% = full phase noise. A setting of 30–60% often produces the most musical shimmer.
 
-**Latency:** when spectral processing is enabled, Grano reports 2048 samples (≈ 42 ms at 48 kHz) of additional latency to the host. DAWs with delay compensation will align Grano's output correctly. Disable spectral processing to reduce latency to near-zero.
+**Latency:** none. The spectral transform runs once on the source sample (off the audio thread); it adds no delay to the audio path, so Grano reports 0 samples of latency with Spectral on or off.
 
 **Source priority:** Spectral takes highest priority as a grain source — above Feedback and the loaded SampleBuffer. Enable Feedback while Spectral is also on: the engine will use the spectral output as its source regardless.
 
@@ -651,7 +651,7 @@ The spectral processor applies a 2048-point FFT transform to the loaded sample b
 | 500 grains, all modules on | ~20% |
 | 1000 grains, Sub-grain depth 2, Feedback + Spectral on | ~35% |
 
-The engine's grain generation runs on background worker threads, not the audio thread. Increasing Density or Sub-grain Depth adds CPU on those threads, not on the audio thread. You will rarely cause an audio dropout by increasing grain density — you may hit CPU wall first.
+Grain scheduling and rendering run on the audio thread on a sample-accurate clock, so offline bounces sound exactly like realtime playback at any buffer size. Increasing Density, Grain Size or Sub-grain Depth increases the number of simultaneously rendered grains (capped at 256) and therefore audio-thread CPU. Grain level is normalised by the expected overlap, so dense settings don't get proportionally louder.
 
 **Buffer size:** tested at 128 to 1024 samples at 44.1 and 48 kHz. 64-sample buffers may produce xruns on slower machines with high grain counts.
 
@@ -897,8 +897,8 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 2
 - Clear the component cache: `sudo killall -9 AudioComponentRegistrar` and relaunch your DAW.
 - Remove the quarantine attribute: `sudo xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Grano.vst3`
 
-**DAW reports non-zero latency even with Spectral disabled:**
-- Grano re-reports latency whenever the Spectral toggle changes. If your DAW still shows stale delay compensation, force a graph rebuild (toggle bypass) or reload the plugin instance.
+**DAW reports non-zero latency:**
+- Grano reports 0 samples. Projects saved with beta.1/beta.2 may hold a stale 2048-sample compensation from Spectral; force a graph rebuild (toggle bypass) or reload the plugin instance.
 
 ---
 

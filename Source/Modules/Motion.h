@@ -21,7 +21,7 @@ public:
     // Updates pitchModSt_ and adds crackle to buffer.
     void processBlock(juce::AudioBuffer<float>& buffer) noexcept;
 
-    // Read by GranularEngine::scheduleGrain() (scheduler thread).
+    // Read by GranularEngine::scheduleGrain() (audio thread).
     // Returns total pitch offset in semitones (Wow + Flutter + Drift).
     float getPitchModSemitones() const noexcept
     {
@@ -52,7 +52,7 @@ private:
     float filterState_[2] { 0.0f, 0.0f };
     float splitCoeff_     { 0.9f };
 
-    // Cross-thread: audio thread writes, scheduler thread reads
+    // Audio thread only since 08-08 (atomic kept for UI/telemetry reads)
     std::atomic<float> pitchModSt_ { 0.0f };
 
     std::atomic<float>* pEnabled_    { nullptr };

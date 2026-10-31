@@ -1,5 +1,60 @@
 # Grano — Release Notes
 
+## v1.0.0-beta.3 (unreleased)
+
+A correctness release: a full code review (08-08) found that several features
+produced wrong audio. **Existing projects and presets will sound different** —
+mostly closer to what the controls always claimed to do.
+
+### Sound changes you will hear
+
+- **Stereo Spread works as labelled.** 0% is now mono and 100% fully wide. Before,
+  the knob was V-shaped and its default (50%) was **mono**; the default is now a
+  half-width stereo image.
+- **Dense settings are no longer much louder.** Grain level is normalised by the
+  expected overlap (density × grain size) and sub-grain families are normalised
+  too. High-density patches are quieter than before; turn Volume up if needed.
+- **Spectral Freeze is a sustained texture,** not a click. **Blur 0% is the dry
+  source** and smears smoothly towards noise.
+- **Verb no longer adds +6 dB** to the dry signal the moment it is engaged; the mix
+  knob is an equal-power dry/wet crossfade.
+- **Crackle** stays audible across the whole Color range and no longer buzzes at the
+  host block rate. **Drift** wanders the same way at any buffer size.
+- **Saturate** fades in smoothly with the knob instead of jumping +2–24 dB.
+- **Poisson** timing is now a clustered (bursty) process — it used to be identical
+  to Exponential.
+- **Spray** randomises grain length both shorter and longer (½×–2×).
+- **Scale quantize** no longer removes Motion's wow/flutter/drift.
+
+### Fixes
+
+- **Offline bounces match playback.** Grains are now scheduled on a sample-accurate
+  clock on the audio thread (the old wall-clock scheduler thread rendered fast
+  offline bounces almost silent). Onsets land on their exact sample; Sync and
+  Euclidean patterns lock to the host timeline.
+- **No more clicks at the end of the sample** when pitched up — grains are fitted
+  to the source and always play their full envelope. Long samples (> 1 min) keep
+  sub-sample precision.
+- **Feedback** can no longer run away to inf/NaN, never reads across its own write
+  head (periodic clicks), still passes signal at 100% Damp, and is cleared on
+  transport restart / sample-rate change.
+- **Spectral** latency is 0 (the reported 2048 samples shifted the track 42 ms early)
+  and a newly loaded sample is always the one transformed.
+- **Master volume** changes and LFO→Volume are ramped (no zipper noise).
+- Loading a preset/state now clears samples and snapshots that are not in it.
+- Two rapid loads into one slot can no longer pair a buffer with the wrong length;
+  the audio thread never frees memory.
+- Transient (Audio) trigger is independent of buffer size and listens to both
+  channels.
+
+### Compatibility
+
+Parameters and the saved-state format are unchanged; the sound of existing patches
+changes as described above.
+
+---
+
+
 ## v1.0.0-beta.2 (2026-06-07)
 
 Second public beta, focused on Windows fixes and exposing every module control in the UI.

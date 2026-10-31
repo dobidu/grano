@@ -52,7 +52,7 @@ private:
     };
     std::array<SlotParams, kNumSlots> slots_{};
 
-    // Written by audio thread in processBlock, read by scheduler thread via getModOffset.
+    // Written by audio thread in processBlock, read by the engine (same thread) via getModOffset.
     // atomic<float> gives TSAN-clean cross-thread reads without a lock.
     std::array<std::atomic<float>, kNumDests> modSums_{};
 };

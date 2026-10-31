@@ -37,7 +37,7 @@ public:
     // Message thread (~30 Hz): delete retired buffers for all slots.
     void processRetiredAll();
 
-    // Scheduler thread: weighted-random slot selection. RT-safe.
+    // Audio thread (sample-clock scheduler): weighted-random slot selection. RT-safe.
     // weights[kNumSlots] — unnormalized; slots with weight=0 or no data excluded.
     // Returns {ptr, len} for the selected slot, or {nullptr, 0} if none available.
     std::pair<const float*, int> pickSlot(juce::Random& rng,

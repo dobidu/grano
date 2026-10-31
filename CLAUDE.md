@@ -88,7 +88,7 @@ Source/
 ├── Parameters.{h,cpp}          APVTS parameter layout (added in F3)
 ├── Engine/
 │   ├── Grain.h                 Single grain descriptor, header-only (F1)
-│   ├── GranularEngine.{h,cpp}  Engine, FIFO, scheduler thread (F1)
+│   ├── GranularEngine.{h,cpp}  Engine, sample-clock scheduler, mixer (F1, 08-08)
 │   ├── GrainPool.{h,cpp}       Pre-allocated grain slots (F1)
 │   ├── EnvelopeShapes.{h,cpp}  Hann/Tukey/Gauss/etc (F1)
 │   ├── SampleBuffer.{h,cpp}    Atomic sample swap (F2)
@@ -128,23 +128,23 @@ graphify-out/                   Knowledge graph (consult before reads)
 
 ## Threading model
 
-**Three classes of threads:**
+**Two classes of threads:**
 
-1. **Audio thread** (host-owned). Runs `processBlock`, renders grains. Real-time safe.
-2. **Message thread / UI thread** (JUCE-owned). Runs editor paint/update, sample loading, spectral FFT. Can allocate freely.
-3. **Scheduler thread** (single `juce::Thread`, "GrainScheduler"). Fills grain descriptors on stochastic/pattern timing. (A ThreadPool was planned in F1 and deferred; SPSC FIFO requires a single producer.)
+1. **Audio thread** (host-owned). Runs `processBlock`: schedules grains on a sample clock (exact sample offsets, PPQ-locked Sync/Euclidean) and renders them. Modulation, scheduling and Motion run in 32-sample sub-blocks. Real-time safe.
+2. **Message thread / UI thread** (JUCE-owned). Runs editor paint/update, sample loading, spectral FFT, freeing retired buffers. Can allocate freely.
+
+(The F1 "GrainScheduler" thread + SPSC FIFO was removed in 08-08: wall-clock scheduling broke offline bounces and onset timing.)
 
 **Communication:**
 
 - UI → Audio: via APVTS atomics. UI sets parameter, audio reads atomically. Lock-free.
-- Message thread → Audio: sample buffers via `SampleBuffer` pending/current/retired atomic swap.
-- Scheduler → Audio: via SPSC `juce::AbstractFifo` carrying grain descriptors. Audio drains the FIFO each block.
-- Audio → UI: grain snapshot array + atomic count, sampled by UI `Timer` callbacks (WaveformDisplay 30 Hz, editor footer 10 Hz).
+- Message thread → Audio: sample buffers via `SampleBuffer` pending record `{buffer, length, generation}`, swapped in one atomic exchange; old buffers retire through an `AbstractFifo` and are freed on the message thread. The audio thread never allocates or frees.
+- Audio → UI: grain snapshot array + atomic count, loop-sweep fraction, sampled by UI `Timer` callbacks (WaveformDisplay 30 Hz, editor footer 10 Hz).
 
 **What never happens:**
 
-- The scheduler writing to memory the audio thread reads concurrently (descriptors are handed off through the FIFO).
-- Audio thread waiting on the scheduler (the FIFO is its only contact, drained non-blocking).
+- The audio thread allocating, freeing, locking or waiting.
+- The FFT reading a slot before the newly loaded buffer is live (load generation check).
 - UI thread blocking on audio thread.
 
 See `ARCHITECTURE.md` section "Threading model" for the diagram.
@@ -155,7 +155,7 @@ See `ARCHITECTURE.md` section "Threading model" for the diagram.
 
 - Nominal: ≤ 15% CPU on a 2020 i7 with 200 grains, all modules enabled, default settings.
 - Worst case: ≤ 40% CPU on the same hardware at the 256 active-grain cap, sub-grain depth 2, feedback on, spectral on.
-- Latency: ≤ 64 samples @ 48 kHz (≈ 1.3 ms) excluding spectral. Spectral adds 2048 samples ≈ 42 ms, reported via `setLatencySamples`.
+- Latency: 0 samples reported (spectral is offline on the source and adds no audio-path delay).
 - Memory: ≤ 200 MB resident with all 4 sample slots loaded.
 
 ---
