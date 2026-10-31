@@ -168,7 +168,8 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     constexpr int kSubBlock = 32;
     const int N     = buffer.getNumSamples();
     const int numCh = buffer.getNumChannels();
-    const double samplesPerBeat = getSampleRate() * 60.0 / bpm;
+    const double sr = getSampleRate() > 0.0 ? getSampleRate() : 48000.0;
+    const double samplesPerBeat = sr * 60.0 / bpm;
     for (int start = 0; start < N; start += kSubBlock)
     {
         const int n = std::min(kSubBlock, N - start);
