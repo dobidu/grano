@@ -150,16 +150,9 @@ void Pattern::processBlock(const juce::AudioBuffer<float>& inputBuffer, double b
         const int divIdx = pSyncDivision_
             ? (int)pSyncDivision_->load(std::memory_order_relaxed) : 1;
 
-        // Division multipliers relative to one quarter note (60/bpm seconds).
-        // Order: 1/4, 1/8, 1/16, 1/32, 1/64, 1/4T, 1/8T, 1/16T, 1/4D, 1/8D
-        static constexpr float kDivMult[] = {
-            1.0f, 0.5f, 0.25f, 0.125f, 0.0625f,
-            2.0f/3.0f, 1.0f/3.0f, 1.0f/6.0f,
-            1.5f, 0.75f
-        };
-        const int   idx     = juce::jlimit(0, 9, divIdx);
+        juce::ignoreUnused(divIdx);
         const float beatSec = (float)(60.0 / bpm);
-        syncIntervalAtomic_.store(beatSec * kDivMult[idx], std::memory_order_relaxed);
+        syncIntervalAtomic_.store(beatSec * (float)getStepBeats(), std::memory_order_relaxed);
     }
 
     // ── Audio-driven transient detection ─────────────────────────────────────
@@ -197,7 +190,46 @@ void Pattern::processBlock(const juce::AudioBuffer<float>& inputBuffer, double b
     }
 }
 
-// ── Scheduler-thread API ──────────────────────────────────────────────────────
+// ── Scheduler API (audio thread — sample clock) ──────────────────────────────
+
+int Pattern::getActiveTriggerMode() const noexcept
+{
+    if (pEnabled_ == nullptr || pEnabled_->load(std::memory_order_relaxed) < 0.5f)
+        return 0;
+    return juce::jlimit(0, 3, pTriggerMode_
+        ? (int)pTriggerMode_->load(std::memory_order_relaxed) : 0);
+}
+
+double Pattern::getStepBeats() const noexcept
+{
+    // Division lengths in quarter-note beats.
+    // Order: 1/4, 1/8, 1/16, 1/32, 1/64, 1/4T, 1/8T, 1/16T, 1/4D, 1/8D
+    static constexpr double kDivBeats[] = {
+        1.0, 0.5, 0.25, 0.125, 0.0625,
+        2.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0,
+        1.5, 0.75
+    };
+    const int idx = juce::jlimit(0, 9, pSyncDivision_
+        ? (int)pSyncDivision_->load(std::memory_order_relaxed) : 1);
+    return kDivBeats[idx];
+}
+
+bool Pattern::shouldFireGrainAtStep(long long step) noexcept
+{
+    if (getActiveTriggerMode() == 2)
+    {
+        rebuildEuclidIfNeeded();
+        const long long len = std::max(euclidPatternLen_, 1);
+        const long long idx = ((step % len) + len) % len;
+        if (!euclidPattern_[(size_t)idx])
+            return false;
+    }
+    const float prob = pProbability_
+        ? pProbability_->load(std::memory_order_relaxed) : 1.0f;
+    return rng_.nextFloat() < prob;
+}
+
+// ── Free-running scheduler API ────────────────────────────────────────────────
 
 bool Pattern::isSchedulerOverrideActive() const noexcept
 {

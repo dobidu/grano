@@ -5,7 +5,7 @@
 #include <algorithm>
 
 // SpectralProcessor — FFT-based source transformation.
-// processSource() runs on a worker thread (NOT audio thread).
+// processSource() runs on the message thread (NOT audio thread).
 // Outputs 2048-sample grain source via getReadPointer()/getNumSamples().
 class SpectralProcessor
 {
@@ -17,6 +17,8 @@ public:
 
     SpectralProcessor();
 
+    // Spectral processing is offline on the source: it adds NO delay to the
+    // audio path, so the plugin reports 0 latency for it (R-10).
     // Process source into spectral output. Call from worker/message thread.
     // srcLen should be >= kFFTSize (padded with zeros otherwise).
     void processSource(const float* src, int srcLen,
@@ -30,7 +32,6 @@ public:
 private:
     juce::dsp::FFT fft_;
     std::array<float, kFFTSize * 2> fftBuf_{}; // complex interleaved
-    std::array<float, kFFTSize>     window_{};
     // +2 zero guard samples past kFFTSize for linear-interpolation safety
     // (processSource only writes [0, kFFTSize); guards stay zero).
     std::array<float, kFFTSize + 2> output_{};

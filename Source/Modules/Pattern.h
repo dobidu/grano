@@ -52,6 +52,19 @@ public:
     // True when triggerMode is not Free and patternEnabled=true.
     bool isSchedulerOverrideActive() const noexcept;
 
+    // ── Sample-clock API (audio thread, GranularEngine scheduler) ───────────────
+
+    // Effective trigger mode: 0 when pattern is disabled, else triggerMode
+    // (0 Free, 1 Sync, 2 Euclidean, 3 Audio).
+    int getActiveTriggerMode() const noexcept;
+
+    // Length of one Sync/Euclidean step in quarter-note beats (1/16 → 0.25).
+    double getStepBeats() const noexcept;
+
+    // PPQ-anchored gate: `step` is the absolute grid index (ppq / stepBeats),
+    // so Euclidean patterns stay phase-locked to the host timeline.
+    bool shouldFireGrainAtStep(long long step) noexcept;
+
 private:
     // ── Scale tables ─────────────────────────────────────────────────────────────
     static constexpr int kMaxScaleNotes = 12;

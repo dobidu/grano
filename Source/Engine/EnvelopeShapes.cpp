@@ -28,9 +28,14 @@ float applyEnvelope(EnvelopeShape shape, float phase) noexcept
         case EnvelopeShape::Gaussian:
         {
             // σ expressed as a fraction of the half-window.
+            // Edge-subtracted and renormalised so the window starts and ends
+            // at exactly 0 — the raw bell is 0.044 at the edges, a -27 dB
+            // step on every grain onset/offset (R-20).
             constexpr float sigma = 0.4f * 0.5f;
             const float     x     = (p - 0.5f) / sigma;
-            return std::clamp(std::exp(-0.5f * x * x), 0.0f, 1.0f);
+            const float     edge  = 0.04393693f; // exp(-0.5 * (0.5/sigma)^2)
+            const float     g     = std::exp(-0.5f * x * x);
+            return std::clamp((g - edge) / (1.0f - edge), 0.0f, 1.0f);
         }
 
         case EnvelopeShape::Triangle:

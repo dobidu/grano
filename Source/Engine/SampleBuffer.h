@@ -31,11 +31,14 @@ public:
     // Loading thread: transfer ownership of a new buffer.
     // numAudioSamples = actual playable frames (excludes 2 guard samples).
     // If a previous pending buffer was never claimed it is discarded here.
-    void setPending(std::unique_ptr<juce::AudioBuffer<float>> newBuf,
-                    int numAudioSamples);
+    // Returns the load generation of this buffer (monotonic per slot, > 0).
+    juce::uint32 setPending(std::unique_ptr<juce::AudioBuffer<float>> newBuf,
+                            int numAudioSamples);
 
     // Audio thread: atomically claim pending buffer, retire old current.
-    // Returns true if a new buffer was installed. noexcept, zero allocation.
+    // Returns true if a new buffer was installed. noexcept, zero allocation,
+    // never frees memory: if the retire queue is full the swap is deferred
+    // to a later block (R-21).
     [[nodiscard]] bool trySwap() noexcept;
 
     // Audio thread: read pointer to channel-0 data. nullptr if no buffer loaded.
@@ -44,26 +47,43 @@ public:
     // Audio thread: playable sample count (excludes guard samples). 0 if empty.
     int getNumSamples() const noexcept;
 
+    // Any thread: generation of the buffer currently installed (0 = none).
+    juce::uint32 getCurrentGeneration() const noexcept
+    {
+        return currentGen_.load(std::memory_order_acquire);
+    }
+
     // Message thread (Timer at ~30 Hz): delete any retired buffers.
     void processRetired();
 
 private:
+    // A buffer travels with its own length + generation so the audio thread
+    // can never pair one load's data with another load's length (R-06).
+    // The same record carries the OLD buffer to the retire queue, so the
+    // audio thread neither allocates nor frees.
+    struct Record
+    {
+        std::unique_ptr<juce::AudioBuffer<float>> buffer;
+        int          numSamples = 0;
+        juce::uint32 generation = 0;
+    };
+
     // Audio thread owns current exclusively.
     std::unique_ptr<juce::AudioBuffer<float>> current_;
 
     // Read-optimised atomics — safe to read from any thread.
-    std::atomic<const float*> currentReadPtr_   { nullptr };
-    std::atomic<int>          currentNumSamples_{ 0 };
+    std::atomic<const float*>  currentReadPtr_   { nullptr };
+    std::atomic<int>           currentNumSamples_{ 0 };
+    std::atomic<juce::uint32>  currentGen_       { 0 };
 
     // Loading thread writes here; audio thread claims via CAS.
-    std::atomic<juce::AudioBuffer<float>*> pending_           { nullptr };
-    std::atomic<int>                       pendingNumSamples_ { 0 };
+    std::atomic<Record*> pending_{ nullptr };
+    juce::uint32         nextGen_{ 0 }; // loading thread only
 
-    // Retired buffers waiting for message-thread deletion.
-    // Capacity 4: handles up to 4 sample loads between processRetired() calls.
-    static constexpr int kRetiredCapacity = 4;
-    juce::AbstractFifo                                     retiredFifo_{ kRetiredCapacity };
-    std::array<juce::AudioBuffer<float>*, kRetiredCapacity> retiredSlots_{};
+    // Retired records waiting for message-thread deletion.
+    static constexpr int kRetiredCapacity = 16;
+    juce::AbstractFifo                          retiredFifo_{ kRetiredCapacity };
+    std::array<Record*, kRetiredCapacity>       retiredSlots_{};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SampleBuffer)
 };

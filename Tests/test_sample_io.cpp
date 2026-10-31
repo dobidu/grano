@@ -293,7 +293,8 @@ TEST_CASE("Enabling spectral at runtime reprocesses source and updates latency",
     param->setValueNotifyingHost(1.0f);
     proc.applyPendingSpectralUpdate(); // timer surrogate (headless: no MessageManager)
 
-    REQUIRE(proc.getLatencySamples() == SpectralProcessor::kFFTSize);
+    // R-10: spectral is offline on the source — no audio-path latency.
+    REQUIRE(proc.getLatencySamples() == 0);
 
     // Engine now sources from the spectral buffer — output must not be silent.
     juce::AudioBuffer<float> buf(2, 512);
@@ -320,4 +321,91 @@ TEST_CASE("Enabling spectral at runtime reprocesses source and updates latency",
 
     proc.releaseResources();
     f0.deleteFile();
+}
+
+// ── 08-08: SampleBuffer record swap + spectral reload ────────────────────────
+
+TEST_CASE("SampleBuffer keeps each buffer paired with its own length", "[SampleBuffer]")
+{
+    // R-06: the length used to be stored separately before the pointer
+    // exchange, so a second load before the swap could pair buffer A with
+    // len(B). Now length + generation travel with the buffer.
+    SampleBuffer sb;
+    const auto g1 = sb.setPending(makeBuffer(100), 100);
+    const auto g2 = sb.setPending(makeBuffer(5000), 5000);
+    REQUIRE(g2 > g1);
+    REQUIRE(sb.trySwap());
+    REQUIRE(sb.getNumSamples() == 5000);
+    REQUIRE(sb.getCurrentGeneration() == g2);
+    // Guard samples present → the buffer really is 5000 + 2 long.
+    REQUIRE(sb.getReadPointer()[5001] == 0.0f);
+}
+
+TEST_CASE("SampleBuffer defers swaps instead of freeing on the audio thread", "[SampleBuffer]")
+{
+    // R-21: with the retire queue full the old code deleted the current
+    // buffer on the audio thread. Now the swap waits for processRetired().
+    SampleBuffer sb;
+    int swaps = 0;
+    for (int i = 0; i < 40; ++i)
+    {
+        sb.setPending(makeBuffer(100 + i), 100 + i);
+        if (sb.trySwap()) ++swaps;
+    }
+    REQUIRE(swaps < 40);          // some swaps deferred (queue full)
+    REQUIRE(sb.getNumSamples() > 0);
+    sb.processRetired();          // message thread drains the queue
+    REQUIRE(sb.trySwap());        // deferred load now goes live
+    REQUIRE(sb.getNumSamples() == 139);
+}
+
+TEST_CASE("Loading a new sample with spectral on derives the spectrum from it",
+          "[State][Spectral]")
+{
+    // R-09: loadSampleFile used to run the FFT immediately — on the OLD
+    // slot-0 buffer, because the new one is only pending until the audio
+    // thread swaps it in.
+    const auto fA = writeTestWav("grano_r09_a.wav", 8192);
+    GranoAudioProcessor proc;
+    proc.prepareToPlay(48000.0, 512);
+    auto* param = proc.getAPVTS().getParameter(ParamIDs::spectralEnabled);
+    param->setValueNotifyingHost(1.0f);
+
+    juce::AudioBuffer<float> buf(2, 512);
+    juce::MidiBuffer midi;
+    proc.loadSampleFile(fA, 0);
+    proc.processBlock(buf, midi);
+    proc.applyPendingSpectralUpdate();
+
+    // Sample B: different content (noise) in the same slot.
+    const auto fB = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                        .getChildFile("grano_r09_b.wav");
+    {
+        fB.deleteFile();
+        juce::WavAudioFormat wav;
+        std::unique_ptr<juce::AudioFormatWriter> w(wav.createWriterFor(
+            new juce::FileOutputStream(fB), 48000.0, 1, 16, {}, 0));
+        juce::AudioBuffer<float> noise(1, 8192);
+        juce::Random r(5);
+        for (int i = 0; i < 8192; ++i) noise.setSample(0, i, r.nextFloat() - 0.5f);
+        w->writeFromAudioSampleBuffer(noise, 0, 8192);
+    }
+    proc.loadSampleFile(fB, 0);
+    proc.applyPendingSpectralUpdate(); // B still pending → must NOT process A again
+    proc.processBlock(buf, midi);      // audio thread swaps B in
+    proc.applyPendingSpectralUpdate(); // now derived from B
+
+    SpectralProcessor expected;
+    expected.processSource(proc.getSampleBank().getReadPointer(0),
+                           proc.getSampleBank().getNumSamples(0),
+                           SpectralProcessor::Mode::Freeze, 0.0f);
+    const float* got = proc.getSpectralProcessor().getReadPointer();
+    float maxDiff = 0.0f;
+    for (int i = 0; i < SpectralProcessor::kFFTSize; ++i)
+        maxDiff = std::max(maxDiff, std::abs(got[i] - expected.getReadPointer()[i]));
+    REQUIRE(maxDiff < 1e-5f);
+
+    proc.releaseResources();
+    fA.deleteFile();
+    fB.deleteFile();
 }

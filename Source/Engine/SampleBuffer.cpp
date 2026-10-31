@@ -2,61 +2,47 @@
 
 SampleBuffer::~SampleBuffer()
 {
-    // Delete any unclaimed pending buffer.
-    auto* p = pending_.exchange(nullptr, std::memory_order_acquire);
-    delete p;
-
-    // Delete remaining retired buffers.
+    delete pending_.exchange(nullptr, std::memory_order_acquire);
     processRetired();
 }
 
-void SampleBuffer::setPending(std::unique_ptr<juce::AudioBuffer<float>> newBuf,
-                               int numAudioSamples)
+juce::uint32 SampleBuffer::setPending(std::unique_ptr<juce::AudioBuffer<float>> newBuf,
+                                      int numAudioSamples)
 {
-    pendingNumSamples_.store(numAudioSamples, std::memory_order_relaxed);
-
-    auto* raw = pending_.exchange(newBuf.release(), std::memory_order_acq_rel);
-    delete raw; // Delete any previously pending buffer that was never claimed.
+    auto* rec = new Record{ std::move(newBuf), numAudioSamples, ++nextGen_ };
+    const auto gen = rec->generation;
+    delete pending_.exchange(rec, std::memory_order_acq_rel); // drop unclaimed older load
+    return gen;
 }
 
 bool SampleBuffer::trySwap() noexcept
 {
-    auto* incoming = pending_.load(std::memory_order_acquire);
-    if (incoming == nullptr)
+    if (pending_.load(std::memory_order_acquire) == nullptr)
         return false;
 
-    // CAS: claim the pending buffer.
-    if (!pending_.compare_exchange_strong(incoming, nullptr,
-                                          std::memory_order_acq_rel,
-                                          std::memory_order_relaxed))
+    // Only this thread writes the retire queue, so free space can only grow
+    // concurrently — checking first guarantees the push below succeeds.
+    if (retiredFifo_.getFreeSpace() < 1)
+        return false; // defer; the message thread will drain the queue
+
+    Record* rec = pending_.exchange(nullptr, std::memory_order_acq_rel);
+    if (rec == nullptr)
         return false;
 
-    // Read the sample count for the incoming buffer before retiring current.
-    const int newCount = pendingNumSamples_.load(std::memory_order_relaxed);
+    // Swap buffers: rec now carries the OLD buffer (possibly null) away.
+    std::swap(current_, rec->buffer);
+    const int          newCount = rec->numSamples;
+    const juce::uint32 newGen   = rec->generation;
 
-    // Retire the old current buffer via the FIFO for message-thread deletion.
-    if (current_ != nullptr)
-    {
-        int s1{}, c1{}, s2{}, c2{};
-        retiredFifo_.prepareToWrite(1, s1, c1, s2, c2);
-        if (c1 > 0)
-        {
-            retiredSlots_[static_cast<std::size_t>(s1)] = current_.release();
-            retiredFifo_.finishedWrite(1);
-        }
-        else
-        {
-            // FIFO full — delete immediately to prevent unbounded growth.
-            // Rare: requires 4 loads between processRetired() calls (~30 Hz).
-            current_.reset();
-        }
-    }
+    int s1{}, c1{}, s2{}, c2{};
+    retiredFifo_.prepareToWrite(1, s1, c1, s2, c2);
+    retiredSlots_[static_cast<std::size_t>(c1 > 0 ? s1 : s2)] = rec;
+    retiredFifo_.finishedWrite(1);
 
-    // Install new buffer.
-    current_.reset(incoming);
-    currentReadPtr_.store(current_->getReadPointer(0), std::memory_order_release);
-    currentNumSamples_.store(newCount, std::memory_order_release);
-
+    currentReadPtr_.store(current_ ? current_->getReadPointer(0) : nullptr,
+                          std::memory_order_release);
+    currentNumSamples_.store(current_ ? newCount : 0, std::memory_order_release);
+    currentGen_.store(newGen, std::memory_order_release);
     return true;
 }
 

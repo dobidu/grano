@@ -1,12 +1,18 @@
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 #include <cmath>
+#include <limits>
 
 #include "Engine/FeedbackPath.h"
 
-TEST_CASE("FeedbackPath getNumSamples matches capacity", "[feedback]")
+TEST_CASE("FeedbackPath ring length follows the sample rate", "[feedback]")
 {
     FeedbackPath fb;
+    fb.prepare(48000.0);
+    REQUIRE(fb.getNumSamples() == 4 * 48000);
+    fb.prepare(96000.0);
+    REQUIRE(fb.getNumSamples() == 4 * 96000); // 4 s at any rate (was 2 s at 96k)
+    fb.prepare(192000.0);
     REQUIRE(fb.getNumSamples() == FeedbackPath::kCapacity);
 }
 
@@ -43,7 +49,7 @@ TEST_CASE("FeedbackPath gain clamped: no divergence at 0.95 for 10000 blocks", "
 
     const float* ptr = fb.getReadPointer();
     bool bounded = true;
-    for (int i = 0; i < FeedbackPath::kCapacity; ++i)
+    for (int i = 0; i < fb.getNumSamples(); ++i)
         if (std::abs(ptr[i]) > 2.0f) { bounded = false; break; }
     REQUIRE(bounded);
 }
@@ -58,4 +64,30 @@ TEST_CASE("FeedbackPath gain > 0.95 is clamped", "[feedback]")
     const float* ptr = fb.getReadPointer();
     for (int i = 0; i < 1024; ++i)
         REQUIRE(std::abs(ptr[i]) <= 2.0f);
+}
+
+TEST_CASE("FeedbackPath damp=1 still passes a darkened signal", "[feedback]")
+{
+    FeedbackPath fb;
+    fb.prepare(48000.0);
+    std::array<float, 512> L{};
+    L.fill(0.5f);
+    fb.process(L.data(), L.data(), 512, 0.9f, 1.0f);
+    REQUIRE(std::abs(fb.getReadPointer()[511]) > 0.1f); // was frozen at 0 (k = 0)
+}
+
+TEST_CASE("FeedbackPath scrubs non-finite input and soft-clips", "[feedback]")
+{
+    FeedbackPath fb;
+    fb.prepare(48000.0);
+    std::array<float, 64> L{};
+    L.fill(1000.0f);
+    L[10] = std::numeric_limits<float>::quiet_NaN();
+    L[20] = std::numeric_limits<float>::infinity();
+    fb.process(L.data(), L.data(), 64, 0.95f, 0.0f);
+    for (int i = 0; i < 64; ++i)
+    {
+        REQUIRE(std::isfinite(fb.getReadPointer()[i]));
+        REQUIRE(std::abs(fb.getReadPointer()[i]) <= 1.0f);
+    }
 }

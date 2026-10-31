@@ -1,12 +1,12 @@
 #include "MultiSampleBank.h"
 
-void MultiSampleBank::loadSlot(int slot,
-                                std::unique_ptr<juce::AudioBuffer<float>> buf,
-                                int numSamples)
+juce::uint32 MultiSampleBank::loadSlot(int slot,
+                                        std::unique_ptr<juce::AudioBuffer<float>> buf,
+                                        int numSamples)
 {
     if (slot < 0 || slot >= kNumSlots)
-        return;
-    slots_[slot].setPending(std::move(buf), numSamples);
+        return 0;
+    return slots_[slot].setPending(std::move(buf), numSamples);
 }
 
 bool MultiSampleBank::trySwapAll() noexcept

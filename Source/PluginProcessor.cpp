@@ -110,14 +110,15 @@ GranoAudioProcessor::~GranoAudioProcessor()
 void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     engine_.prepare(sampleRate, samplesPerBlock);
+    feedbackPath_.prepare(sampleRate); // clear stale ring, size to session rate (R-25)
+    feedbackWasOn_ = false;
     motion_.prepare(sampleRate);
     color_.prepare(sampleRate, samplesPerBlock);
     pattern_.prepare(sampleRate);
     lfo1_.prepare(sampleRate);
     lfo2_.prepare(sampleRate);
     modMatrix_.prepare(sampleRate);
-    const bool spectralOn = *apvts_.getRawParameterValue(ParamIDs::spectralEnabled) > 0.5f;
-    setLatencySamples(spectralOn ? SpectralProcessor::kFFTSize : 0);
+    setLatencySamples(0); // spectral is offline on the source — no audio-path delay (R-10)
 }
 
 void GranoAudioProcessor::releaseResources()
@@ -137,25 +138,55 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 {
     juce::ScopedNoDenormals noDenormals;
 
-    // Feed Pattern BPM for Sync mode + input buffer for Audio-driven transient detection.
+    // Host transport.
     double bpm = 120.0;
+    bool   playing = false, ppqValid = false;
+    double ppq = 0.0;
     if (auto* ph = getPlayHead())
         if (auto pos = ph->getPosition())
+        {
             if (auto b = pos->getBpm())
                 bpm = *b;
+            playing = pos->getIsPlaying();
+            if (auto q = pos->getPpqPosition())
+            {
+                ppq = *q;
+                ppqValid = true;
+            }
+        }
+    if (bpm <= 0.0)
+        bpm = 120.0;
 
-    // ModMatrix advances LFOs and computes mod offsets; must run before engine schedules grains.
-    modMatrix_.processBlock(buffer.getNumSamples(), bpm);
-
+    // Pattern consumes the host INPUT (transient detection) — before the
+    // engine clears the buffer.
     pattern_.processBlock(buffer, bpm);
-    engine_.processBlock(buffer);
-    motion_.processBlock(buffer);
+
+    // Modulation, grain scheduling and Motion run in short sub-blocks so LFO,
+    // wow/flutter/drift values are sampled near each grain's spawn time
+    // instead of once per host block (R-24/R-28). Sub-buffers reference the
+    // host buffer — no allocation.
+    constexpr int kSubBlock = 32;
+    const int N     = buffer.getNumSamples();
+    const int numCh = buffer.getNumChannels();
+    const double samplesPerBeat = getSampleRate() * 60.0 / bpm;
+    for (int start = 0; start < N; start += kSubBlock)
+    {
+        const int n = std::min(kSubBlock, N - start);
+        juce::AudioBuffer<float> sub(buffer.getArrayOfWritePointers(), numCh, start, n);
+
+        modMatrix_.processBlock(n, bpm);
+        engine_.setTransport(bpm, playing, ppqValid,
+                             ppq + (double)start / samplesPerBeat);
+        engine_.processBlock(sub);
+        motion_.processBlock(sub);
+    }
     color_.processBlock(buffer);
 
     // Feed audio output back into FeedbackPath for re-injection as a grain
-    // source. Skipped entirely when feedback is off (README: zero CPU cost);
-    // ring is cleared on re-enable so stale audio doesn't burst back in.
-    // Cached atomic pointers — no string-keyed APVTS lookups on the audio thread.
+    // source. Tapped BEFORE master volume so the loop gain doesn't depend on
+    // the output level (R-11). Skipped entirely when feedback is off (README:
+    // zero CPU cost); ring is cleared on re-enable so stale audio doesn't
+    // burst back in. Cached atomic pointers — no string-keyed APVTS lookups.
     {
         const bool fbOn = pFeedbackEnabled_ != nullptr &&
             pFeedbackEnabled_->load(std::memory_order_relaxed) > 0.5f;
@@ -171,6 +202,9 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
         feedbackWasOn_ = fbOn;
     }
+
+    // Master volume last, ramped per block (R-14).
+    engine_.applyMasterGain(buffer);
 }
 
 juce::AudioProcessorEditor* GranoAudioProcessor::createEditor()
@@ -221,8 +255,15 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
     lastLoadedNumFrames_  = numFrames;
     if (slot >= 0 && slot < MultiSampleBank::kNumSlots)
         slotFiles_[static_cast<size_t>(slot)] = file;
-    sampleBank_.loadSlot(slot, std::move(buf), numFrames);
-    triggerSpectralProcessIfEnabled();
+    const auto gen = sampleBank_.loadSlot(slot, std::move(buf), numFrames);
+    if (slot == 0)
+    {
+        // The new buffer is only PENDING until the audio thread swaps it in;
+        // processing now would read the previous sample (R-09). Mark dirty
+        // and let the timer retry until slot 0 is live with this generation.
+        spectralWaitGen_ = gen;
+        spectralDirty_.store(true, std::memory_order_release);
+    }
 }
 
 void GranoAudioProcessor::applyPendingSpectralUpdate()
@@ -231,11 +272,13 @@ void GranoAudioProcessor::applyPendingSpectralUpdate()
         return;
 
     const bool on = *apvts_.getRawParameterValue(ParamIDs::spectralEnabled) > 0.5f;
-    setLatencySamples(on ? SpectralProcessor::kFFTSize : 0);
 
     // A freshly loaded slot stays pending until the audio thread's trySwapAll;
-    // if the source isn't visible yet, stay dirty and retry on the next tick.
-    if (on && sampleBank_.getReadPointer(0) == nullptr)
+    // until slot 0 holds the generation we're waiting for, stay dirty and
+    // retry on the next tick.
+    if (on && (sampleBank_.getReadPointer(0) == nullptr ||
+               (spectralWaitGen_ != 0 &&
+                sampleBank_.getCurrentGeneration(0) != spectralWaitGen_)))
     {
         spectralDirty_.store(true, std::memory_order_release);
         return;

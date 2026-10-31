@@ -15,40 +15,74 @@
 #include <atomic>
 #include <vector>
 
-// GranularEngine — owns the grain pool, scheduler thread, lock-free FIFO,
-// and audio-thread mixer.
+// GranularEngine — owns the grain pool, the sample-clock grain scheduler and
+// the audio-thread mixer.
 //
-// Threading model:
-//   SchedulerThread (single producer) — acquires grain slots, fills them,
-//     pushes pointers into the AbstractFifo. Runs at ~50 grains/sec.
-//   Audio thread (consumer) — drains the FIFO in processBlock(), mixes
-//     active grains into the output buffer, releases finished grains.
+// Threading model (08-08, R-01):
+//   Everything runs on the audio thread. processBlock() advances a sample
+//   clock: grains are spawned at exact sample offsets inside the block (no
+//   wall-clock thread, no FIFO), so offline renders, realtime playback and
+//   any host block size produce identical grain timing. Sync/Euclidean steps
+//   are anchored to the host PPQ position while the transport plays.
+//   The UI reads grain snapshots (plain array + atomic count).
 //
 // RT contract: processBlock() performs no heap allocation, no locks,
 //   no blocking calls. All storage is pre-allocated.
 //
-// Source data: SampleBuffer set via setSource() provides live audio data.
-//   Falls back to internal 440 Hz sine tone if no SampleBuffer is loaded.
-//
-// setSource() must be called before prepareToPlay() (before audio thread starts).
+// Source data: MultiSampleBank set via setBank(); falls back to an internal
+//   440 Hz sine if nothing is loaded.
 class GranularEngine
 {
 public:
-    static constexpr int FifoCapacity    = 512;
     static constexpr int MaxActiveGrains = 256;
 
     GranularEngine();
     ~GranularEngine();
 
-    // Called from prepare-to-play (message thread). Allocates test sample,
-    // starts scheduler. May be called multiple times (re-initialises cleanly).
+    // Called from prepare-to-play (message thread, audio stopped). Allocates
+    // the test sample. May be called multiple times (re-initialises cleanly).
     void prepare(double sampleRate, int samplesPerBlock);
 
-    // Called from processBlock (audio thread). RT-safe.
+    // Audio thread. Clears `buffer`, spawns due grains at their sample offsets,
+    // renders all active grains. Does NOT apply master volume (see
+    // applyMasterGain) so the feedback tap can sit pre-volume. RT-safe.
     void processBlock(juce::AudioBuffer<float>& buffer) noexcept;
 
-    // Stops scheduler, releases all active grains, drains FIFO.
+    // Audio thread: host transport for the block about to be processed.
+    // ppq = quarter-note position at the first sample of that block.
+    void setTransport(double bpm, bool isPlaying, bool ppqValid, double ppq) noexcept
+    {
+        bpm_ = bpm > 0.0 ? bpm : 120.0;
+        transportPlaying_ = isPlaying;
+        ppqValid_ = ppqValid;
+        ppq_ = ppq;
+    }
+
+    // Audio thread: master volume (+ mod), ramped from the previous block's
+    // gain to avoid zipper noise (R-14).
+    void applyMasterGain(juce::AudioBuffer<float>& buffer) noexcept;
+
+    // Releases all active grains and resets the sample clock. Audio stopped.
     void reset();
+
+    // Tests / telemetry: deterministic RNG seed and total grains spawned
+    // (parents only, after pattern gating) since construction.
+    void setRandomSeed(juce::int64 seed) noexcept { grainRng_.setSeed(seed); }
+    long long getSpawnCount() const noexcept
+    {
+        return spawnCount_.load(std::memory_order_relaxed);
+    }
+
+    // Renders (adds) one grain into L/R for numSamples output samples.
+    // Returns true when the grain has finished playback. Stateless apart
+    // from the grain itself — public for unit tests.
+    static bool renderGrain(Grain* g, float* L, float* R, int numSamples) noexcept;
+
+    // UI: current loop-sweep offset in [0..1) (0 when loop is off).
+    float getLoopSweepFraction() const noexcept
+    {
+        return loopSweepFrac_.load(std::memory_order_relaxed);
+    }
 
     // Set the multi-sample bank as the grain source. Call before prepareToPlay.
     void setBank(MultiSampleBank* b) noexcept { bankSource_ = b; }
@@ -139,30 +173,19 @@ public:
     int getGrainSnapshots(GrainSnapshot* out, int maxCount) const noexcept;
 
 private:
-    // --- scheduler thread (sole FIFO producer) ---
-    class SchedulerThread : public juce::Thread
-    {
-    public:
-        explicit SchedulerThread(GranularEngine& e)
-            : juce::Thread("GrainScheduler"), engine_(e) {}
-        void run() override;
-    private:
-        GranularEngine& engine_;
-    };
+    // Sample-clock scheduling for the next numSamples (audio thread).
+    void runScheduler(int numSamples) noexcept;
+    // Pattern gate + spawn. step >= 0: PPQ-anchored grid index.
+    void fireEvent(long long step, int offset) noexcept;
+    // Interval to the next free-running event, in samples (>= 1).
+    double nextIntervalSamples(int mode) noexcept;
+    // Builds one grain (+ sub-grains) starting `offset` samples into the block.
+    void scheduleGrain(int offset) noexcept;
+    void addActive(Grain* g) noexcept;
 
-    // Called only from SchedulerThread.
-    void scheduleGrain() noexcept;
-
-    // Renders one grain for numSamples output samples.
-    // Returns true when the grain has finished playback.
-    bool renderGrain(Grain* g, float* L, float* R, int numSamples) noexcept;
 
     // --- data ---
     GrainPool pool_;
-
-    // SPSC FIFO: SchedulerThread → audio thread
-    juce::AbstractFifo               fifo_{ FifoCapacity };
-    std::array<Grain*, FifoCapacity> fifoSlots_{};
 
     // Active grains — audio thread only, no sharing
     std::array<Grain*, MaxActiveGrains> activeGrains_{};
@@ -172,7 +195,7 @@ private:
     // Written once in prepare(), read-only thereafter.
     // +2 guard samples prevent srcInt+1 OOB at pitchRatio ≤ 2.
     std::vector<float> testSample_;
-    std::atomic<bool>  sampleReady_{ false };
+    bool               sampleReady_{ false };
 
     // Multi-sample bank — set once before audio starts, never changed while running.
     MultiSampleBank*    bankSource_{ nullptr };
@@ -205,26 +228,40 @@ private:
     std::atomic<float>* pSpectralMode_      { nullptr };
     std::atomic<float>* pSpectralBlurAmount_{ nullptr };
 
-    // Pitch modulation source — set once before audio starts, read in scheduler thread.
+    // Pitch modulation source — set once before audio starts.
     Motion*  pitchMod_ { nullptr };
 
-    // Pattern module — set once before audio starts, consulted in scheduler thread.
+    // Pattern module — set once before audio starts.
     Pattern* pattern_  { nullptr };
 
-    // ModMatrix — set once before audio starts, read in scheduler thread.
+    // ModMatrix — set once before audio starts.
     class ModMatrix* modMatrix_{ nullptr };
 
-    // Used only from SchedulerThread — no synchronization needed.
+    // Audio thread only.
     juce::Random grainRng_;
 
-    // Loop position sweep (scheduler thread only). When the loop param is on,
-    // the effective grain position advances in real time and wraps, sweeping
-    // the playhead across the source once per source duration.
+    // Sample clock: samples from the start of the current block to the next
+    // free-running event (may be fractional — no ms truncation).
+    double samplesToNext_{ 0.0 };
+    double bpm_{ 120.0 };
+    bool   transportPlaying_{ false };
+    bool   ppqValid_{ false };
+    double ppq_{ 0.0 };
+    static constexpr long long kNoStep = -(1LL << 62);
+    long long lastAnchoredStep_{ kNoStep };
+
+    // Loop position sweep (audio thread). When the loop param is on, the
+    // effective grain position advances with rendered samples and wraps,
+    // sweeping the source once per source duration.
     double loopTimeSec_{ 0.0 };
     bool   prevLoopOn_ { false };
+    std::atomic<float> loopSweepFrac_{ 0.0f };
+
+    std::atomic<long long> spawnCount_{ 0 };
+
+    // Master gain ramp state (audio thread).
+    float lastMasterGain_{ -1.0f };
 
     std::array<GrainSnapshot, MaxActiveGrains> grainSnapshots_{};
     std::atomic<int>                           grainSnapshotCount_{ 0 };
-
-    SchedulerThread schedulerThread_{ *this };
 };

@@ -10,7 +10,7 @@
 //   loadSlot()          — message/loading thread
 //   trySwapAll()        — audio thread, once per processBlock; returns true if any slot swapped
 //   processRetiredAll() — message thread (~30 Hz Timer)
-//   pickSlot()          — scheduler thread (RT-safe: stack arrays only, no alloc, no locks)
+//   pickSlot()          — audio thread (RT-safe: stack arrays only, no alloc, no locks)
 class MultiSampleBank
 {
 public:
@@ -19,9 +19,16 @@ public:
     MultiSampleBank() = default;
 
     // Message/loading thread: load a buffer into a slot.
-    void loadSlot(int slot,
-                  std::unique_ptr<juce::AudioBuffer<float>> buf,
-                  int numSamples);
+    // Returns the slot's load generation for this buffer (0 if slot invalid).
+    juce::uint32 loadSlot(int slot,
+                          std::unique_ptr<juce::AudioBuffer<float>> buf,
+                          int numSamples);
+
+    // Any thread: generation of the buffer currently live in `slot` (0 = none).
+    juce::uint32 getCurrentGeneration(int slot) const noexcept
+    {
+        return (slot >= 0 && slot < kNumSlots) ? slots_[slot].getCurrentGeneration() : 0;
+    }
 
     // Audio thread: try-swap all pending buffers.
     // Returns true if any slot swapped (caller should flush active grains).

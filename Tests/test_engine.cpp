@@ -99,7 +99,7 @@ TEST_CASE("Grain is trivially copyable", "[grain]")
 TEST_CASE("Grain stores all fields correctly via aggregate init", "[grain]")
 {
     float buf[64] = {};
-    Grain g{ buf, 10, 64, 2048, 1.5f, -0.3f, EnvelopeShape::Triangle, 0.25f };
+    Grain g{ buf, 10, 64, 2048, 1.5f, -0.3f, EnvelopeShape::Triangle, 512 };
 
     REQUIRE(g.source        == buf);
     REQUIRE(g.startPos      == 10);
@@ -108,7 +108,8 @@ TEST_CASE("Grain stores all fields correctly via aggregate init", "[grain]")
     REQUIRE(g.pitchRatio    == Catch::Approx(1.5f));
     REQUIRE(g.pan           == Catch::Approx(-0.3f));
     REQUIRE(g.shape         == EnvelopeShape::Triangle);
-    REQUIRE(g.currentPhase  == Catch::Approx(0.25f));
+    REQUIRE(g.elapsed       == 512);
+    REQUIRE(g.phase()       == Catch::Approx(0.25f));
 }
 
 TEST_CASE("Grain default init is zero/null", "[grain]")
@@ -120,7 +121,9 @@ TEST_CASE("Grain default init is zero/null", "[grain]")
     REQUIRE(g.lengthSamples == 0);
     REQUIRE(g.pitchRatio    == Catch::Approx(1.0f));
     REQUIRE(g.pan           == Catch::Approx(0.0f));
-    REQUIRE(g.currentPhase  == Catch::Approx(0.0f));
+    REQUIRE(g.elapsed       == 0);
+    REQUIRE(g.startDelay    == 0);
+    REQUIRE(g.gain          == Catch::Approx(1.0f));
 }
 
 // ── GrainPool ─────────────────────────────────────────────────────────────────
@@ -209,7 +212,7 @@ TEST_CASE("GrainPool acquired grain is zero-initialised", "[pool]")
     REQUIRE(g != nullptr);
     REQUIRE(g->source       == nullptr);
     REQUIRE(g->startPos     == 0);
-    REQUIRE(g->currentPhase == Catch::Approx(0.0f));
+    REQUIRE(g->elapsed      == 0);
     pool.release(g);
 }
 
@@ -479,4 +482,370 @@ TEST_CASE("ModMatrix kPosition destination moves grain positions", "[engine][mod
     const float maxFrac = rig.maxSrcFractionOver(700, &matrix);
     rig.engine.reset();
     REQUIRE(maxFrac > 0.4f);
+}
+
+// ── 08-08 R-01: sample-clock scheduling ───────────────────────────────────────
+
+namespace
+{
+    struct ClockRig
+    {
+        std::atomic<float> grainSize{50.0f}, density{50.0f}, position{0.2f},
+                           posJitter{0.3f}, pitchShift{0.0f}, spread{0.5f},
+                           masterVol{0.0f}, loop{0.0f};
+        std::atomic<float> patEnabled{0.0f}, trigMode{0.0f}, syncDiv{2.0f} /*1/16*/,
+                           euclidPulses{4.0f}, euclidSteps{8.0f}, euclidRot{0.0f},
+                           transSens{0.5f}, probability{1.0f}, reverseProb{0.0f},
+                           quantScale{0.0f}, spray{0.0f};
+        Pattern        pattern;
+        GranularEngine engine;
+
+        ClockRig()
+        {
+            pattern.setParamPointers(&patEnabled, &trigMode, &syncDiv, &euclidPulses,
+                                     &euclidSteps, &euclidRot, &transSens, &probability,
+                                     &reverseProb, &quantScale, &spray);
+            pattern.prepare(48000.0);
+            engine.setParamPointers(&grainSize, &density, &position, &posJitter,
+                                    &pitchShift, &spread, &masterVol, &loop);
+            engine.setPatternSource(&pattern);
+            engine.prepare(48000.0, 512);
+            engine.setRandomSeed(1234);
+        }
+
+        // Renders `totalSamples` back-to-back (offline: no wall-clock waits)
+        // in blocks of `block`, appending the left channel to `out`.
+        void render(int totalSamples, int block, std::vector<float>* out = nullptr,
+                    bool playing = false, double bpm = 120.0)
+        {
+            juce::AudioBuffer<float> buf(2, block);
+            const double spb = 48000.0 * 60.0 / bpm;
+            for (int done = 0; done < totalSamples; done += block)
+            {
+                const int n = std::min(block, totalSamples - done);
+                juce::AudioBuffer<float> sub(buf.getArrayOfWritePointers(), 2, 0, n);
+                engine.setTransport(bpm, playing, playing, (double)done / spb);
+                engine.processBlock(sub);
+                if (out)
+                    out->insert(out->end(), sub.getReadPointer(0), sub.getReadPointer(0) + n);
+            }
+        }
+    };
+}
+
+TEST_CASE("Offline back-to-back rendering spawns density x duration grains",
+          "[engine][clock]")
+{
+    // Before R-01 the scheduler slept on the wall clock, so a render with no
+    // real-time waits produced ~0 grains. 10 s at 50 g/s must give ~500.
+    for (int block : { 64, 512, 4096 })
+    {
+        ClockRig rig;
+        rig.render(48000 * 10, block);
+        const auto n = rig.engine.getSpawnCount();
+        INFO("block " << block << " spawned " << n);
+        REQUIRE(n >= 475);
+        REQUIRE(n <= 525);
+    }
+}
+
+TEST_CASE("Grain timing is identical for any host block size", "[engine][clock]")
+{
+    // Same seed, same parameters: output must be bit-identical whether the
+    // host calls us with 64- or 4096-sample blocks (onsets are sample-accurate,
+    // not snapped to block boundaries).
+    std::vector<float> a, b;
+    { ClockRig rig; rig.render(48000 * 2, 64,   &a); }
+    { ClockRig rig; rig.render(48000 * 2, 4096, &b); }
+    REQUIRE(a.size() == b.size());
+    double maxDiff = 0.0;
+    for (size_t i = 0; i < a.size(); ++i)
+        maxDiff = std::max(maxDiff, (double)std::abs(a[i] - b[i]));
+    REQUIRE(maxDiff < 1.0e-6);
+}
+
+TEST_CASE("Euclidean steps lock to the host PPQ grid", "[engine][clock][pattern]")
+{
+    // 1/16 steps, E(4,8), 16 beats at 120 BPM while playing = 64 steps,
+    // 32 hits — exactly, regardless of block size.
+    for (int block : { 100, 512, 2048 })
+    {
+        ClockRig rig;
+        rig.patEnabled.store(1.0f);
+        rig.trigMode.store(2.0f); // Euclidean
+        const int total = (int)(48000.0 * 60.0 / 120.0 * 16.0); // 16 beats
+        rig.render(total, block, nullptr, /*playing*/ true);
+        INFO("block " << block);
+        REQUIRE(rig.engine.getSpawnCount() == 32);
+    }
+}
+
+TEST_CASE("Stereo spread: 0 is mono, default 0.5 is stereo", "[engine][spread]")
+{
+    auto sideEnergy = [](float spread)
+    {
+        ClockRig rig;
+        rig.spread.store(spread);
+        juce::AudioBuffer<float> buf(2, 512);
+        double side = 0.0, mid = 0.0;
+        for (int b = 0; b < 200; ++b)
+        {
+            rig.engine.processBlock(buf);
+            for (int i = 0; i < 512; ++i)
+            {
+                const double l = buf.getSample(0, i), r = buf.getSample(1, i);
+                side += (l - r) * (l - r);
+                mid  += (l + r) * (l + r);
+            }
+        }
+        return side / std::max(mid, 1e-12);
+    };
+    REQUIRE(sideEnergy(0.0f) < 1.0e-9);  // R-02: spread 0 = centre
+    REQUIRE(sideEnergy(0.5f) > 0.01);    // default is NOT mono
+    REQUIRE(sideEnergy(1.0f) > sideEnergy(0.5f));
+}
+
+// ── 08-08 T2: grain geometry, precision, envelope ─────────────────────────────
+
+TEST_CASE("Gaussian envelope reaches zero at both edges", "[envelope]")
+{
+    REQUIRE(applyEnvelope(EnvelopeShape::Gaussian, 0.0f) == Catch::Approx(0.0f).margin(1e-6));
+    REQUIRE(applyEnvelope(EnvelopeShape::Gaussian, 1.0f) == Catch::Approx(0.0f).margin(1e-6));
+    REQUIRE(applyEnvelope(EnvelopeShape::Gaussian, 0.5f) == Catch::Approx(1.0f).margin(1e-5));
+}
+
+TEST_CASE("fitGrainToSource keeps every read span inside the source", "[engine][bounds]")
+{
+    // Exhaustive sweep: position x pitch x length x reverse — the read span
+    // [startPos, startPos + len*pitch] must lie in [0, sourceLen-1] and the
+    // grain must keep its full envelope (no truncation, R-03).
+    static float src[10000 + 2]{};
+    for (float pos : { 0.0f, 0.5f, 0.9f, 0.99f, 1.0f })
+        for (float st : { -24.0f, -7.0f, 0.0f, 7.0f, 12.0f, 24.0f })
+            for (int len : { 1, 100, 2000, 9999, 50000 })
+                for (bool rev : { false, true })
+                {
+                    Grain g{};
+                    g.source = src;
+                    g.sourceLen = 10000;
+                    g.lengthSamples = len;
+                    g.pitchRatio = std::pow(2.0f, st / 12.0f);
+                    g.reversed = rev;
+                    g.startPos = (int)(pos * 9999.0f);
+                    fitGrainToSource(g);
+                    INFO("pos " << pos << " st " << st << " len " << len);
+                    REQUIRE(g.startPos >= 0);
+                    REQUIRE(g.lengthSamples >= 1);
+                    REQUIRE((double)g.startPos + (double)g.lengthSamples * g.pitchRatio
+                            <= 9999.0 + 1e-6);
+                    if ((double)len * g.pitchRatio <= 9999.0)
+                        REQUIRE(g.lengthSamples == len); // never shortened when it fits
+                }
+}
+
+TEST_CASE("Grains near the source end play a complete envelope", "[engine][bounds]")
+{
+    // Position 0.96, +12 st, 100 ms grains on a 1 s source: before R-03 the
+    // read ran off the end at phase 0.5 and the grain was cut at peak level.
+    // Now every grain must decay to ~0 at its final sample.
+    std::atomic<float> grainSize{100.0f}, density{20.0f}, position{0.96f},
+                       posJitter{0.0f}, pitchShift{12.0f}, spread{0.0f},
+                       masterVol{0.0f}, loop{0.0f};
+    MultiSampleBank bank;
+    auto buf = std::make_unique<juce::AudioBuffer<float>>(1, 48000 + 2);
+    buf->clear();
+    for (int i = 0; i < 48000; ++i) buf->setSample(0, i, 1.0f); // DC: output == envelope
+    bank.loadSlot(0, std::move(buf), 48000);
+
+    GranularEngine engine;
+    engine.setBank(&bank);
+    engine.setParamPointers(&grainSize, &density, &position, &posJitter,
+                            &pitchShift, &spread, &masterVol, &loop);
+    engine.prepare(48000.0, 512);
+    engine.setRandomSeed(7);
+
+    juce::AudioBuffer<float> out(2, 64);
+    float prev = 0.0f, maxJump = 0.0f;
+    for (int b = 0; b < 48000 / 64; ++b)
+    {
+        engine.processBlock(out);
+        for (int i = 0; i < 64; ++i)
+        {
+            const float v = out.getSample(0, i);
+            maxJump = std::max(maxJump, std::abs(v - prev));
+            prev = v;
+        }
+    }
+    // Hann grains of 4800 samples: max slope ≈ pi/4800 ≈ 6.5e-4 per sample
+    // per grain. A truncation would jump by up to ~0.5.
+    REQUIRE(maxJump < 0.01f);
+}
+
+TEST_CASE("Long sources keep sub-sample read precision", "[engine][precision]")
+{
+    // A ramp source (value == index) over 30 M frames: at position 0.9 a
+    // float read position quantises to 2 samples (R-05). With the double
+    // read position, consecutive output samples of a pitch 0.5 grain must
+    // step by exactly 0.5 (times the envelope).
+    constexpr int kLen = 30'000'000;
+    std::vector<float> ramp((size_t)kLen + 2);
+    // Ramp relative to the read region keeps float values exact.
+    const int base = (int)(0.9 * (kLen - 1));
+    for (int i = 0; i < kLen + 2; ++i)
+        ramp[(size_t)i] = (float)(i - base);
+
+    Grain g{};
+    g.source = ramp.data();
+    g.sourceLen = kLen;
+    g.startPos = base;
+    g.lengthSamples = 1000;
+    g.pitchRatio = 0.5f;
+    g.shape = EnvelopeShape::Rectangle;
+    g.pan = -1.0f; // all to L, lGain = 1.0
+    fitGrainToSource(g);
+    REQUIRE(g.startPos == base);
+
+    std::vector<float> L(1000, 0.0f), R(1000, 0.0f);
+    REQUIRE(GranularEngine::renderGrain(&g, L.data(), R.data(), 1000));
+    for (int e = 0; e < 1000; ++e)
+        REQUIRE(L[(size_t)e] == Catch::Approx((double)e * 0.5).margin(1e-3));
+}
+
+// ── 08-08 T3 / T5: level safety + feedback ring positioning ──────────────────
+
+namespace
+{
+    struct FbRig
+    {
+        std::atomic<float> grainSize{50.0f}, density{1.0f}, position{0.0f},
+                           posJitter{0.0f}, pitchShift{0.0f}, spread{0.0f},
+                           masterVol{0.0f}, loop{0.0f};
+        std::atomic<float> fbOn{1.0f}, fbGain{0.95f}, fbDamp{0.0f};
+        std::atomic<float> shape{4.0f}; // Rectangle
+        std::atomic<float> subDepth{0.0f}, dist{0.0f};
+        FeedbackPath   fb;
+        GranularEngine engine;
+
+        FbRig()
+        {
+            fb.prepare(48000.0);
+            engine.setParamPointers(&grainSize, &density, &position, &posJitter,
+                                    &pitchShift, &spread, &masterVol, &loop);
+            engine.setAdvancedParamPointers(&subDepth, &dist);
+            engine.setEnvelopeShapeParam(&shape);
+            engine.setFeedbackSource(&fb);
+            engine.setFeedbackParamPointers(&fbOn, &fbGain, &fbDamp);
+            engine.prepare(48000.0, 512);
+            engine.setRandomSeed(3);
+        }
+    };
+}
+
+TEST_CASE("Feedback grains read only recent audio behind the write head",
+          "[engine][feedback]")
+{
+    // Ring input is 0.2 for 4.5 s, then 0.8. Position 0 = most recent audio:
+    // once the new content is older than a grain span, every sounding sample
+    // must come from the 0.8 region. A grain reading across the write head
+    // (R-12) would pull in the 4-second-old 0.2 audio.
+    FbRig rig;
+    const float hi = std::tanh(0.8f * 0.95f) * 0.5f; // pan 0 → lGain 0.5, gain 1
+    std::vector<float> in(512);
+    juce::AudioBuffer<float> out(2, 512);
+    int badSamples = 0, soundingSamples = 0;
+    for (int b = 0; b < (48000 * 8) / 512; ++b)
+    {
+        const double t = (double)b * 512.0 / 48000.0;
+        std::fill(in.begin(), in.end(), t < 4.5 ? 0.2f : 0.8f);
+        rig.engine.processBlock(out);
+        rig.fb.process(in.data(), in.data(), 512, 0.95f, 0.0f);
+        if (t > 4.7)
+            for (int i = 0; i < 512; ++i)
+            {
+                const float v = out.getSample(0, i);
+                if (std::abs(v) < 1e-6f) continue;
+                ++soundingSamples;
+                if (std::abs(v - hi) > 1e-3f) ++badSamples;
+            }
+    }
+    REQUIRE(soundingSamples > 1000);
+    REQUIRE(badSamples == 0);
+}
+
+TEST_CASE("Feedback loop at max gain and density stays finite and bounded",
+          "[engine][feedback][level]")
+{
+    // Closed loop: engine output → ring → feedback grains. Before R-11 the
+    // loop gain exceeded 1 at high overlap and ran to inf/NaN.
+    FbRig rig;
+    rig.density.store(100.0f);
+    rig.grainSize.store(100.0f);
+    rig.shape.store(0.0f); // Hann
+    rig.spread.store(0.5f);
+    juce::AudioBuffer<float> out(2, 512);
+    // Seed the ring with a burst.
+    std::vector<float> burst(512, 0.9f);
+    rig.fb.process(burst.data(), burst.data(), 512, 0.95f, 0.0f);
+    float peak = 0.0f;
+    int nonFinite = 0;
+    for (int b = 0; b < (48000 * 60) / 512; ++b)
+    {
+        rig.engine.processBlock(out);
+        rig.fb.process(out.getReadPointer(0), out.getReadPointer(1), 512, 0.95f, 0.0f);
+        for (int c = 0; c < 2; ++c)
+            for (int i = 0; i < 512; ++i)
+            {
+                const float v = out.getSample(c, i);
+                if (!std::isfinite(v)) ++nonFinite;
+                else peak = std::max(peak, std::abs(v));
+            }
+    }
+    REQUIRE(nonFinite == 0);
+    REQUIRE(peak < 4.0f);
+}
+
+TEST_CASE("Dense overlapping grains stay near unity level", "[engine][level]")
+{
+    // Density 100, size 500 ms (≈50 overlapping grains), jitter 0, sub-grain
+    // depth 2: before R-04 the sum reached ~+28 dBFS.
+    std::atomic<float> grainSize{500.0f}, density{100.0f}, position{0.3f},
+                       posJitter{0.0f}, pitchShift{0.0f}, spread{0.5f},
+                       masterVol{0.0f}, loop{0.0f}, subDepth{2.0f}, dist{0.0f};
+    GranularEngine engine; // 440 Hz test sine, amplitude 1
+    engine.setParamPointers(&grainSize, &density, &position, &posJitter,
+                            &pitchShift, &spread, &masterVol, &loop);
+    engine.setAdvancedParamPointers(&subDepth, &dist);
+    engine.prepare(48000.0, 512);
+    engine.setRandomSeed(11);
+    juce::AudioBuffer<float> out(2, 512);
+    float peak = 0.0f;
+    for (int b = 0; b < (48000 * 5) / 512; ++b)
+    {
+        engine.processBlock(out);
+        peak = std::max(peak, out.getMagnitude(0, 512));
+    }
+    INFO("peak " << peak);
+    REQUIRE(peak <= 2.0f); // ≤ +6 dBFS
+    REQUIRE(peak > 0.1f);
+}
+
+TEST_CASE("Master volume changes are ramped, not stepped", "[engine][level]")
+{
+    std::atomic<float> masterVol{-60.0f};
+    std::atomic<float> d{0.0f};
+    GranularEngine engine;
+    engine.setParamPointers(&d, &d, &d, &d, &d, &d, &masterVol, &d);
+    juce::AudioBuffer<float> buf(2, 512);
+    buf.clear();
+    for (int i = 0; i < 512; ++i) { buf.setSample(0, i, 1.0f); buf.setSample(1, i, 1.0f); }
+    engine.applyMasterGain(buf); // establishes -60 dB
+    for (int i = 0; i < 512; ++i) { buf.setSample(0, i, 1.0f); buf.setSample(1, i, 1.0f); }
+    masterVol.store(6.0f);
+    engine.applyMasterGain(buf); // -60 → +6 dB over this block
+    float maxStep = 0.0f;
+    for (int i = 1; i < 512; ++i)
+        maxStep = std::max(maxStep, std::abs(buf.getSample(0, i) - buf.getSample(0, i - 1)));
+    REQUIRE(buf.getSample(0, 0) < 0.01f);
+    REQUIRE(buf.getSample(0, 511) > 1.9f);
+    REQUIRE(maxStep < 0.01f); // ~2.0 / 512 per sample
 }

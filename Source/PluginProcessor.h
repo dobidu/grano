@@ -90,6 +90,7 @@ public:
     SampleBuffer&              getSampleBuffer()  noexcept { return sampleBank_.getSlot(0); }
     MultiSampleBank&           getSampleBank()    noexcept { return sampleBank_; }
     GranularEngine&            getEngine()        noexcept { return engine_; }
+    const SpectralProcessor&   getSpectralProcessor() const noexcept { return spectralProcessor_; }
     juce::AudioFormatManager&  getFormatManager() noexcept { return formatManager_; }
 
     double getLastLoadedSampleRate() const noexcept { return lastLoadedSampleRate_; }
@@ -140,6 +141,9 @@ private:
 
     // Set by parameterChanged (any thread), consumed on the message thread.
     std::atomic<bool> spectralDirty_{ false };
+    // Message thread: slot-0 load generation the spectral source must be
+    // derived from (0 = none pending).
+    juce::uint32      spectralWaitGen_{ 0 };
 
     // Cached APVTS atomics for the audio-thread feedback tap (hard rule 1:
     // no string-keyed getRawParameterValue in processBlock).
