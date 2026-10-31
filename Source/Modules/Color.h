@@ -39,6 +39,7 @@ private:
 
     // Verb: JUCE built-in plate reverb (Freeverb-style), no external IR
     juce::Reverb reverb_;
+    bool         verbActive_ { false }; // reset tail on bypass → active (R-27)
 
     std::atomic<float>* pEnabled_  { nullptr };
     std::atomic<float>* pSaturate_ { nullptr };

@@ -29,7 +29,7 @@ public:
     }
 
 private:
-    float nextPink()                    noexcept;
+    float nextPink(int ch)              noexcept;
     void  updatePitchMod(int numSamples) noexcept;
 
     double sampleRate_ { 44100.0 };
@@ -38,16 +38,19 @@ private:
     float wowPhase_     { 0.0f };
     float flutterPhase_ { 0.0f };
 
-    // Drift random walk (audio thread only)
-    float driftCurrent_ { 0.0f };
-    float driftTarget_  { 0.0f };
-    int   driftCounter_ { 0 };
+    // Drift random walk (audio thread only). Unit-range target re-rolled
+    // every 0.5–2 s; depth applied at the output so the knob acts at once.
+    float  driftCurrent_  { 0.0f };
+    float  driftTarget_   { 0.0f };
+    double driftTimerSec_ { 0.0 };
 
-    // Pink noise — Paul Kellet 7-stage (audio thread only)
-    float b0_ {}, b1_ {}, b2_ {}, b3_ {}, b4_ {}, b5_ {}, b6_ {};
+    // Pink noise — Paul Kellet 7-stage, one state per channel so L and R
+    // are continuous streams across blocks (audio thread only)
+    float pink_[2][7] {};
 
-    // Color filter state (1-pole IIR, audio thread only)
-    float filterState_ { 0.0f };
+    // Crackle split filter (1-pole LP at kCrackleSplitHz), per channel (R-16)
+    float filterState_[2] { 0.0f, 0.0f };
+    float splitCoeff_     { 0.9f };
 
     // Cross-thread: audio thread writes, scheduler thread reads
     std::atomic<float> pitchModSt_ { 0.0f };

@@ -37,23 +37,72 @@ TEST_CASE("Color bypass leaves buffer unchanged")
 
 // ── Test 2: saturate compresses full-scale peaks ──────────────────────────────
 
-TEST_CASE("Color saturate pushes moderate signals toward saturation")
+TEST_CASE("Color saturate compresses dynamics (waveshaping)")
 {
-    // Normalised tanh: unity input stays at unity (identity at max).
-    // Intermediate values get pushed toward 1.0 at high drive.
-    // drive=16x: tanh(0.5 * 16) / tanh(16) ≈ 0.9999... — much higher than 0.5.
-    Color c;
-    c.prepare(44100.0, 512);
+    // 08-08 R-26: the old normalised shaper boosted quiet input up to +24 dB
+    // (this test used to assert 0.5 → > 0.5). Now the shaped path is
+    // compensated by 1/sqrt(drive); what matters is that it compresses:
+    // a 10x level difference in comes out much smaller than 10x.
+    auto run = [](float level)
+    {
+        Color c;
+        c.prepare(44100.0, 512);
+        std::atomic<float> en{ 1.0f };
+        std::atomic<float> sat{ 1.0f }, dec{ 0.0f }, tilt{ 0.0f }, verb{ 0.0f };
+        c.setParamPointers(&en, &sat, &dec, &tilt, &verb);
+        auto buf = makeStereoBuffer(512, level);
+        c.processBlock(buf);
+        return buf.getReadPointer(0)[100];
+    };
+    const float loud  = run(0.5f);
+    const float quiet = run(0.05f);
+    CHECK(loud / quiet < 3.0f);
+    CHECK(loud <= 1.0f);
+    CHECK(quiet <= 0.05f * 4.0f + 1e-4f); // ≤ +12 dB small-signal gain
+}
 
-    std::atomic<float> en{ 1.0f };
-    std::atomic<float> sat{ 1.0f }, dec{ 0.0f }, tilt{ 0.0f }, verb{ 0.0f };
-    c.setParamPointers(&en, &sat, &dec, &tilt, &verb);
+TEST_CASE("Color saturate engages continuously")
+{
+    // amount 0.0009 (bypassed) vs 0.0011 (engaged) must sound the same.
+    auto run = [](float amount)
+    {
+        Color c;
+        c.prepare(44100.0, 512);
+        std::atomic<float> en{ 1.0f };
+        std::atomic<float> sat{ amount }, dec{ 0.0f }, tilt{ 0.0f }, verb{ 0.0f };
+        c.setParamPointers(&en, &sat, &dec, &tilt, &verb);
+        auto buf = makeStereoBuffer(512, 0.3f);
+        c.processBlock(buf);
+        return buf.getReadPointer(0)[100];
+    };
+    CHECK(std::abs(run(0.0011f) - run(0.0009f)) < 0.003f);
+}
 
-    auto buf = makeStereoBuffer(512, 0.5f); // moderate level
-    c.processBlock(buf);
-
-    for (int n = 0; n < 512; ++n)
-        CHECK(buf.getReadPointer(0)[n] > 0.5f); // saturation boosts intermediate values
+TEST_CASE("Color verb engaging does not jump the dry level")
+{
+    // R-15: juce::Reverb scales dryLevel x2 — the old dryLevel = 1.0 gave
+    // +6 dB the moment Verb Mix left 0.
+    auto firstSample = [](float mix)
+    {
+        Color c;
+        c.prepare(44100.0, 512);
+        std::atomic<float> en{ 1.0f };
+        std::atomic<float> sat{ 0.0f }, dec{ 0.0f }, tilt{ 0.0f }, verb{ mix };
+        c.setParamPointers(&en, &sat, &dec, &tilt, &verb);
+        // 300 blocks so juce::Reverb's internal gain smoothing settles.
+        juce::AudioBuffer<float> buf(2, 512);
+        for (int b = 0; b < 300; ++b)
+        {
+            buf.clear();
+            buf.setSample(0, 0, 1.0f);
+            buf.setSample(1, 0, 1.0f);
+            c.processBlock(buf);
+        }
+        return buf.getSample(0, 0); // impulse is dry-only at n = 0
+    };
+    const float dryOnly = firstSample(0.0f);
+    const float engaged = firstSample(0.001f);
+    CHECK(std::abs(juce::Decibels::gainToDecibels(engaged / dryOnly)) < 0.1f);
 }
 
 // ── Test 3: saturate at amount=0 passes through unchanged ─────────────────────

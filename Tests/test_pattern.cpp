@@ -310,16 +310,58 @@ TEST_CASE("Pattern spray=0 getDurMultiplier returns 1.0")
         REQUIRE(f.p.getDurMultiplier() == Catch::Approx(1.0f));
 }
 
-TEST_CASE("Pattern spray=1 getDurMultiplier exceeds 1.0")
+TEST_CASE("Pattern spray=1 getDurMultiplier spans shorter and longer grains")
 {
+    // R-30: spray used to only lengthen grains (x1..x3).
     PatternFixture f;
     f.spray.store(1.0f);
 
-    float maxMult = 0.0f;
-    for (int i = 0; i < 100; ++i)
-        maxMult = std::max(maxMult, f.p.getDurMultiplier());
+    float maxMult = 0.0f, minMult = 10.0f;
+    for (int i = 0; i < 500; ++i)
+    {
+        const float m = f.p.getDurMultiplier();
+        maxMult = std::max(maxMult, m);
+        minMult = std::min(minMult, m);
+    }
+    REQUIRE(maxMult > 1.5f);
+    REQUIRE(maxMult <= 2.0f + 1e-4f);
+    REQUIRE(minMult < 0.67f);
+    REQUIRE(minMult >= 0.5f - 1e-4f);
+}
 
-    REQUIRE(maxMult > 1.0f);
+TEST_CASE("Transient detection is block-size independent and hears both channels",
+          "[pattern][transient]")
+{
+    // R-29: per-block coefficients + channel-0-only input.
+    auto onsets = [](int block, bool rightOnly)
+    {
+        PatternFixture f;
+        f.triggerMode.store(3.0f);
+        f.p.prepare(48000.0);
+        int fired = 0;
+        juce::AudioBuffer<float> buf(2, block);
+        juce::Random r(3);
+        for (int done = 0; done < 48000 * 4; done += block)
+        {
+            buf.clear();
+            for (int i = 0; i < block; ++i)
+            {
+                const int t = done + i;
+                // Quiet noise bed + a burst every 0.5 s.
+                float v = (r.nextFloat() - 0.5f) * 0.01f;
+                if (t % 24000 < 480 && t < 48000 * 4 - 12000) // 8 bursts: 0 .. 3.5 s
+                    v += (r.nextFloat() - 0.5f) * 0.8f;
+                buf.setSample(rightOnly ? 1 : 0, i, v);
+                if (!rightOnly) buf.setSample(1, i, v);
+            }
+            f.p.processBlock(buf, 120.0);
+            if (f.p.shouldFireGrain()) ++fired; // consumes the flag
+        }
+        return fired;
+    };
+    REQUIRE(onsets(64, false) == 8);
+    REQUIRE(onsets(2048, false) == 8);
+    REQUIRE(onsets(512, true) == 8);
 }
 
 // ── UAT-010 regression: Euclidean step clock is tempo-locked ──────────────────

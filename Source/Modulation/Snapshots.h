@@ -13,6 +13,7 @@ public:
     void save   (int slot, const juce::ValueTree& state) noexcept;
     void recall (int slot, juce::AudioProcessorValueTreeState& apvts) const noexcept;
     bool isOccupied (int slot) const noexcept;
+    void clear() noexcept { for (auto& s : slots_) s = {}; }
 
     juce::ValueTree serialise() const;
     void deserialise(const juce::ValueTree& data);

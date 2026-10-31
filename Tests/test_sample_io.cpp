@@ -409,3 +409,33 @@ TEST_CASE("Loading a new sample with spectral on derives the spectrum from it",
     fA.deleteFile();
     fB.deleteFile();
 }
+
+TEST_CASE("Restoring a state without samples/snapshots clears stale ones", "[State]")
+{
+    // R-23: deserialise only overwrote slots present in the data, so the old
+    // instance's samples kept playing and its snapshots survived a preset load.
+    GranoAudioProcessor fresh;
+    juce::MemoryBlock emptyState;
+    fresh.getStateInformation(emptyState);
+
+    const auto f1 = writeTestWav("grano_r23.wav", 700);
+    GranoAudioProcessor proc;
+    proc.prepareToPlay(48000.0, 512);
+    proc.loadSampleFile(f1, 1);
+    proc.getSnapshots().save(2, proc.getAPVTS().copyState());
+    juce::AudioBuffer<float> buf(2, 512);
+    juce::MidiBuffer midi;
+    proc.processBlock(buf, midi);
+    REQUIRE(proc.getSampleBank().getNumSamples(1) == 700);
+
+    proc.setStateInformation(emptyState.getData(), (int)emptyState.getSize());
+    proc.processBlock(buf, midi); // audio thread swaps the empty record in
+
+    REQUIRE(proc.getSampleBank().getNumSamples(1) == 0);
+    REQUIRE(proc.getSampleBank().getReadPointer(1) == nullptr);
+    REQUIRE(proc.getSlotFile(1) == juce::File());
+    REQUIRE_FALSE(proc.getSnapshots().isOccupied(2));
+
+    proc.releaseResources();
+    f1.deleteFile();
+}

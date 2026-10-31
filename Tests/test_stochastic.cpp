@@ -84,3 +84,18 @@ TEST_CASE("All distribution samples within clamp bounds", "[stochastic]")
         }
     }
 }
+
+TEST_CASE("Poisson (clustered) is burstier than Exponential", "[stochastic]")
+{
+    // R-22: Poisson and Exponential used identical math.
+    juce::Random rng(17);
+    const float mean = 100.0f;
+    int shortP = 0, shortE = 0;
+    for (int i = 0; i < 20000; ++i)
+    {
+        if (StochasticTiming::nextIntervalMs(mean, StochasticTiming::Distribution::Poisson, rng) < 0.2f * mean) ++shortP;
+        if (StochasticTiming::nextIntervalMs(mean, StochasticTiming::Distribution::Exponential, rng) < 0.2f * mean) ++shortE;
+    }
+    // Exp: P(X < 0.2m) = 18 %. Clustered: ≈ 0.5·63 % + 0.5·10 % ≈ 37 %.
+    REQUIRE(shortP > shortE + 2000);
+}

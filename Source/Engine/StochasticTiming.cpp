@@ -15,9 +15,15 @@ float StochasticTiming::gaussian(float meanMs, juce::Random& rng) noexcept
 
 float StochasticTiming::poisson(float meanMs, juce::Random& rng) noexcept
 {
-    // Inter-arrival time for Poisson process: Exp(1/mean).
+    // Clustered ("bursty") Poisson process: a two-phase hyperexponential.
+    // Half the gaps are short intra-cluster gaps (mean 0.2·m), half are long
+    // inter-cluster gaps (mean 1.92·m, compensated for the 5·m clamp), so the
+    // overall mean stays ≈ m. Grains arrive in bursts separated by pauses —
+    // audibly distinct from plain Exponential (memoryless) spacing, which the
+    // menu also offers (R-22: the two used to be identical).
     const float u = std::max(1e-7f, rng.nextFloat());
-    return meanMs * (-std::log(u));
+    const bool  intraCluster = rng.nextFloat() < 0.5f;
+    return (intraCluster ? 0.2f : 1.92f) * meanMs * (-std::log(u));
 }
 
 float StochasticTiming::pareto(float meanMs, juce::Random& rng) noexcept

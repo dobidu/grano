@@ -34,13 +34,20 @@ const Pattern::Scale Pattern::kScales[Pattern::kNumScales] = {
 void Pattern::prepare(double sampleRate) noexcept
 {
     sampleRate_ = sampleRate;
+    const auto coef = [sampleRate](double tauSec)
+    { return (float)(1.0 - std::exp(-1.0 / (tauSec * sampleRate))); };
+    fastAttack_  = coef(0.001);
+    fastRelease_ = coef(0.030);
+    slowCoef_    = coef(0.400);
     reset();
 }
 
 void Pattern::reset() noexcept
 {
     euclidStep_        = 0;
-    energyFollower_    = 0.0f;
+    fastEnv_           = 0.0f;
+    slowEnv_           = 0.0f;
+    transientArmed_    = true;
     transientCooldown_ = 0;
     transientFired_.store(false, std::memory_order_relaxed);
     syncIntervalAtomic_.store(0.25f, std::memory_order_relaxed);
@@ -156,36 +163,45 @@ void Pattern::processBlock(const juce::AudioBuffer<float>& inputBuffer, double b
     }
 
     // ── Audio-driven transient detection ─────────────────────────────────────
+    // Per-sample fast/slow energy envelopes on L+R with time constants in
+    // seconds, so sensitivity is independent of the host block size and a
+    // right-only input is heard (R-29). Onset = fast envelope rising above
+    // the slow (background) envelope by the sensitivity-dependent ratio.
     if (mode == 3 && inputBuffer.getNumChannels() > 0)
     {
         const float sens = pTransientSens_
             ? pTransientSens_->load(std::memory_order_relaxed) : 0.5f;
+        const float ratioThresh = 1.5f + (1.0f - sens) * 6.5f; // 8x (low) .. 1.5x (high)
 
-        const float* ch = inputBuffer.getReadPointer(0);
-        const int    N  = inputBuffer.getNumSamples();
+        const float* chL = inputBuffer.getReadPointer(0);
+        const float* chR = inputBuffer.getNumChannels() > 1 ? inputBuffer.getReadPointer(1) : chL;
+        const int    N   = inputBuffer.getNumSamples();
+        const int    cooldownSamples = (int)(kTransientCooldownMs * 0.001f * (float)sampleRate_);
 
-        float blockEnergy = 0.0f;
         for (int n = 0; n < N; ++n)
-            blockEnergy += ch[n] * ch[n];
-        blockEnergy /= std::max(N, 1);
-
-        constexpr float kAttack  = 0.9f;
-        constexpr float kRelease = 0.05f;
-        energyFollower_ = (blockEnergy > energyFollower_)
-            ? kAttack  * energyFollower_ + (1.0f - kAttack)  * blockEnergy
-            : kRelease * energyFollower_ + (1.0f - kRelease) * blockEnergy;
-
-        if (transientCooldown_ > 0)
-            transientCooldown_ -= N;
-
-        const float threshold = 0.3f - sens * 0.25f;
-        const float ratio = (energyFollower_ > 1e-10f)
-            ? blockEnergy / energyFollower_ : 0.0f;
-
-        if (ratio > (1.0f + threshold) && transientCooldown_ <= 0)
         {
-            transientFired_.store(true, std::memory_order_relaxed);
-            transientCooldown_ = (int)(kTransientCooldownMs * 0.001f * (float)sampleRate_);
+            const float e = 0.5f * (chL[n] * chL[n] + chR[n] * chR[n]);
+            fastEnv_ += (e > fastEnv_ ? fastAttack_ : fastRelease_) * (e - fastEnv_);
+            slowEnv_ += slowCoef_ * (e - slowEnv_);
+
+            // Hysteresis: after an onset, re-arm only once the fast envelope
+            // has fallen back near the background — a decaying tail must not
+            // re-trigger when the cooldown ends.
+            if (!transientArmed_ && fastEnv_ < 0.5f * ratioThresh * (slowEnv_ + 1.0e-7f))
+                transientArmed_ = true;
+
+            if (transientCooldown_ > 0)
+            {
+                --transientCooldown_;
+                continue;
+            }
+            if (transientArmed_ && fastEnv_ > 1.0e-6f
+                && fastEnv_ > ratioThresh * (slowEnv_ + 1.0e-7f))
+            {
+                transientFired_.store(true, std::memory_order_relaxed);
+                transientCooldown_ = cooldownSamples;
+                transientArmed_    = false;
+            }
         }
     }
 }
@@ -337,5 +353,6 @@ float Pattern::getDurMultiplier() noexcept
     const float sprayAmt = pSpray_
         ? pSpray_->load(std::memory_order_relaxed) : 0.0f;
     if (sprayAmt < 0.001f) return 1.0f;
-    return 1.0f + rng_.nextFloat() * sprayAmt * kMaxSprayDurMult;
+    // Symmetric in log-time: spray 1 → ×0.5 .. ×2 (was ×1 .. ×3, only longer).
+    return std::exp2((rng_.nextFloat() * 2.0f - 1.0f) * sprayAmt);
 }

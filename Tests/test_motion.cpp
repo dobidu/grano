@@ -132,3 +132,105 @@ TEST_CASE("Crackle produces output across the full color range", "[motion][crack
         REQUIRE(energy > 0.0f);
     }
 }
+
+// ── 08-08 T6 ──────────────────────────────────────────────────────────────────
+
+namespace
+{
+    struct MotionRig
+    {
+        std::atomic<float> en{1.0f}, wowD{0.0f}, wowR{0.5f}, flD{0.0f}, flR{8.0f},
+                           drift{0.0f}, crk{-12.0f}, col{0.5f};
+        Motion m;
+        explicit MotionRig(double sr = 48000.0)
+        {
+            m.setParamPointers(&en, &wowD, &wowR, &flD, &flR, &drift, &crk, &col);
+            m.prepare(sr);
+        }
+    };
+}
+
+TEST_CASE("Crackle level is roughly constant across the color knob", "[motion][crackle]")
+{
+    // R-17: color = 1 used to be ~34 dB quieter than color = 0.
+    auto levelDb = [](float color)
+    {
+        MotionRig r;
+        r.col.store(color);
+        juce::AudioBuffer<float> buf(2, 512);
+        double e = 0.0;
+        for (int b = 0; b < 200; ++b)
+        {
+            buf.clear();
+            r.m.processBlock(buf);
+            for (int i = 0; i < 512; ++i) e += buf.getSample(0, i) * buf.getSample(0, i);
+        }
+        return 10.0 * std::log10(e / (200.0 * 512.0) + 1e-20);
+    };
+    const double ref = levelDb(0.0f);
+    for (float c : { 0.25f, 0.5f, 0.75f, 1.0f })
+    {
+        INFO("color " << c);
+        CHECK(std::abs(levelDb(c) - ref) < 6.0);
+    }
+}
+
+TEST_CASE("Crackle is continuous across block boundaries on both channels",
+          "[motion][crackle]")
+{
+    // R-16: one filter state shared by L and R stepped at every block edge.
+    // Warm crackle (color 0) is strongly low-passed: sample-to-sample steps
+    // are small, so a block-edge jump stands out.
+    MotionRig r;
+    r.col.store(0.0f);
+    juce::AudioBuffer<float> buf(2, 64);
+    float prev[2] = { 0.0f, 0.0f };
+    double edgeJump = 0.0, innerJump = 0.0;
+    int edges = 0, inner = 0;
+    for (int b = 0; b < 400; ++b)
+    {
+        buf.clear();
+        r.m.processBlock(buf);
+        for (int ch = 0; ch < 2; ++ch)
+            for (int i = 0; i < 64; ++i)
+            {
+                const float v = buf.getSample(ch, i);
+                const double d = std::abs(v - prev[ch]);
+                if (i == 0 && b > 0) { edgeJump += d; ++edges; }
+                else if (i > 0)      { innerJump += d; ++inner; }
+                prev[ch] = v;
+            }
+    }
+    CHECK(edgeJump / edges < 3.0 * innerJump / inner);
+}
+
+TEST_CASE("Drift timing does not depend on host block size", "[motion][drift]")
+{
+    // R-18: re-roll interval and smoothing were counted in blocks (32x
+    // slower at 2048 than at 64). Measure mean |pitch change| per second.
+    auto activity = [](int block)
+    {
+        MotionRig r;
+        r.drift.store(1.0f);
+        r.crk.store(-60.0f);
+        juce::AudioBuffer<float> buf(2, block);
+        const int blocksPerSec = 48000 / block;
+        double total = 0.0;
+        float last = 0.0f;
+        for (int s = 0; s < 60; ++s)
+        {
+            for (int b = 0; b < blocksPerSec; ++b)
+                r.m.processBlock(buf);
+            const float now = r.m.getPitchModSemitones();
+            total += std::abs(now - last);
+            last = now;
+        }
+        return total / 60.0;
+    };
+    const double a64   = activity(64);
+    const double a2048 = activity(2048);
+    INFO("64: " << a64 << "  2048: " << a2048);
+    CHECK(a64 > 0.01);   // drift actually moves (≥ 1 cent/s on average)
+    CHECK(a2048 > 0.3 * a64);
+    CHECK(a2048 < 3.0 * a64);
+}

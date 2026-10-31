@@ -24,6 +24,9 @@ public:
     void processSource(const float* src, int srcLen,
                        Mode mode, float blurAmount) noexcept;
 
+    // Message thread: silence the output (slot 0 unloaded).
+    void clear() noexcept { output_.fill(0.0f); }
+
     // getNumSamples() excludes the +2 guard samples (renderGrain contract:
     // interpolation may read source[len] and source[len+1]).
     const float* getReadPointer() const noexcept { return output_.data(); }

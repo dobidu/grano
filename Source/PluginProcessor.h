@@ -85,6 +85,16 @@ public:
     // On success, clears lastLoadError_. On failure, sets it.
     void loadSampleFile(const juce::File& file, int slot = 0);
 
+    // Message thread: clear a slot (no sample, no saved path).
+    void unloadSlot(int slot);
+
+    // Message thread: file currently assigned to a slot (empty if none).
+    juce::File getSlotFile(int slot) const
+    {
+        return (slot >= 0 && slot < MultiSampleBank::kNumSlots)
+            ? slotFiles_[(size_t)slot] : juce::File();
+    }
+
     const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
 
     SampleBuffer&              getSampleBuffer()  noexcept { return sampleBank_.getSlot(0); }

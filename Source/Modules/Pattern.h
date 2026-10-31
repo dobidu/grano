@@ -91,7 +91,12 @@ private:
     std::atomic<float> syncIntervalAtomic_ { 0.25f };  // written by audio thread, read by scheduler
 
     // ── Audio-driven transient detection ─────────────────────────────────────────
-    float  energyFollower_    { 0.0f };
+    float  fastEnv_           { 0.0f };
+    float  slowEnv_           { 0.0f };
+    float  fastAttack_        { 0.02f };
+    float  fastRelease_       { 0.0007f };
+    float  slowCoef_          { 0.00005f };
+    bool   transientArmed_    { true };
     double sampleRate_        { 44100.0 };
     int    transientCooldown_ { 0 };
 
@@ -99,7 +104,6 @@ private:
 
     // ── Constants ────────────────────────────────────────────────────────────────
     static constexpr float kMaxSprayPitchSt     = 12.0f;
-    static constexpr float kMaxSprayDurMult     = 2.0f;
     static constexpr float kTransientCooldownMs = 80.0f;
     static constexpr float kPollingIntervalSec  = 0.010f;
 

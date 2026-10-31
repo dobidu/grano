@@ -42,21 +42,23 @@ void Color::setParamPointers(std::atomic<float>* enabled,
 }
 
 // ── Saturate ──────────────────────────────────────────────────────────────────
-// tanh waveshaper. drive 1x (clean) → 16x (hard saturated).
-// Normalised by tanh(drive) so unity input stays near unity at amount=0.
+// tanh waveshaper, drive 1x → 16x, crossfaded with the dry signal by
+// `amount` so engaging the stage is continuous (R-26). The shaped path is
+// compensated by 1/sqrt(drive): ±12 dB worst case (quiet input boosted,
+// full-scale input compressed) instead of +24 dB on quiet grains.
 void Color::applySaturate(float* L, float* R, int N, float amount) noexcept
 {
     if (amount < 0.001f) return;
-    const float drive     = 1.0f + amount * (kSaturateMaxDrive - 1.0f);
-    const float tanhDrive = std::tanh(drive);
-    if (tanhDrive < 1e-6f) return;
-    const float norm = 1.0f / tanhDrive;
+    const float drive = 1.0f + amount * (kSaturateMaxDrive - 1.0f);
+    const float comp  = 1.0f / std::sqrt(drive);
+    const float wet   = amount;
+    const float dry   = 1.0f - amount;
     // L == R on mono layouts — writing R would apply the shaper twice.
     for (int n = 0; n < N; ++n)
     {
-        L[n] = std::tanh(L[n] * drive) * norm;
+        L[n] = dry * L[n] + wet * std::tanh(L[n] * drive) * comp;
         if (R != L)
-            R[n] = std::tanh(R[n] * drive) * norm;
+            R[n] = dry * R[n] + wet * std::tanh(R[n] * drive) * comp;
     }
 }
 
@@ -115,15 +117,27 @@ void Color::applyTilt(float* L, float* R, int N, float tiltParam) noexcept
 
 // ── Verb ─────────────────────────────────────────────────────────────────────
 // juce::Reverb (Freeverb-style plate). Processes stereo in-place.
-// wetLevel = mix, dryLevel = 1.0 (additive — engine already produced dry signal).
+// Equal-power dry/wet law. juce::Reverb internally scales dryLevel ×2 and
+// wetLevel ×3, so the parameters are pre-divided — the old dryLevel = 1.0
+// meant +6 dB on the dry signal the moment verb engaged (R-15).
 void Color::applyVerb(float* L, float* R, int N, float mix) noexcept
 {
-    if (mix < 0.001f) return;
+    if (mix < 0.001f)
+    {
+        verbActive_ = false;
+        return;
+    }
+    if (!verbActive_)
+    {
+        reverb_.reset(); // don't release a tail frozen at the last bypass
+        verbActive_ = true;
+    }
+    const float theta = mix * juce::MathConstants<float>::halfPi;
     juce::Reverb::Parameters p;
     p.roomSize   = 0.75f;
     p.damping    = 0.5f;
-    p.wetLevel   = mix;
-    p.dryLevel   = 1.0f;
+    p.wetLevel   = std::sin(theta) / 3.0f;
+    p.dryLevel   = std::cos(theta) / 2.0f;
     p.width      = 1.0f;
     p.freezeMode = 0.0f;
     reverb_.setParameters(p);
@@ -139,7 +153,10 @@ void Color::processBlock(juce::AudioBuffer<float>& buffer) noexcept
     if (pEnabled_ == nullptr)
         return;
     if (pEnabled_->load(std::memory_order_relaxed) < 0.5f)
+    {
+        verbActive_ = false;
         return;
+    }
 
     const int numCh = buffer.getNumChannels();
     if (numCh < 1) return;

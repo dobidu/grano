@@ -266,6 +266,21 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
     }
 }
 
+void GranoAudioProcessor::unloadSlot(int slot)
+{
+    if (slot < 0 || slot >= MultiSampleBank::kNumSlots)
+        return;
+    const bool hadSample = slotFiles_[(size_t)slot].getFullPathName().isNotEmpty()
+                           || sampleBank_.getNumSamples(slot) > 0;
+    slotFiles_[(size_t)slot] = juce::File();
+    if (hadSample)
+    {
+        sampleBank_.loadSlot(slot, nullptr, 0); // empty record: slot goes silent on swap
+        if (slot == 0)
+            spectralProcessor_.clear();
+    }
+}
+
 void GranoAudioProcessor::applyPendingSpectralUpdate()
 {
     if (!spectralDirty_.exchange(false, std::memory_order_acq_rel))
@@ -333,8 +348,13 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         {
             if (auto apvtsChild = tree.getChildWithName(apvts_.state.getType()); apvtsChild.isValid())
                 apvts_.replaceState(apvtsChild);
+            // Restoring a state REPLACES the instance — snapshots and samples
+            // absent from it must not survive from the previous one (R-23).
+            snapshots_.clear();
             if (auto snapChild = tree.getChildWithName("Snapshots"); snapChild.isValid())
                 snapshots_.deserialise(snapChild);
+
+            std::array<bool, MultiSampleBank::kNumSlots> restored{};
 
             // Reload sample files so the project restores audibly, not just
             // parameter-wise. Missing files surface via the error-label flow
@@ -349,11 +369,19 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                         continue;
                     const juce::File f(path);
                     if (f.existsAsFile())
+                    {
                         loadSampleFile(f, slot);
+                        restored[(size_t)slot] = slotFiles_[(size_t)slot] == f;
+                    }
                     else
+                    {
                         lastLoadError_ = "Sample not found: " + f.getFileName();
+                    }
                 }
             }
+            for (int slot = 0; slot < MultiSampleBank::kNumSlots; ++slot)
+                if (!restored[(size_t)slot])
+                    unloadSlot(slot);
         }
         else if (tree.hasType(apvts_.state.getType()))
         {
