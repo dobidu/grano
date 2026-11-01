@@ -2,21 +2,15 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
-#include "UI/WaveformDisplay.h"
 #include "UI/LookAndFeel/GranoLAF.h"
-#include "UI/Knob.h"
-#include "UI/Slider.h"
-#include "UI/CurveEditor.h"
-#include "UI/ModuleTabPanel.h"
+#include "UI/ConsoleView.h"
 
-// GranoAudioProcessorEditor is the AudioProcessorEditor entry point.
+// GranoAudioProcessorEditor — hosts the console view (fixed 1200 x 780 base
+// canvas, scaled uniformly 0.75x-1.6x with a fixed aspect ratio) and owns
+// file drag-and-drop (incl. the Win32 OLE drop target).
 //
-// F0: Carbon background (#0A0B0D) + centred "GRANO" label. No controls.
-// F2: FileDragAndDropTarget — drop audio files to load samples.
-// F3: Custom LookAndFeel applied; knobs and sliders added.
-// F6: Visual polish — halo glows, radial vignette, particle trails.
-//
-// See DESIGN_SPEC.md for the complete visual identity specification.
+// See DESIGN_SPEC.md for the visual system and design/mock/grano-ui.html for
+// the approved layout.
 
 class GranoAudioProcessorEditor : public juce::AudioProcessorEditor,
                                    public juce::FileDragAndDropTarget,
@@ -37,65 +31,18 @@ public:
     void fileDragExit (const juce::StringArray& files)               override;
 
 private:
-    using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
-    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
-
-    void showError(const juce::String& message);
-    void clearError();
-    void openFileChooser(int slot);
     void timerCallback() override;
 #if JUCE_WINDOWS
     void tryRegisterWindowDrop();
 #endif
 
-    juce::uint32 errorGen_{ 0 };
+    GranoLAF             laf_;
+    ConsoleView          view_;
+    juce::TooltipWindow  tooltips_ { this, 900 };
 
-    GranoAudioProcessor& processorRef;
-
-    GranoLAF laf_;
-
-    WaveformDisplay                    waveformDisplay_;
-    juce::TextButton                   slotButtons_[4];
-    juce::TextButton                   loadButton_;
-    std::unique_ptr<juce::FileChooser> fileChooser_;
-    int                                pendingSlot_{ 0 };
-    bool                               dragAcceptRegistered_{ false };
-    void*                              droppedHwnd_{ nullptr }; // HWND with our OLE drop target (Win32)
-    void*                              dropTarget_{ nullptr };  // IDropTarget* we registered (Win32)
-    juce::Label                        errorLabel_;
-    CurveEditor                        curveEditor_;
-    Knob                               slotWeightKnobs_[4] = { Knob{"W0"}, Knob{"W1"}, Knob{"W2"}, Knob{"W3"} };
-    std::unique_ptr<SliderAttachment>  slotWeightAttachments_[4];
-
-    // ── Core controls ─────────────────────────────────────────────────────────
-    GranoSlider        positionSlider_  { "POSITION" };
-    Knob               grainSizeKnob_   { "SIZE"     };
-    Knob               densityKnob_     { "DENS"     };
-    Knob               posJitterKnob_   { "JITTER"   };
-    Knob               pitchShiftKnob_  { "PITCH"    };
-    GranoSlider        spreadSlider_    { "SPREAD"   };
-    Knob               masterVolKnob_   { "VOLUME"   };
-    juce::ToggleButton loopButton_;
-
-    // ── APVTS attachments (must outlive controls) ──────────────────────────────
-    std::unique_ptr<SliderAttachment> positionAttach_;
-    std::unique_ptr<SliderAttachment> grainSizeAttach_;
-    std::unique_ptr<SliderAttachment> densityAttach_;
-    std::unique_ptr<SliderAttachment> posJitterAttach_;
-    std::unique_ptr<SliderAttachment> pitchShiftAttach_;
-    std::unique_ptr<SliderAttachment> spreadAttach_;
-    std::unique_ptr<SliderAttachment> masterVolAttach_;
-    std::unique_ptr<ButtonAttachment> loopAttach_;
-
-    ModuleTabPanel       moduleTabPanel_;
-    juce::TextButton     snapButtons_[4];
-
-    // ── Header extras ─────────────────────────────────────────────────────────
-    juce::Label          snapLabel_;
-    juce::Label          masterDbLabel_;
-
-    // ── Footer status bar ─────────────────────────────────────────────────────
-    juce::Label          footerGrainLabel_;
+    bool  dragAcceptRegistered_{ false };
+    void* droppedHwnd_{ nullptr }; // HWND with our OLE drop target (Win32)
+    void* dropTarget_{ nullptr };  // IDropTarget* we registered (Win32)
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GranoAudioProcessorEditor)
 };

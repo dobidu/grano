@@ -1,151 +1,175 @@
 #include "GranoLAF.h"
 
-const juce::Colour GranoLAF::kSurfaceBase { 0xff0a0b0du };
-const juce::Colour GranoLAF::kSurface1   { 0xff1a1d22u };
-const juce::Colour GranoLAF::kBorderMuted{ 0xff2a2e36u };
-const juce::Colour GranoLAF::kTextPrimary{ 0xffe8e6e1u };
-const juce::Colour GranoLAF::kTextSecond { 0xff8b8985u };
-const juce::Colour GranoLAF::kAccent      { 0xff7cf5c4u };
-const juce::Colour GranoLAF::kGrain      { 0xffc77cffu };
-const juce::Colour GranoLAF::kClip       { 0xffff5252u };
+using namespace Theme;
 
 GranoLAF::GranoLAF()
 {
-    setColour(juce::ResizableWindow::backgroundColourId,    kSurfaceBase);
-    setColour(juce::Slider::rotarySliderFillColourId,       kAccent);
-    setColour(juce::Slider::rotarySliderOutlineColourId,    kBorderMuted);
-    setColour(juce::Slider::trackColourId,                  kAccent);
-    setColour(juce::Slider::thumbColourId,                  kAccent);
-    setColour(juce::Label::textColourId,                    kTextSecond);
-    setColour(juce::TextButton::buttonColourId,             kSurface1);
-    setColour(juce::TextButton::buttonOnColourId,           kAccent.withAlpha(0.15f));
-    setColour(juce::TextButton::textColourOffId,            kTextSecond);
-    setColour(juce::TextButton::textColourOnId,             kAccent);
-    setColour(juce::ToggleButton::textColourId,             kTextSecond);
-    setColour(juce::ToggleButton::tickColourId,             kAccent);
-    setColour(juce::ToggleButton::tickDisabledColourId,     kBorderMuted);
+    setColour(juce::ResizableWindow::backgroundColourId, C::desk);
+    setColour(juce::ComboBox::textColourId,              C::lcd);
+    setColour(juce::ComboBox::backgroundColourId,        C::lcdBg);
+    setColour(juce::ComboBox::outlineColourId,           C::groove);
+    setColour(juce::ComboBox::arrowColourId,             C::lcd);
+    setColour(juce::ComboBox::focusedOutlineColourId,    C::lcd);
+    setColour(juce::PopupMenu::backgroundColourId,            C::menu);
+    setColour(juce::PopupMenu::textColourId,                  C::silk);
+    setColour(juce::PopupMenu::highlightedBackgroundColourId, C::tape);
+    setColour(juce::PopupMenu::highlightedTextColourId,       C::tapeInk);
+    setColour(juce::Label::textColourId,             C::silk);
+    setColour(juce::TextButton::buttonColourId,      C::key);
+    setColour(juce::TextButton::buttonOnColourId,    C::tape);
+    setColour(juce::TextButton::textColourOffId,     C::silk);
+    setColour(juce::TextButton::textColourOnId,      C::tapeInk);
+    setColour(juce::TooltipWindow::backgroundColourId, C::menu);
+    setColour(juce::TooltipWindow::textColourId,       C::silk);
+    setColour(juce::TooltipWindow::outlineColourId,    C::groove);
 }
 
-void GranoLAF::drawRotarySlider(juce::Graphics& g,
-                                 int x, int y, int width, int height,
-                                 float sliderPos,
-                                 float startAngle, float endAngle,
-                                 juce::Slider& /*slider*/)
+void GranoLAF::paintKey(juce::Graphics& g, juce::Rectangle<float> r, bool lit,
+                        juce::Colour litColour, bool hover, bool down)
 {
-    const float radius = (float)juce::jmin(width / 2, height / 2) - 4.0f;
-    const float cx     = (float)x + (float)width  * 0.5f;
-    const float cy     = (float)y + (float)height * 0.5f;
-    const float rr     = radius * 2.0f;
-    const float rx     = cx - radius;
-    const float ry     = cy - radius;
-    const float angle  = startAngle + sliderPos * (endAngle - startAngle);
-
-    // Track arc (grey)
+    if (down)
+        r = r.translated(0.0f, 1.0f);
+    else
     {
-        juce::Path arc;
-        arc.addArc(rx, ry, rr, rr, startAngle, endAngle, true);
-        g.setColour(kBorderMuted);
-        g.strokePath(arc, juce::PathStrokeType(2.0f));
+        g.setColour(C::shadow);
+        g.fillRoundedRectangle(r.translated(0.0f, 1.0f), kKeyRadius);
     }
-    // Halo passes — wider arcs at low alpha before solid arc renders on top
-    {
-        const float halos[][2] = { {6.0f, 0.04f}, {4.5f, 0.09f}, {3.0f, 0.18f} };
-        for (auto& [hw, ha] : halos)
-        {
-            juce::Path halo;
-            halo.addArc(rx, ry, rr, rr, startAngle, angle, true);
-            g.setColour(kAccent.withAlpha(ha));
-            g.strokePath(halo, juce::PathStrokeType(hw,
-                juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        }
-    }
-    // Value arc (mint)
-    {
-        juce::Path arc;
-        arc.addArc(rx, ry, rr, rr, startAngle, angle, true);
-        g.setColour(kAccent);
-        g.strokePath(arc, juce::PathStrokeType(
-            2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    }
-    // Knob body
-    const float ir = radius * 0.68f;
-    g.setColour(kSurface1);
-    g.fillEllipse(cx - ir, cy - ir, ir * 2.0f, ir * 2.0f);
-    g.setColour(kBorderMuted);
-    g.drawEllipse(cx - ir, cy - ir, ir * 2.0f, ir * 2.0f, 1.0f);
-    // Needle
-    const float nl = ir * 0.65f;
-    g.setColour(kAccent);
-    g.drawLine(cx, cy, cx + nl * std::sin(angle), cy - nl * std::cos(angle), 1.5f);
+    g.setColour(lit ? litColour : (hover ? C::keyHover : C::key));
+    g.fillRoundedRectangle(r, kKeyRadius);
+    g.setColour(lit ? C::groove.withAlpha(0.6f) : C::edge);
+    g.drawRoundedRectangle(r.reduced(0.5f), kKeyRadius, 1.0f);
 }
 
-void GranoLAF::drawLinearSlider(juce::Graphics& g,
-                                  int x, int y, int width, int height,
-                                  float sliderPos, float /*minPos*/, float /*maxPos*/,
-                                  juce::Slider::SliderStyle style,
-                                  juce::Slider& slider)
+// ── ComboBox ──────────────────────────────────────────────────────────────────
+void GranoLAF::drawComboBox(juce::Graphics& g, int width, int height, bool,
+                            int, int, int, int, juce::ComboBox& box)
 {
-    if (style != juce::Slider::LinearHorizontal)
+    const auto r = juce::Rectangle<float>(0.0f, 0.0f, (float)width, (float)height);
+    g.setColour(C::lcdBg);
+    g.fillRoundedRectangle(r, kStripRadius);
+    g.setColour(box.hasKeyboardFocus(true) ? C::lcd : (box.isMouseOver(true) ? C::line2 : C::groove));
+    g.drawRoundedRectangle(r.reduced(0.5f), kStripRadius, 1.0f);
+
+    // Chevron
+    const float cx = (float)width - 12.0f, cy = (float)height * 0.5f;
+    juce::Path p;
+    p.startNewSubPath(cx - 4.0f, cy - 2.0f);
+    p.lineTo(cx, cy + 2.0f);
+    p.lineTo(cx + 4.0f, cy - 2.0f);
+    g.setColour(C::lcd);
+    g.strokePath(p, juce::PathStrokeType(1.5f));
+}
+
+juce::Font GranoLAF::getComboBoxFont(juce::ComboBox& box)
+{
+    // Matrix destination selects use silkscreen type (names), others values.
+    if (box.getProperties()["silk"])
+        return font(Face::silk, 13.0f, 0.02f);
+    return font(Face::lcd, 14.0f);
+}
+
+void GranoLAF::positionComboBoxText(juce::ComboBox& box, juce::Label& label)
+{
+    label.setBounds(1, 1, box.getWidth() - 22, box.getHeight() - 2);
+    label.setFont(getComboBoxFont(box));
+    label.setBorderSize({ 0, 6, 0, 0 });
+    label.setMinimumHorizontalScale(0.8f);
+}
+
+juce::PopupMenu::Options GranoLAF::getOptionsForComboBoxPopupMenu(juce::ComboBox& box, juce::Label& label)
+{
+    return LookAndFeel_V4::getOptionsForComboBoxPopupMenu(box, label)
+        .withMinimumWidth(juce::jmax(box.getWidth(), 120))
+        .withStandardItemHeight(26);
+}
+
+// ── PopupMenu ─────────────────────────────────────────────────────────────────
+void GranoLAF::drawPopupMenuBackground(juce::Graphics& g, int width, int height)
+{
+    g.fillAll(C::menu);
+    g.setColour(C::groove);
+    g.drawRect(0, 0, width, height, 1);
+}
+
+void GranoLAF::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area,
+                                 bool isSeparator, bool isActive, bool isHighlighted,
+                                 bool isTicked, bool, const juce::String& text,
+                                 const juce::String&, const juce::Drawable*, const juce::Colour*)
+{
+    if (isSeparator)
     {
-        LookAndFeel_V4::drawLinearSlider(g, x, y, width, height,
-                                          sliderPos, 0.0f, 0.0f, style, slider);
+        g.setColour(C::line);
+        g.fillRect(area.reduced(6, 0).withSizeKeepingCentre(area.getWidth() - 12, 1));
         return;
     }
-    const float trackY = (float)y + (float)height * 0.5f;
-    const float thick  = 2.0f;
-    const float thumbR = 5.0f;
-
-    g.setColour(kBorderMuted);
-    g.fillRoundedRectangle((float)x, trackY - thick * 0.5f,
-                            (float)width, thick, 1.0f);
-
-    const float fillW = sliderPos - (float)x;
-    if (fillW > 0.0f)
+    auto r = area.reduced(2, 1).toFloat();
+    if (isHighlighted && isActive)
     {
-        g.setColour(kAccent);
-        g.fillRoundedRectangle((float)x, trackY - thick * 0.5f, fillW, thick, 1.0f);
+        g.setColour(C::tape);
+        g.fillRoundedRectangle(r, kStripRadius);
     }
-
-    g.setColour(kAccent);
-    g.fillEllipse(sliderPos - thumbR, trackY - thumbR, thumbR * 2.0f, thumbR * 2.0f);
-    g.setColour(kSurfaceBase);
-    g.drawEllipse(sliderPos - thumbR, trackY - thumbR, thumbR * 2.0f, thumbR * 2.0f, 1.0f);
+    g.setColour(!isActive ? C::disabled : (isHighlighted ? C::tapeInk : (isTicked ? C::lcd : C::silk)));
+    g.setFont(getPopupMenuFont());
+    g.drawFittedText(text, area.reduced(10, 0), juce::Justification::centredLeft, 1, 0.85f);
 }
 
-void GranoLAF::drawButtonBackground(juce::Graphics& g, juce::Button& button,
-                                     const juce::Colour& /*bg*/,
-                                     bool isMouseOver, bool isDown)
+juce::Font GranoLAF::getPopupMenuFont()
 {
-    const auto b = button.getLocalBounds().toFloat().reduced(0.5f);
-    juce::Colour fill = kSurface1;
-    if (button.getToggleState())  fill = kAccent.withAlpha(0.12f);
-    else if (isDown)              fill = kSurface1.brighter(0.15f);
-    else if (isMouseOver)         fill = kSurface1.brighter(0.06f);
-
-    g.setColour(fill);
-    g.fillRoundedRectangle(b, 4.0f);
-
-    const juce::Colour border = button.getToggleState() ? kAccent : kBorderMuted;
-    g.setColour(border);
-    g.drawRoundedRectangle(b, 4.0f, 1.0f);
-
-    if (button.getToggleState())
-    {
-        g.setColour(kAccent.withAlpha(0.40f));
-        g.drawRoundedRectangle(b.expanded(1.0f), 4.5f, 1.5f);
-    }
+    return font(Face::silk, 14.0f, 0.04f);
 }
 
-void GranoLAF::drawButtonText(juce::Graphics& g, juce::TextButton& button,
-                               bool /*isMouseOver*/, bool /*isDown*/)
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+juce::Rectangle<int> GranoLAF::getTooltipBounds(const juce::String& tipText, juce::Point<int> screenPos,
+                                                juce::Rectangle<int> parentArea)
 {
-    g.setColour(button.getToggleState() ? kAccent : kTextSecond);
-    g.setFont(juce::Font(juce::FontOptions{}.withHeight(11.0f)));
-    g.drawText(button.getButtonText(), button.getLocalBounds(),
-               juce::Justification::centred, true);
+    juce::TextLayout tl;
+    juce::AttributedString s;
+    s.append(tipText, font(Face::text, 13.0f), C::silk);
+    tl.createLayoutWithBalancedLineLengths(s, 320.0f);
+    const int w = (int)tl.getWidth() + 18, h = (int)tl.getHeight() + 12;
+    return juce::Rectangle<int>(screenPos.x > parentArea.getCentreX() ? screenPos.x - (w + 12) : screenPos.x + 24,
+                                screenPos.y > parentArea.getCentreY() ? screenPos.y - (h + 6) : screenPos.y + 6,
+                                w, h).constrainedWithin(parentArea);
 }
 
-juce::Font GranoLAF::getLabelFont(juce::Label& /*label*/)
+void GranoLAF::drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height)
 {
-    return juce::Font(juce::FontOptions{}.withHeight(10.0f));
+    g.fillAll(C::menu);
+    g.setColour(C::groove);
+    g.drawRect(0, 0, width, height, 1);
+    juce::AttributedString s;
+    s.append(text, font(Face::text, 13.0f), C::silk);
+    juce::TextLayout tl;
+    tl.createLayoutWithBalancedLineLengths(s, 320.0f);
+    tl.draw(g, juce::Rectangle<float>(9.0f, 6.0f, (float)width - 18.0f, (float)height - 12.0f));
+}
+
+// ── TextButton ────────────────────────────────────────────────────────────────
+void GranoLAF::drawButtonBackground(juce::Graphics& g, juce::Button& b, const juce::Colour&,
+                                    bool isMouseOver, bool isButtonDown)
+{
+    paintKey(g, b.getLocalBounds().toFloat().reduced(0.5f, 0.5f).withTrimmedBottom(1.0f),
+             b.getToggleState(), b.findColour(juce::TextButton::buttonOnColourId),
+             isMouseOver, isButtonDown);
+}
+
+void GranoLAF::drawButtonText(juce::Graphics& g, juce::TextButton& b, bool, bool isButtonDown)
+{
+    g.setFont(getTextButtonFont(b, b.getHeight()));
+    g.setColour(b.findColour(b.getToggleState() ? juce::TextButton::textColourOnId
+                                                : juce::TextButton::textColourOffId)
+                 .withMultipliedAlpha(b.isEnabled() ? 1.0f : 0.4f));
+    auto r = b.getLocalBounds().withTrimmedBottom(1);
+    if (isButtonDown) r = r.translated(0, 1);
+    g.drawFittedText(b.getButtonText().toUpperCase(), r.reduced(4, 0), juce::Justification::centred, 1, 0.8f);
+}
+
+juce::Font GranoLAF::getTextButtonFont(juce::TextButton&, int)
+{
+    return font(Face::silkBold, 13.0f, 0.1f);
+}
+
+juce::Font GranoLAF::getLabelFont(juce::Label&)
+{
+    return font(Face::silk, 13.0f, 0.12f);
 }

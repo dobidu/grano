@@ -31,12 +31,16 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/Engine/SpectralProcessor.cpp
     # F6d — Multi-sample bank
     ${CMAKE_SOURCE_DIR}/Source/Engine/MultiSampleBank.cpp
-    # F2 — UI
-    ${CMAKE_SOURCE_DIR}/Source/UI/WaveformDisplay.cpp
-    # F3 — UI components and LookAndFeel
+    # F8 (08-09) — console UI
+    ${CMAKE_SOURCE_DIR}/Source/UI/LookAndFeel/GranoTheme.cpp
     ${CMAKE_SOURCE_DIR}/Source/UI/LookAndFeel/GranoLAF.cpp
-    ${CMAKE_SOURCE_DIR}/Source/UI/Knob.cpp
-    ${CMAKE_SOURCE_DIR}/Source/UI/Slider.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/ParamFormat.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/Console.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/Monitor.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/Header.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/SlotStrip.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/Banks.cpp
+    ${CMAKE_SOURCE_DIR}/Source/UI/ConsoleView.cpp
     # F3 — Parameters
     ${CMAKE_SOURCE_DIR}/Source/Parameters.cpp
     test_parameters.cpp
@@ -52,18 +56,15 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/Modulation/ModMatrix.cpp
     ${CMAKE_SOURCE_DIR}/Source/Modulation/Snapshots.cpp
     # F5 — UI panels (needed because PluginEditor.cpp is compiled into GranoTests)
-    ${CMAKE_SOURCE_DIR}/Source/UI/LfoPanel.cpp
-    ${CMAKE_SOURCE_DIR}/Source/UI/ModulationMatrixView.cpp
     # F6e — CurveEditor (PluginEditor.h includes it)
-    ${CMAKE_SOURCE_DIR}/Source/UI/CurveEditor.cpp
     # F8-UX — ModuleTabPanel (PluginEditor.h includes it)
-    ${CMAKE_SOURCE_DIR}/Source/UI/ModuleTabPanel.cpp
     test_modulation.cpp
     test_subgrain.cpp
     test_stochastic.cpp
     test_feedback.cpp
     test_spectral.cpp
     test_multisample.cpp
+    test_ui_format.cpp
 )
 
 target_include_directories(GranoTests
@@ -74,6 +75,7 @@ target_include_directories(GranoTests
 target_link_libraries(GranoTests
     PRIVATE
         Catch2::Catch2WithMain
+        GranoFonts
         juce::juce_audio_formats
         juce::juce_audio_utils
         juce::juce_audio_processors

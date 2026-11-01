@@ -75,12 +75,16 @@ target_sources(Grano
         Source/Engine/SpectralProcessor.cpp
         # F6d — Multi-sample bank
         Source/Engine/MultiSampleBank.cpp
-        # F2 — UI
-        Source/UI/WaveformDisplay.cpp
-        # F3 — UI components and LookAndFeel
+        # F8 (08-09) — console UI
+        Source/UI/LookAndFeel/GranoTheme.cpp
         Source/UI/LookAndFeel/GranoLAF.cpp
-        Source/UI/Knob.cpp
-        Source/UI/Slider.cpp
+        Source/UI/ParamFormat.cpp
+        Source/UI/Console.cpp
+        Source/UI/Monitor.cpp
+        Source/UI/Header.cpp
+        Source/UI/SlotStrip.cpp
+        Source/UI/Banks.cpp
+        Source/UI/ConsoleView.cpp
         # F3 — Parameters
         Source/Parameters.cpp
         # F4 — Processing modules
@@ -91,14 +95,18 @@ target_sources(Grano
         Source/Modulation/Lfo.cpp
         Source/Modulation/ModMatrix.cpp
         Source/Modulation/Snapshots.cpp
-        # F5 — UI panels
-        Source/UI/LfoPanel.cpp
-        Source/UI/ModulationMatrixView.cpp
-        # F6e — Envelope shape selector UI
-        Source/UI/CurveEditor.cpp
-        # F8-UX — module tab panel (exposes all F4/F6 module controls)
-        Source/UI/ModuleTabPanel.cpp
 )
+
+# ── Embedded fonts (OFL; licences in Resources/Fonts) ─────────────────────────
+juce_add_binary_data(GranoFonts
+    SOURCES
+        Resources/Fonts/ArchivoCondSemiBold.ttf
+        Resources/Fonts/ArchivoCondBold.ttf
+        Resources/Fonts/ArchivoSemiCondMedium.ttf
+        Resources/Fonts/ArchivoExpExtraBold.ttf
+        Resources/Fonts/MartianMonoCondMedium.ttf
+)
+set_target_properties(GranoFonts PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # ── Compile definitions ───────────────────────────────────────────────────────
 target_compile_definitions(Grano
@@ -112,6 +120,7 @@ target_compile_definitions(Grano
 # ── Link libraries ────────────────────────────────────────────────────────────
 target_link_libraries(Grano
     PRIVATE
+        GranoFonts
         juce::juce_audio_formats
         juce::juce_audio_utils
         juce::juce_audio_processors

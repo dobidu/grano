@@ -1,0 +1,736 @@
+<title>Grano Console Mock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+<style>
+/* Layout: fixed 1200x780 plugin canvas (absolute bounds = JUCE setBounds), scaled uniformly to fit.
+   World: stage lighting desk. Powder-coat desk, recessed wells, amber scribble strips, taped banks. */
+:root{
+  color-scheme: dark;
+  --room:#0C0D0F;        /* page around the plugin window */
+  --desk:#17181B;        /* powder-coat desk */
+  --plate:#1D1F23;       /* bank plate, raised */
+  --well:#0B0C0D;        /* recessed wells: faders, monitor, strips */
+  --line:#2C2F35;        /* panel seams */
+  --line-2:#3A3E46;      /* hover seams */
+  --silk:#CFCBC1;        /* silkscreen text */
+  --silk-dim:#8C887F;    /* secondary silkscreen (≥4.5:1 on desk) */
+  --lcd-bg:#0E0D09;      /* scribble strip glass */
+  --lcd:#FFB547;         /* scribble strip value */
+  --lcd-name:#E9E2D0;    /* scribble strip name */
+  --lcd-dim:#A38D61;     /* unlit strip text */
+  --tape:#ECE7DA;        /* console tape */
+  --tape-ink:#18181A;    /* marker on tape */
+  --cap:#5B5F67;         /* fader cap */
+  --cap-hi:#7A7F88;
+  --m-grain:#F5D547; --m-engine:#9DB0C4; --m-motion:#FF8A4C; --m-color:#EF6AA8; --m-pattern:#55CC92; --m-mod:#4FB0F7;
+  --live:#FFFFFF; --clip:#FF4438;
+  --f-silk:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-lcd:"Martian Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--room);color:var(--silk);font-family:var(--f-silk);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;box-sizing:border-box}
+::selection{background:var(--lcd);color:var(--lcd-bg)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;max-width:1200px;margin:0 auto 12px;font-size:13px;color:var(--silk-dim)}
+.toolbar b{font-weight:600;color:var(--silk);letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-stretch:80%}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:5px 12px;font:600 12px/1 var(--f-silk);font-stretch:85%;letter-spacing:.08em;text-transform:uppercase;color:var(--silk-dim);background:var(--desk)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--tape);color:var(--tape-ink)}
+.seg button:focus-visible{outline:2px solid var(--lcd);outline-offset:-2px}
+.toolbar .note{flex-basis:100%;font-size:13px}
+#stageWrap{margin:0 auto;position:relative;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1200px;height:780px;transform-origin:0 0;background:var(--desk);
+  border-radius:6px;box-shadow:0 18px 40px -12px rgba(0,0,0,.7);user-select:none;-webkit-user-select:none;overflow:hidden}
+.abs{position:absolute}
+
+/* ---- shared silkscreen + strips ---- */
+.silk{font:600 13px/1 var(--f-silk);font-stretch:80%;letter-spacing:.12em;text-transform:uppercase;color:var(--silk-dim)}
+.strip{position:relative;background:var(--lcd-bg);border:1px solid #000;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);padding:4px 6px 5px;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.strip .n{font:600 13px/1.1 var(--f-silk);font-stretch:78%;letter-spacing:.06em;text-transform:uppercase;color:var(--lcd-name);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .v{font:500 15px/1.1 var(--f-lcd);font-stretch:75%;color:var(--lcd);white-space:nowrap;font-variant-numeric:tabular-nums}
+.u{font:600 13px/1 var(--f-silk);font-stretch:80%;color:var(--lcd);opacity:.8;margin-left:3px}
+.strip.is-mod,.vs.is-mod{box-shadow:inset 0 -3px 0 var(--m-mod)}
+.strip.is-mod::after,.vs.is-mod::after{content:"";position:absolute;right:4px;top:4px;width:7px;height:7px;background:var(--m-mod);border-radius:1px}
+.ch .strip.is-mod .n{padding-right:8px;font-stretch:72%}
+.enc .strip.is-mod::after{top:auto;bottom:6px;right:3px;width:5px;height:5px}
+.vs.is-mod::after{top:3px;right:3px;width:5px;height:5px}
+
+/* ---- bank plates with console tape ---- */
+.bank{background:var(--plate);border:1px solid var(--line);border-radius:4px;box-shadow:0 2px 6px -2px rgba(0,0,0,.55)}
+.tape{position:absolute;left:10px;top:-1px;height:22px;padding:0 10px 0 16px;background:var(--tape);color:var(--tape-ink);
+  font:700 13px/22px var(--f-silk);font-stretch:75%;letter-spacing:.14em;text-transform:uppercase;border-radius:0 0 2px 2px;display:flex;align-items:center;gap:8px;
+  box-shadow:inset 7px 0 0 var(--edge,var(--m-grain))}
+.bank.is-off .tape .t{text-decoration:line-through;text-decoration-thickness:2px}
+.bank .body{position:absolute;inset:28px 0 0 0;transition:opacity .12s ease-out}
+.bank.is-off .body{opacity:.38}
+.bank.is-touched{border-color:var(--line-2)}
+
+/* ---- keys (flash / select / on) ---- */
+.key{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  background:#2A2D33;border:1px solid #0A0A0B;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.5);
+  font:700 13px/1 var(--f-silk);font-stretch:76%;letter-spacing:.1em;text-transform:uppercase;color:var(--silk)}
+.key:hover{background:#2D3036}
+.key:active{transform:translateY(1px);box-shadow:none}
+.key:focus-visible{outline:2px solid var(--lcd);outline-offset:1px}
+.key.on{background:var(--lit,var(--tape));color:var(--tape-ink);border-color:rgba(0,0,0,.6)}
+.onkey{height:18px;padding:0 7px;font-size:13px;border-radius:2px;margin-left:2px}
+.onkey.on{--lit:var(--edge)}
+
+/* ---- faders ---- */
+.ch{position:absolute;display:flex;flex-direction:column;align-items:stretch;gap:6px}
+.track{position:relative;flex:1;background:var(--well);border-radius:3px;box-shadow:inset 0 1px 2px rgba(0,0,0,.7);cursor:ns-resize;touch-action:none}
+.track::before{content:"";position:absolute;left:50%;top:10px;bottom:10px;width:2px;margin-left:-1px;background:#000;box-shadow:1px 0 0 #22252A}
+.ticks{position:absolute;inset:10px 6px;background:repeating-linear-gradient(to bottom,#3A3D44 0 1px,transparent 1px 10%);background-size:100% 100%;mask:linear-gradient(90deg,#000 0 7px,transparent 7px calc(100% - 7px),#000 calc(100% - 7px))}
+.fill{position:absolute;left:50%;width:4px;margin-left:-2px;background:var(--edge,var(--m-grain));opacity:.75;border-radius:1px}
+.range{position:absolute;left:50%;width:14px;margin-left:-7px;border:1.5px solid var(--m-mod);border-left-color:transparent;border-right-color:transparent;display:none}
+.ch.is-mod .range{display:block}
+.capk{position:absolute;left:50%;width:38px;height:22px;margin:-11px 0 0 -19px;background:var(--cap);border-radius:3px;
+  box-shadow:0 3px 5px rgba(0,0,0,.55)}
+.capk::after{content:"";position:absolute;left:4px;right:4px;top:50%;height:2px;margin-top:-1px;background:var(--live);border-radius:1px}
+.track:hover .capk{background:var(--cap-hi)}
+.track:focus-visible{outline:2px solid var(--lcd);outline-offset:2px}
+
+/* ---- encoders ---- */
+.enc{position:absolute;display:flex;flex-direction:column;align-items:center;gap:5px}
+.knob{position:relative;width:34px;height:34px;border-radius:50%;background:#33373E;border:1px solid #0A0A0B;box-sizing:border-box;
+  box-shadow:0 3px 5px rgba(0,0,0,.55);cursor:ns-resize;touch-action:none}
+.knob svg{position:absolute;left:-9px;top:-9px;width:50px;height:50px;overflow:visible;pointer-events:none}
+.knob:focus-visible{outline:2px solid var(--lcd);outline-offset:6px}
+.enc .strip{width:100%;box-sizing:border-box;padding:3px 4px 4px;align-items:center}
+.enc .strip .n{font-size:13px;font-stretch:82%;letter-spacing:.01em}
+.enc .strip .v{font-size:14px;font-stretch:75%}
+
+/* ---- value strips (compact draggable secondary controls) ---- */
+.vs{position:absolute;height:28px;background:var(--lcd-bg);border:1px solid #000;border-radius:2px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;gap:4px;cursor:ew-resize;touch-action:none;overflow:hidden;box-sizing:border-box}
+.vs .n{font:600 13px/1 var(--f-silk);font-stretch:76%;letter-spacing:.05em;text-transform:uppercase;color:var(--lcd-name);white-space:nowrap}
+.vs .v{font:500 14px/1 var(--f-lcd);font-stretch:75%;color:var(--lcd);font-variant-numeric:tabular-nums;white-space:nowrap}
+.vs i{position:absolute;left:0;bottom:0;height:2px;background:var(--edge,var(--m-grain));opacity:.8}
+.vs:hover{border-color:var(--line-2)}
+.vs:focus-visible{outline:2px solid var(--lcd);outline-offset:1px}
+.info{position:absolute;font:500 13px/1.35 var(--f-silk);font-stretch:90%;color:var(--silk-dim)}
+
+/* ---- selects ---- */
+.sel{appearance:none;-webkit-appearance:none;background:var(--lcd-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23FFB547' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center;
+  border:1px solid #000;border-radius:2px;color:var(--lcd);font:500 14px/1 var(--f-lcd);font-stretch:75%;padding:0 22px 0 7px;height:28px;cursor:pointer}
+.sel:focus-visible{outline:2px solid var(--lcd);outline-offset:1px}
+.sel option{background:#15161A;color:var(--silk)}
+
+/* ---- header ---- */
+.wordmark{font:800 24px/1 var(--f-silk);font-stretch:125%;letter-spacing:.1em;color:var(--silk)}
+.sub{font:600 13px/1 var(--f-silk);font-stretch:80%;color:var(--silk-dim);letter-spacing:.08em;margin-top:6px;text-transform:uppercase}
+.cmd{background:var(--lcd-bg);border:1px solid #000;border-radius:3px;box-shadow:inset 0 2px 4px rgba(0,0,0,.6);display:grid;grid-template-columns:minmax(0,1fr) 196px;align-items:center;padding:0 12px;gap:14px}
+.cmd .p{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:700 15px/1.2 var(--f-silk);font-stretch:78%;letter-spacing:.12em;text-transform:uppercase;color:var(--lcd-name)}
+.cmd .p small{display:block;overflow:hidden;text-overflow:ellipsis;font:500 13px/1.35 var(--f-lcd);font-stretch:75%;letter-spacing:0;text-transform:none;color:var(--lcd-dim)}
+.cmd .big{overflow:hidden;font:500 42px/1 var(--f-lcd);font-stretch:75%;letter-spacing:-.02em;color:var(--lcd);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.snap{display:flex;flex-direction:column;gap:3px}
+.snap .key{width:50px;height:38px;font-size:20px;font-stretch:110%}
+.snap .key.on{--lit:var(--live)}
+.snap .key.stored:not(.on){color:var(--lcd)}
+.snap .st{font:600 13px/1 var(--f-silk);font-stretch:80%;letter-spacing:.1em;text-transform:uppercase;color:var(--silk-dim);text-align:center}
+.snap .st.live{color:var(--live)}
+.meter{position:relative;height:9px;background:var(--well);border-radius:1px;overflow:hidden}
+.meter i{position:absolute;inset:0;background:linear-gradient(90deg,#8FD08A 0 70%,#E8C55A 70% 88%,var(--clip) 88%);-webkit-mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);clip-path:inset(0 calc(100% - var(--lv,0%)) 0 0)}
+.meter{background:repeating-linear-gradient(90deg,#1A1C20 0 5px,transparent 5px 7px),var(--well)}
+.clipled{width:10px;height:10px;border-radius:2px;background:#3A1512;border:1px solid #000}
+.clipled.hot{background:var(--clip)}
+.hfader{position:relative;height:22px;background:var(--well);border-radius:3px;box-shadow:inset 0 1px 2px rgba(0,0,0,.7);cursor:ew-resize;touch-action:none}
+.hfader::before{content:"";position:absolute;top:50%;left:8px;right:8px;height:2px;margin-top:-1px;background:#000;box-shadow:0 1px 0 #22252A}
+.hfader .hfill{position:absolute;top:50%;height:4px;margin-top:-2px;left:8px;background:var(--edge,var(--m-grain));opacity:.75;border-radius:1px}
+.hfader .hcap{position:absolute;top:50%;width:14px;height:18px;margin:-9px 0 0 -7px;background:var(--cap);border-radius:2px;box-shadow:0 2px 4px rgba(0,0,0,.55)}
+.hfader .hcap::after{content:"";position:absolute;top:3px;bottom:3px;left:50%;width:2px;margin-left:-1px;background:var(--live)}
+.hfader:focus-visible{outline:2px solid var(--lcd);outline-offset:2px}
+
+/* ---- monitor ---- */
+.monitor{background:var(--well);border:1px solid #000;border-radius:4px;box-shadow:inset 0 2px 6px rgba(0,0,0,.8);overflow:hidden;cursor:crosshair}
+.monitor canvas{position:absolute;left:0;top:0}
+.mon-lab{position:absolute;font:500 13px/1 var(--f-lcd);font-stretch:80%;color:var(--silk-dim);pointer-events:none}
+.mon-lab.name{font:600 14px/1 var(--f-silk);font-stretch:85%;letter-spacing:.04em;color:var(--silk)}
+.mon-lab.grains{color:var(--lcd)}
+.drop{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font:700 14px/1 var(--f-silk);font-stretch:80%;letter-spacing:.16em;text-transform:uppercase;color:var(--silk-dim)}
+.monitor.is-empty .drop{display:flex}
+
+/* ---- sample submasters ---- */
+.slot{display:grid;grid-template-columns:30px 1fr 64px 24px;gap:6px;align-items:center;padding:0 6px;background:var(--plate);border:1px solid var(--line);border-radius:3px}
+.slot .num.key{width:30px;height:26px;font-size:15px}
+.slot .num.key.on{--lit:var(--tape)}
+.slot .fn{cursor:pointer;font:500 14px/26px var(--f-lcd);font-stretch:75%;color:var(--lcd);background:var(--lcd-bg);border:1px solid #000;border-radius:2px;padding:0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot.empty .fn{color:var(--lcd-dim)}
+.slot.err .fn{color:var(--clip)}
+.slot .ib{width:24px;height:26px;padding:0}
+.slot .fn:hover{border-color:var(--line-2)}
+.slot .ib svg{width:15px;height:15px}
+.slot .hfader{height:20px}
+.slot .wv{font:500 10.5px/1 var(--f-lcd);color:var(--silk-dim);position:absolute;right:8px;top:-14px}
+
+/* ---- misc ---- */
+.icon{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.envkey{flex-direction:column;gap:5px;height:auto;padding:7px 0 6px;letter-spacing:.03em}
+.envkey svg{width:40px;height:22px}
+.envkey svg path{fill:none;stroke:currentColor;stroke-width:1.6}
+.envkey.on{--lit:var(--m-engine)}
+.wavekey{width:auto;height:22px;padding:0}
+.wavekey svg{width:20px;height:12px}
+.wavekey svg path{fill:none;stroke:currentColor;stroke-width:1.5}
+.wavekey.on{--lit:var(--m-mod)}
+.tkey.on{--lit:var(--edge)}
+.mrow{display:grid;grid-template-columns:14px 58px 1fr 60px;gap:6px;align-items:center;height:28px}
+.mrow .sn{font:600 13px/1 var(--f-lcd);color:var(--silk-dim);text-align:right}
+.mrow .srcs{display:flex;gap:2px}
+.mrow .srcs .key{width:28px;height:24px;font-size:13px;padding:0}
+.mrow .srcs .key.on{--lit:var(--m-mod)}
+.mrow .sel{height:24px;width:100%;font:600 13px/1 var(--f-silk);font-stretch:75%;letter-spacing:.02em;padding:0 22px 0 7px;text-overflow:ellipsis}
+.bip{position:relative;height:24px;background:var(--well);border-radius:2px;cursor:ew-resize;touch-action:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.7)}
+.bip::before{content:"";position:absolute;left:50%;bottom:1px;height:6px;width:1px;background:#6A6E76}
+.bip i{position:absolute;bottom:2px;height:4px;background:var(--m-mod);opacity:.85;border-radius:1px}
+.bip b{position:absolute;inset:0;font:500 13px/22px var(--f-lcd);font-stretch:75%;color:var(--silk);text-align:center;pointer-events:none;mix-blend-mode:normal}
+.bip:focus-visible{outline:2px solid var(--lcd);outline-offset:1px}
+.mrow.dead .sel,.mrow.dead .bip{opacity:.45}
+.status{font:500 13px/1 var(--f-lcd);font-stretch:80%;color:var(--silk-dim);display:flex;justify-content:space-between;align-items:center}
+.status .v{color:var(--lcd)}
+.status .hint{font:500 13px/1 var(--f-silk);font-stretch:90%;color:var(--silk)}
+.status .hint kbd{font:600 12px/1 var(--f-lcd);color:var(--lcd-bg);background:var(--silk-dim);border-radius:2px;padding:2px 4px}
+.menu{position:absolute;z-index:20;background:#22252A;border:1px solid #000;border-radius:3px;box-shadow:0 10px 24px -6px rgba(0,0,0,.8);padding:4px;display:none;min-width:150px}
+.menu button{all:unset;display:block;box-sizing:border-box;width:100%;padding:7px 10px;font:600 12px/1 var(--f-silk);font-stretch:85%;letter-spacing:.06em;color:var(--silk);border-radius:2px;cursor:pointer}
+.menu button:hover,.menu button:focus-visible{background:var(--tape);color:var(--tape-ink)}
+.menu button[disabled]{color:#5D6068;cursor:default;background:none}
+.ctx[hidden]{display:none!important}
+.euclid svg circle{transition:fill .06s linear}
+@media (prefers-reduced-motion:reduce){.bank .body{transition:none}}
+</style>
+
+<div class="toolbar">
+  <b>Mock state</b>
+  <span class="seg" role="group" aria-label="Mock state">
+    <button id="stDefault" aria-pressed="true">Default</button>
+    <button id="stDense" aria-pressed="false">Dense</button>
+  </span>
+  <b>Scale</b>
+  <span class="seg" role="group" aria-label="Window scale">
+    <button data-scale="fit" aria-pressed="true">Fit</button>
+    <button data-scale="0.75" aria-pressed="false">0.75×</button>
+    <button data-scale="1" aria-pressed="false">1×</button>
+    <button data-scale="1.25" aria-pressed="false">1.25×</button>
+  </span>
+  <span class="note">Interactive mock of the Grano plugin window, 1200 × 780 base. Drag faders and encoders (Ctrl/Cmd = fine, double-click = reset). Ctrl/Cmd-click or right-click a snapshot key to store it. Sample names are examples.</span>
+</div>
+
+<div id="stageWrap"><div id="stage" aria-label="Grano plugin window">
+
+  <!-- HEADER -->
+  <div class="abs" style="left:18px;top:14px;width:140px;height:40px">
+    <div class="wordmark">GRANO</div>
+    <div class="sub">granular · 1.0</div>
+  </div>
+  <div class="abs cmd" style="left:160px;top:8px;width:428px;height:56px" aria-live="polite">
+    <div class="p" id="cmdName">Grain Size<small id="cmdWas">touch a control</small></div>
+    <div class="big" id="cmdVal">100 ms</div>
+  </div>
+  <div class="abs" style="left:604px;top:8px;display:flex;gap:8px" id="snaps"></div>
+  <div class="abs snap" style="left:844px;top:8px">
+    <button class="key" id="loopKey" style="width:60px;height:38px;--lit:var(--lcd)" data-hint="Loop: sweeps the read position through the sample once per sample length.">
+      <svg class="icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 12a7 7 0 0 1 12-5l2 2"/><path d="M18 4v5h-5"/><path d="M20 12a7 7 0 0 1-12 5l-2-2"/><path d="M6 20v-5h5"/></svg>
+    </button>
+    <div class="st" id="loopSt">Loop off</div>
+  </div>
+  <div class="abs" style="left:918px;top:8px;width:266px;height:56px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+      <span class="silk">Master</span>
+      <span style="display:flex;gap:8px;align-items:center"><span id="volVal" style="font:500 15px/1 var(--f-lcd);font-stretch:75%;color:var(--lcd)">0.0 dB</span><span class="clipled" id="clip" title="Clip"></span></span>
+    </div>
+    <div class="meter" style="margin-bottom:2px"><i id="mL"></i></div>
+    <div class="meter" style="margin-bottom:4px"><i id="mR"></i></div>
+    <div class="hfader" id="volF" style="height:18px" tabindex="0" role="slider" aria-label="Master Volume" data-p="masterVolume" data-hint="Master Volume: output level after all modules. −60 dB is silence."><div class="hfill"></div><div class="hcap"></div></div>
+  </div>
+
+  <!-- MONITOR -->
+  <div class="abs monitor" id="monitor" style="left:16px;top:72px;width:1168px;height:118px" data-hint="Click or drag on the waveform to set Position. Drop an audio file here to load it into the selected slot.">
+    <canvas id="monCv"></canvas>
+    <div class="mon-lab name" id="monName" style="left:24px;top:9px">field-rain.wav</div>
+    <div class="mon-lab" id="monMeta" style="right:12px;top:10px">2.41 s · 48 kHz · stereo</div>
+    <div class="mon-lab" style="left:12px;bottom:9px">0.00 s</div>
+    <div class="mon-lab grains" id="monGrains" style="left:50%;bottom:9px;transform:translateX(-50%)">0 grains</div>
+    <div class="mon-lab" id="monEnd" style="right:12px;bottom:9px">2.41 s</div>
+    <div class="drop">Drop a sample to start</div>
+  </div>
+
+  <!-- SAMPLE SUBMASTERS -->
+  <div id="slots"></div>
+
+  <!-- GRAIN BANK -->
+  <div class="abs bank" id="bkGrain" style="left:16px;top:244px;width:524px;height:200px;--edge:var(--m-grain)">
+    <div class="tape"><span class="t">Grain</span></div>
+    <div class="body" id="grainBody"></div>
+  </div>
+
+  <!-- ENGINE BANK -->
+  <div class="abs bank" id="bkEngine" style="left:548px;top:244px;width:404px;height:200px;--edge:var(--m-engine)">
+    <div class="tape"><span class="t">Engine</span></div>
+    <div class="body">
+      <div class="abs silk" style="left:12px;top:6px">Sub-grain</div>
+      <div class="abs" style="left:12px;top:22px;display:flex;gap:3px" id="subKeys"></div>
+      <div class="abs silk" style="left:132px;top:6px">Timing</div>
+      <div class="abs" style="left:132px;top:22px;display:grid;grid-template-columns:repeat(3,84px);gap:3px" id="distKeys"></div>
+      <div class="abs" style="left:12px;top:82px;width:180px;height:86px;border-top:1px solid var(--line)" id="fbBox"></div>
+      <div class="abs" style="left:196px;top:82px;width:196px;height:86px;border-top:1px solid var(--line);border-left:1px solid var(--line);padding-left:8px;box-sizing:border-box" id="spBox"></div>
+    </div>
+  </div>
+
+  <!-- ENVELOPE BANK -->
+  <div class="abs bank" id="bkEnv" style="left:960px;top:244px;width:224px;height:200px;--edge:var(--m-engine)">
+    <div class="tape"><span class="t">Envelope</span></div>
+    <div class="body">
+      <div class="abs" style="left:12px;top:8px;right:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px" id="envKeys"></div>
+      <canvas class="abs" id="envBig" style="left:12px;top:118px;width:200px;height:36px"></canvas><div class="abs silk" id="envLen" style="left:12px;top:158px;width:200px;display:flex;justify-content:space-between"><span>Grain length</span><span id="envLenV" style="font:500 14px/1 var(--f-lcd);font-stretch:75%;color:var(--lcd)"></span></div>
+    </div>
+  </div>
+
+  <!-- MOTION / COLOR / PATTERN -->
+  <div class="abs bank" id="bkMotion" style="left:16px;top:452px;width:412px;height:150px;--edge:var(--m-motion)">
+    <div class="tape"><span class="t">Motion</span><button class="key onkey" data-toggle="motionEnabled" data-hint="Motion on/off: tape wow, flutter, drift and vinyl crackle.">On</button></div>
+    <div class="body" id="motionBody"></div>
+  </div>
+  <div class="abs bank" id="bkColor" style="left:436px;top:452px;width:258px;height:150px;--edge:var(--m-color)">
+    <div class="tape"><span class="t">Color</span><button class="key onkey" data-toggle="colorEnabled" data-hint="Color on/off: saturation, bit decimation, tilt EQ and reverb.">On</button></div>
+    <div class="body" id="colorBody"></div>
+  </div>
+  <div class="abs bank" id="bkPattern" style="left:702px;top:452px;width:482px;height:150px;--edge:var(--m-pattern)">
+    <div class="tape"><span class="t">Pattern</span><button class="key onkey" data-toggle="patternEnabled" data-hint="Pattern on/off: trigger mode, probability, reverse, pitch quantize and spray.">On</button></div>
+    <div class="body" id="patternBody">
+      <div class="abs" style="left:10px;top:6px;display:flex;gap:3px" id="trigKeys"></div>
+      <div class="abs" id="divBox" style="left:10px;top:46px;display:flex;align-items:center;gap:6px"><span class="silk" style="width:36px">Div</span><select class="sel" id="divSel" data-hint="Sync Division: note length of one step in Sync and Euclidean modes." aria-label="Sync Division"></select></div>
+      <div class="abs" id="scaleBox" style="left:10px;top:84px;display:flex;align-items:center;gap:6px"><span class="silk" style="width:36px">Scale</span><select class="sel" id="scaleSel" data-hint="Quantize Scale: snaps grain pitch to this scale. Chromatic = semitones." aria-label="Quantize Scale"></select></div>
+      <div class="abs" id="ctxBox" style="left:234px;top:4px;width:156px;height:112px;border-left:1px solid var(--line);padding-left:10px;box-sizing:border-box">
+        <svg class="abs euclid" id="eucSvg" viewBox="0 0 80 80" style="left:6px;top:14px;width:72px;height:72px" aria-label="Euclidean rhythm"></svg>
+        <div class="info" id="ctxInfo" style="left:10px;top:6px;width:140px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LFOs + MATRIX -->
+  <div class="abs bank" id="bkLfo1" style="left:16px;top:610px;width:300px;height:140px;--edge:var(--m-mod)"><div class="tape"><span class="t">LFO 1</span></div><div class="body" id="lfo1Body"></div></div>
+  <div class="abs bank" id="bkLfo2" style="left:324px;top:610px;width:300px;height:140px;--edge:var(--m-mod)"><div class="tape"><span class="t">LFO 2</span></div><div class="body" id="lfo2Body"></div></div>
+  <div class="abs bank" id="bkMat" style="left:632px;top:610px;width:552px;height:140px;--edge:var(--m-mod)">
+    <div class="tape"><span class="t">Mod matrix</span></div>
+    <div class="body"><div class="abs" style="left:10px;right:10px;top:0;display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0" id="matRows"></div></div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="abs status" style="left:18px;top:756px;width:1164px;height:16px">
+    <span><span class="v" id="stGr">0</span> <span id="stGrW">grains</span> · cpu <span class="v" id="stCpu">3 %</span> · <span id="stSlots">1 of 4 slots loaded</span></span>
+    <span class="hint" id="hint">Drag a sample onto the monitor · <kbd>Ctrl</kbd>-click a snapshot to store</span>
+  </div>
+
+  <div class="menu" id="menu" role="menu"></div>
+</div></div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s), stage=$('#stage');
+// ---------- parameter model (mirrors Source/Parameters.cpp) ----------
+const P={}; const def=(id,label,min,max,dflt,o={})=>P[id]={id,label,min,max,v:dflt,d:dflt,skew:1,unit:'',...o};
+const pct=v=>Math.round(v*100)+' %';
+const sgn=(v,dig,u)=>(Math.abs(v)<1e-9?'':v>0?'+':'−')+Math.abs(v).toFixed(dig)+u;
+const hz=v=>v>=1000?(v/1000).toFixed(2)+' kHz':v>=100?v.toFixed(0)+' Hz':v>=10?v.toFixed(1)+' Hz':v.toFixed(2)+' Hz';
+def('grainSize','Grain Size',5,500,100,{skew:.3,fmt:v=>(v<10?v.toFixed(1):Math.round(v))+' ms',hint:'Grain Size: length of each grain, 5–500 ms. Short = buzzy, long = smeared.'});
+def('density','Density',1,100,10,{skew:.3,fmt:v=>(v<10?v.toFixed(1):Math.round(v))+' g/s',hint:'Density: grains per second. Overlap is level-compensated.'});
+def('position','Position',0,1,0,{fmt:pct,hint:'Position: where in the sample grains read from. Also click the waveform.'});
+def('positionJitter','Jitter',0,1,0,{fmt:pct,hint:'Position Jitter: random spread of each grain\'s read point around Position.'});
+def('pitchShift','Pitch',-24,24,0,{bip:true,fmt:v=>sgn(v,1,' st'),hint:'Pitch Shift: ±24 semitones per grain.'});
+def('stereoSpread','Spread',0,1,.5,{fmt:pct,hint:'Stereo Spread: random pan width. 0 = mono, 100 % = hard left/right.'});
+def('masterVolume','Master Volume',-60,6,0,{fmt:v=>v<=-59.95?'−∞ dB':sgn(v,1,' dB')});
+def('loop','Loop',0,1,0,{bool:true});
+def('subGrainDepth','Sub-grain Depth',0,2,0,{int:true});
+def('stochasticDist','Timing',0,5,0,{choices:['Uniform','Gaussian','Poisson','Exponential','Pareto','1/f']});
+def('feedbackEnabled','Feedback',0,1,0,{bool:true});
+def('feedbackGain','Gain',0,.95,.5,{fmt:pct,hint:'Feedback Gain: how much output is fed back into the grain source. Soft-clipped, max 95 %.'});
+def('feedbackDamp','Damp',0,1,.3,{fmt:pct,hint:'Feedback Damp: darkens the feedback loop each pass.'});
+def('spectralEnabled','Spectral',0,1,0,{bool:true});
+def('spectralMode','Spectral Mode',0,1,0,{choices:['Freeze','Blur']});
+def('spectralBlurAmount','Blur',0,1,.5,{fmt:pct,hint:'Spectral Blur: phase smear of the source spectrum. 0 % = dry.'});
+for(let i=0;i<4;i++) def('slot'+i+'Weight','Slot '+(i+1)+' Weight',0,1,i?0:1,{fmt:pct});
+def('envelopeShape','Envelope Shape',0,4,0,{choices:['Hann','Tukey','Gaussian','Triangle','Rectangle']});
+def('motionEnabled','Motion',0,1,0,{bool:true});
+def('wowDepth','Wow',0,1,0,{fmt:pct,hint:'Wow Depth: slow tape pitch drift.'});
+def('wowRate','Wow Rate',.1,2,.5,{skew:.5,fmt:hz,hint:'Wow Rate: speed of the wow drift, 0.1–2 Hz.'});
+def('flutterDepth','Flutter',0,1,0,{fmt:pct,hint:'Flutter Depth: fast tape pitch wobble.'});
+def('flutterRate','Flut Rate',3,20,8,{skew:.5,fmt:hz,hint:'Flutter Rate: 3–20 Hz.'});
+def('driftAmount','Drift',0,1,0,{fmt:pct,hint:'Drift: slow random wander of pitch and level.'});
+def('crackleLevel','Crackle',-60,0,-60,{fmt:v=>v<=-59.5?'off':sgn(Math.round(v),0,' dB'),hint:'Crackle Level: vinyl crackle noise, −60 dB = off.'});
+def('crackleColor','Crk Color',0,1,.5,{fmt:pct,hint:'Crackle Color: dark rumble to bright clicks.'});
+def('colorEnabled','Color',0,1,0,{bool:true});
+def('saturate','Saturate',0,1,0,{fmt:pct,hint:'Saturate: tape-style soft saturation, level-matched.'});
+def('decimate','Decimate',0,1,0,{fmt:pct,hint:'Decimate: sample-rate and bit reduction.'});
+def('tiltEq','Tilt',-1,1,0,{bip:true,fmt:v=>Math.abs(v)<.005?'flat':(v<0?'dark ':'brt ')+Math.round(Math.abs(v)*100),hint:'Tilt EQ: one knob from dark to bright around 1 kHz.'});
+def('verbMix','Verb',0,1,0,{fmt:pct,hint:'Verb Mix: reverb wet amount, equal-power.'});
+def('patternEnabled','Pattern',0,1,0,{bool:true});
+def('triggerMode','Trigger',0,3,0,{choices:['Free','Sync','Euclid','Audio']});
+def('syncDivision','Div',0,9,1,{choices:['1/4','1/8','1/16','1/32','1/64','1/4T','1/8T','1/16T','1/4D','1/8D']});
+def('euclidPulses','Pulses',1,32,4,{int:true,fmt:v=>String(Math.round(v)),hint:'Euclid Pulses: hits spread evenly across the steps.'});
+def('euclidSteps','Steps',2,32,8,{int:true,fmt:v=>String(Math.round(v)),hint:'Euclid Steps: length of the cycle.'});
+def('euclidRotation','Rotate',0,31,0,{int:true,fmt:v=>String(Math.round(v)),hint:'Euclid Rotation: shifts the pattern start.'});
+def('transientSensitivity','Sens',0,1,.5,{fmt:pct,hint:'Transient Sensitivity: how easily input hits fire grains (Audio mode).'});
+def('probability','Prob',0,1,1,{fmt:pct,hint:'Probability: chance each trigger actually fires a grain.'});
+def('reverseProb','Reverse',0,1,0,{fmt:pct,hint:'Reverse Prob: chance a grain plays backwards.'});
+def('quantizeScale','Scale',0,10,0,{choices:['Chromatic','Major','Minor','Dorian','Phrygian','Lydian','Mixolydian','Pent Maj','Pent Min','Whole Tone','Octatonic']});
+def('spray','Spray',0,1,0,{fmt:pct,hint:'Spray: random timing and length variation per grain (×0.5–×2).'});
+for(const n of [1,2]){
+  def(`lfo${n}Rate`,'Rate',.01,8000,1,{skew:.2,fmt:hz,hint:`LFO ${n} Rate: 0.01 Hz to 8 kHz (audio rate).`});
+  def(`lfo${n}Waveform`,'Wave',0,5,0,{choices:['Sine','Triangle','Saw','Square','Random','S&H']});
+  def(`lfo${n}Sync`,'Sync',0,1,0,{bool:true});
+  def(`lfo${n}Phase`,'Phase',0,360,0,{fmt:v=>Math.round(v)+'°',hint:`LFO ${n} Phase: start offset in degrees.`});
+  def(`lfo${n}Depth`,'Depth',0,1,.5,{fmt:pct,hint:`LFO ${n} Depth: overall output scale before the matrix.`});
+}
+const DESTS=['None','Grain Size','Density','Position','Pos Jitter','Pitch Shift','Stereo Spread','Master Vol','Wow Depth','Wow Rate','Flutter Depth','Flutter Rate','Drift','Crackle Lvl','Crackle Color','Saturate','Decimate','Tilt EQ','Verb Mix','Probability','Reverse Prob','Spray','Transient Sens','LFO1 Rate','LFO1 Phase','LFO1 Depth','LFO2 Rate','LFO2 Phase','LFO2 Depth'];
+const DEST_ID=['','grainSize','density','position','positionJitter','pitchShift','stereoSpread','masterVolume','wowDepth','wowRate','flutterDepth','flutterRate','driftAmount','crackleLevel','crackleColor','saturate','decimate','tiltEq','verbMix','probability','reverseProb','spray','transientSensitivity','lfo1Rate','lfo1Phase','lfo1Depth','lfo2Rate','lfo2Phase','lfo2Depth'];
+for(let i=1;i<=8;i++){def(`slot${i}Source`,'Source',0,2,0,{choices:['None','LFO1','LFO2']});def(`slot${i}Dest`,'Dest',0,28,0,{choices:DESTS});def(`slot${i}Amount`,'Amount',-1,1,0,{bip:true,fmt:v=>sgn(v*100,0,' %')});}
+
+const norm=p=>Math.pow((p.v-p.min)/(p.max-p.min),p.skew);
+const fromNorm=(p,n)=>{n=Math.min(1,Math.max(0,n));let v=p.min+(p.max-p.min)*Math.pow(n,1/p.skew);return p.int?Math.round(v):v;};
+const text=p=>p.fmt?p.fmt(p.v):p.choices?p.choices[Math.round(p.v)]:String(p.v);
+const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function valHTML(p){const t=text(p);const m=t.match(/^(.*\d)\s(%|ms|g\/s|st|dB|Hz|kHz|dark|brt)$/);return m?esc(m[1])+'<span class="u">'+m[2]+'</span>':esc(t);}
+const listeners={}; const on=(id,f)=>(listeners[id]=listeners[id]||[]).push(f);
+function set(id,v,{silent}={}){const p=P[id];v=Math.min(p.max,Math.max(p.min,v));if(p.int||p.choices||p.bool)v=Math.round(v);p.v=v;(listeners[id]||[]).forEach(f=>f(p));(listeners['*']||[]).forEach(f=>f(p));}
+
+// ---------- command line ----------
+let touchStart=null;
+const prevVal={};
+function command(p,was){
+  if(was!==undefined&&was!==p.v)prevVal[p.id]=was;
+  $('#cmdName').firstChild.nodeValue=p.full||fullName(p);
+  $('#cmdVal').textContent=text(p);
+  const pv=prevVal[p.id];
+  $('#cmdWas').textContent=(pv!==undefined?'← '+text({...p,v:pv})+'  ·  ':'')+'default '+text({...p,v:p.d});
+}
+function fullName(p){
+  const m=p.id.match(/^lfo(\d)(\w+)/); if(m) return 'LFO '+m[1]+' '+p.label;
+  const s=p.id.match(/^slot(\d)(Source|Dest|Amount)$/); if(s) return 'Mod '+s[1]+' '+s[2];
+  return ({wowRate:'Wow Rate',flutterRate:'Flutter Rate',crackleColor:'Crackle Color',positionJitter:'Position Jitter',pitchShift:'Pitch Shift',stereoSpread:'Stereo Spread',feedbackGain:'Feedback Gain',feedbackDamp:'Feedback Damp',spectralBlurAmount:'Spectral Blur',euclidPulses:'Euclid Pulses',euclidSteps:'Euclid Steps',euclidRotation:'Euclid Rotation',transientSensitivity:'Transient Sensitivity',reverseProb:'Reverse Probability',tiltEq:'Tilt EQ',verbMix:'Verb Mix',crackleLevel:'Crackle Level',probability:'Probability'})[p.id]||p.label;
+}
+// bank touch focus
+let touchedBank=null;
+function touchBank(el){const b=el.closest('.bank');if(touchedBank&&touchedBank!==b)touchedBank.classList.remove('is-touched');if(b){b.classList.add('is-touched');touchedBank=b;}}
+
+// ---------- generic drag binding ----------
+function bindDrag(el,id,axis,{px=140}={}){
+  const p=P[id]; let start,sn,startV;
+  el.addEventListener('pointerdown',e=>{if(e.button!==0)return;el.setPointerCapture(e.pointerId);start=axis==='y'?e.clientY:e.clientX;sn=norm(p);startV=p.v;touchBank(el);command(p,startV);el.focus({preventScroll:true});
+    // click on track jumps for faders (not encoders)
+    if(el.classList.contains('track')||el.classList.contains('hfader')||el.classList.contains('bip')){const r=el.getBoundingClientRect();const sc=r.width/el.offsetWidth;
+      if(axis==='y'){const inner=(e.clientY-r.top)/sc;const h=el.offsetHeight-20;const n=1-(inner-10)/h;if(Math.abs(n-sn)>.06){set(id,fromNorm(p,n));sn=norm(p);}}
+      else{const inner=(e.clientX-r.left)/sc;const w=el.offsetWidth-16;const n=(inner-8)/w;if(Math.abs(n-sn)>.06){set(id,fromNorm(p,n));sn=norm(p);}}
+      command(p,startV);}
+  });
+  el.addEventListener('pointermove',e=>{if(!el.hasPointerCapture(e.pointerId))return;const sc=stageScale;const d=(axis==='y'?start-e.clientY:e.clientX-start)/sc;const fine=e.ctrlKey||e.metaKey?.1:1;set(id,fromNorm(p,sn+d/px*fine));command(p,startV);});
+  el.addEventListener('dblclick',()=>{const was=p.v;set(id,p.d);command(p,was);});
+  el.addEventListener('keydown',e=>{const step=(e.shiftKey?.1:.02)*(['ArrowUp','ArrowRight'].includes(e.key)?1:['ArrowDown','ArrowLeft'].includes(e.key)?-1:0);if(step){e.preventDefault();const was=p.v;set(id,fromNorm(p,norm(p)+step));command(p,was);}});
+  el.setAttribute('aria-valuetext',text(p));
+  on(id,()=>el.setAttribute('aria-valuetext',text(p)));
+}
+function hintOf(id){return P[id].hint||P[id].label}
+
+// ---------- builders ----------
+function fader(parent,id,x,y,w,h,label){
+  const p=P[id]; const c=document.createElement('div'); c.className='ch'; c.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+  c.innerHTML=`<div class="strip"><span class="n">${label||p.label}</span><span class="v"></span></div>
+    <div class="track" tabindex="0" role="slider" aria-label="${fullName(p)}" data-hint="${hintOf(id)}"><div class="ticks"></div><div class="fill"></div><div class="range"></div><div class="capk"></div></div>`;
+  parent.appendChild(c); const tr=c.querySelector('.track');
+  const draw=()=>{c.querySelector('.v').innerHTML=valHTML(p);const H=tr.offsetHeight||(h-48);const n=norm(p);const yy=10+(1-n)*(H-20);
+    c.querySelector('.capk').style.top=yy+'px';const f=c.querySelector('.fill');
+    if(p.bip){const mid=10+(H-20)/2;f.style.top=Math.min(mid,yy)+'px';f.style.height=Math.abs(mid-yy)+'px';}else{f.style.top=yy+'px';f.style.height=(H-10-yy)+'px';}};
+  on(id,draw); bindDrag(tr,id,'y'); requestAnimationFrame(draw); modTargets[id]=c; c._draw=draw; return c;
+}
+function encoder(parent,id,x,y,w,label){
+  const p=P[id]; const c=document.createElement('div'); c.className='enc'; c.style.cssText=`left:${x}px;top:${y}px;width:${w}px`;
+  c.innerHTML=`<div class="knob" tabindex="0" role="slider" aria-label="${fullName(p)}" data-hint="${hintOf(id)}"><svg viewBox="0 0 50 50"><path class="mod" d="" fill="none" stroke="var(--m-mod)" stroke-width="2" stroke-linecap="round"/><line class="ind" x1="25" y1="22" x2="25" y2="10" stroke="var(--live)" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+    <div class="strip"><span class="n">${label||p.label}</span><span class="v"></span></div>`;
+  parent.appendChild(c); const sv=c.querySelector('svg');
+  const arc=(a0,a1,r=22)=>{const P0=[25+r*Math.sin(a0),25-r*Math.cos(a0)],P1=[25+r*Math.sin(a1),25-r*Math.cos(a1)];const large=Math.abs(a1-a0)>Math.PI?1:0;const sw=a1>a0?1:0;return `M${P0[0].toFixed(2)} ${P0[1].toFixed(2)}A${r} ${r} 0 ${large} ${sw} ${P1[0].toFixed(2)} ${P1[1].toFixed(2)}`;};
+  const A0=-0.75*Math.PI,A1=0.75*Math.PI;
+  const draw=()=>{const n=norm(p);const a=A0+(A1-A0)*n;
+    sv.querySelector('.ind').setAttribute('transform',`rotate(${a*180/Math.PI} 25 25)`);c.querySelector('.v').innerHTML=valHTML(p);c.querySelector('.strip').classList.toggle('is-mod',!!modAmt[id]);
+    const m=modAmt[id]; sv.querySelector('.mod').setAttribute('d',m?arc(Math.max(A0,a-Math.abs(m)*(A1-A0)),Math.min(A1,a+Math.abs(m)*(A1-A0)),21):'');c.classList.toggle('is-mod',!!m);};
+  on(id,draw); bindDrag(c.querySelector('.knob'),id,'y',{px:160}); draw(); modTargets[id]=c; c._draw=draw; return c;
+}
+function keys(parent,id,labels,{cls='key',w,h=24,lit,svg}={}){
+  const p=P[id]; parent.innerHTML='';
+  labels.forEach((l,i)=>{const b=document.createElement('button');b.className=cls;b.style.height=h+'px';if(w)b.style.width=w+'px';if(lit)b.style.setProperty('--lit',lit);
+    b.innerHTML=svg?svg(i)+(l?`<span>${l}</span>`:''):l; b.setAttribute('aria-label',fullName(p)+' '+(p.choices?p.choices[i]:l)); b.dataset.hint=fullName(p)+': '+(p.choices?p.choices[i]:l);
+    b.addEventListener('click',()=>{const was=p.v;touchBank(b);set(id,i);command(p,was);});parent.appendChild(b);});
+  const draw=()=>[...parent.children].forEach((b,i)=>{b.classList.toggle('on',Math.round(p.v)===i);b.setAttribute('aria-pressed',Math.round(p.v)===i);});
+  on(id,draw); draw();
+}
+const modTargets={}, modAmt={};
+
+// ---------- header: snapshots ----------
+const snaps=[null,null,null,null]; let liveSnap=-1;
+const snapWrap=$('#snaps');
+'ABCD'.split('').forEach((L,i)=>{const d=document.createElement('div');d.className='snap';
+  d.innerHTML=`<button class="key" aria-label="Snapshot ${L}" data-hint="Snapshot ${L}: click to recall · Ctrl/Cmd-click or right-click to store, recall or clear.">${L}</button><div class="st">empty</div>`;
+  const b=d.firstChild;
+  b.addEventListener('click',e=>{if(e.ctrlKey||e.metaKey){storeSnap(i);return;} if(snaps[i])recallSnap(i); else storeSnap(i);});
+  b.addEventListener('contextmenu',e=>{e.preventDefault();openMenu(b,[['Store current',()=>storeSnap(i)],['Recall',()=>recallSnap(i),!snaps[i]],['Clear',()=>{snaps[i]=null;if(liveSnap===i)liveSnap=-1;drawSnaps();},!snaps[i]]]);});
+  snapWrap.appendChild(d);});
+function capture(){const o={};for(const k in P)o[k]=P[k].v;return o;}
+function storeSnap(i){snaps[i]=capture();liveSnap=i;drawSnaps();cmdMsg('Snapshot '+'ABCD'[i],'stored');}
+function recallSnap(i){if(!snaps[i])return;for(const k in snaps[i])if(P[k].v!==snaps[i][k])set(k,snaps[i][k]);liveSnap=i;drawSnaps();cmdMsg('Snapshot '+'ABCD'[i],'recalled');}
+function drawSnaps(){[...snapWrap.children].forEach((d,i)=>{const b=d.firstChild,st=d.lastChild;b.classList.toggle('on',liveSnap===i);b.classList.toggle('stored',!!snaps[i]);
+  st.textContent=liveSnap===i?'live':snaps[i]?'stored':'empty';st.classList.toggle('live',liveSnap===i);});}
+function cmdMsg(a,b){$('#cmdName').firstChild.nodeValue=a;$('#cmdVal').textContent=b;$('#cmdWas').textContent='snapshot';}
+// any manual edit after a recall marks the live snapshot as edited
+on('*',()=>{});
+
+// menu
+const menu=$('#menu');
+function openMenu(anchor,items){menu.innerHTML='';items.forEach(([l,f,dis])=>{const b=document.createElement('button');b.textContent=l;b.role='menuitem';if(dis)b.disabled=true;b.onclick=()=>{closeMenu();f();};menu.appendChild(b);});
+  const r=anchor.getBoundingClientRect(),s=stage.getBoundingClientRect();menu.style.left=((r.left-s.left)/stageScale)+'px';menu.style.top=((r.bottom-s.top)/stageScale+4)+'px';menu.style.display='block';menu.querySelector('button:not([disabled])')?.focus();}
+function closeMenu(){menu.style.display='none';}
+document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target))closeMenu();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+
+// loop + master
+const loopKey=$('#loopKey');
+loopKey.onclick=()=>{const was=P.loop.v;set('loop',1-P.loop.v);command({...P.loop,fmt:v=>v?'on':'off'},was);};
+on('loop',p=>{loopKey.classList.toggle('on',!!p.v);loopKey.setAttribute('aria-pressed',!!p.v);$('#loopSt').textContent=p.v?'Loop on':'Loop off';});
+loopKey.setAttribute('aria-label','Loop');
+const volF=$('#volF');
+on('masterVolume',p=>{const n=norm(p);volF.querySelector('.hcap').style.left=`calc(8px + ${n} * (100% - 16px))`;volF.querySelector('.hfill').style.width=`calc(${n} * (100% - 16px))`;$('#volVal').textContent=text(p);});
+bindDrag(volF,'masterVolume','x',{px:280});
+
+// ---------- sample submasters ----------
+const ICON_LOAD='<svg class="icon" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>';
+const ICON_CLR='<svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const EXAMPLES=['field-rain.wav','glass-bowl.aif','choir-pad.wav','metal-scrape.flac'];
+const slotState=[{name:'field-rain.wav',dur:2.41,sr:48,ch:'stereo'},null,null,null]; let shownSlot=0;
+const slotsEl=$('#slots');
+for(let i=0;i<4;i++){const s=document.createElement('div');s.className='abs slot';s.style.cssText=`left:${16+i*296}px;top:198px;width:${i<3?288:280}px;height:36px;--edge:var(--m-grain)`;
+  s.innerHTML=`<button class="key num" aria-label="Show slot ${i+1} in monitor" data-hint="Slot ${i+1}: click to show this sample in the monitor.">${i+1}</button><div class="fn" role="button" tabindex="0" aria-label="Load sample into slot ${i+1}" data-hint="Slot ${i+1}: click to load a sample (or drop a file on the monitor)."></div>
+  <div class="hfader" tabindex="0" role="slider" aria-label="Slot ${i+1} Weight" data-p="slot${i}Weight" data-hint="Slot ${i+1} Weight: how often grains pick this sample. Weights are relative."><div class="hfill"></div><div class="hcap"></div></div>
+  <button class="key ib cl" aria-label="Clear slot ${i+1}" data-hint="Clear slot ${i+1}.">${ICON_CLR}</button>`;
+  slotsEl.appendChild(s); const id='slot'+i+'Weight', hf=s.querySelector('.hfader');
+  on(id,p=>{const n=norm(p);hf.querySelector('.hcap').style.left=`calc(8px + ${n} * (100% - 16px))`;hf.querySelector('.hfill').style.width=`calc(${n} * (100% - 16px))`;hf.title=text(p);});
+  bindDrag(hf,id,'x',{px:90});
+  s.querySelector('.num').onclick=()=>{shownSlot=i;drawSlots();buildWave();};
+  s.querySelector('.fn').onclick=()=>{slotState[i]={name:EXAMPLES[i],dur:[2.41,1.18,6.02,3.37][i],sr:48,ch:i===2?'mono':'stereo'};if(P['slot'+i+'Weight'].v===0)set('slot'+i+'Weight',.5);shownSlot=i;drawSlots();buildWave();cmdMsg('Slot '+(i+1),'loaded');};
+  s.querySelector('.cl').onclick=()=>{slotState[i]=null;drawSlots();buildWave();cmdMsg('Slot '+(i+1),'cleared');};
+}
+function midTrunc(n,max){if(n.length<=max)return n;const dot=n.lastIndexOf('.');const ext=dot>0?n.slice(dot):'';const keep=max-ext.length-1;return n.slice(0,keep)+'…'+ext;}
+function drawSlots(){[...slotsEl.children].forEach((s,i)=>{const st=slotState[i];s.classList.toggle('empty',!st);s.querySelector('.fn').textContent=st?midTrunc(st.name,15):'click to load';s.querySelector('.fn').title=st?st.name:'';
+  s.querySelector('.num').classList.toggle('on',shownSlot===i);s.querySelector('.cl').disabled=!st;s.querySelector('.cl').style.opacity=st?1:.35;
+  s.querySelector('.hfader').style.opacity=st?1:.4;});
+  $('#stSlots').textContent=slotState.filter(Boolean).length+' of 4 slots loaded';}
+
+// ---------- grain bank ----------
+const gb=$('#grainBody');
+[['grainSize','Size'],['density','Density'],['position','Position'],['positionJitter','Jitter'],['pitchShift','Pitch'],['stereoSpread','Spread']].forEach(([id,l],i)=>fader(gb,id,10+i*85,6,80,160,l));
+
+// ---------- engine bank ----------
+keys($('#subKeys'),'subGrainDepth',['0','1','2'],{w:34,h:52,lit:'var(--m-engine)'});
+$('#subKeys').querySelectorAll('.key').forEach((b,i)=>{b.style.fontSize='18px';b.dataset.hint='Sub-grain Depth '+i+': '+['grains only','each grain spawns 2–4 sub-grains','sub-grains spawn their own'][i]+'.';});
+keys($('#distKeys'),'stochasticDist',['Uniform','Gauss','Poisson','Expon','Pareto','1/f'],{h:25,lit:'var(--m-engine)'});
+$('#distKeys').querySelectorAll('.key').forEach((b,i)=>b.dataset.hint='Timing '+P.stochasticDist.choices[i]+': '+['even random spacing','clustered around the mean','bursts with gaps','memoryless, irregular','rare long gaps','correlated, organic drift'][i]+'.');
+function subPanel(box,title,togId,build){box.innerHTML=`<div style="position:absolute;left:0;top:10px;width:68px;display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span class="silk">${title}</span><button class="key onkey" style="--edge:var(--m-engine);margin:0" data-toggle="${togId}" data-hint="${title} on/off.">Off</button></div><div class="pb" style="position:absolute;left:76px;top:6px;right:0;height:80px;transition:opacity .12s"></div>`;build(box.querySelector('.pb'));
+  on(togId,p=>box.querySelector('.pb').style.opacity=p.v?1:.38);}
+subPanel($('#fbBox'),'Feedback','feedbackEnabled',pb=>{encoder(pb,'feedbackGain',0,0,50,'Gain');encoder(pb,'feedbackDamp',54,0,50,'Damp');});
+subPanel($('#spBox'),'Spectral','spectralEnabled',pb=>{const k=document.createElement('div');k.style.cssText='position:absolute;left:0;top:2px;display:flex;flex-direction:column;gap:3px';pb.appendChild(k);
+  keys(k,'spectralMode',['Freeze','Blur'],{w:58,h:26,lit:'var(--m-engine)'});k.children[0].dataset.hint='Spectral Freeze: sustained texture from the source spectrum.';k.children[1].dataset.hint='Spectral Blur: smears source phase by Blur amount.';
+  encoder(pb,'spectralBlurAmount',64,0,54,'Blur');});
+on('spectralMode',p=>{const e=modTargets.spectralBlurAmount;if(e)e.style.opacity=p.v?1:.4;});
+
+// ---------- envelope bank ----------
+const ENV=[x=>.5-.5*Math.cos(2*Math.PI*x),x=>x<.25?.5-.5*Math.cos(Math.PI*x/.25):x>.75?.5-.5*Math.cos(Math.PI*(1-x)/.25):1,
+  x=>{const g=t=>Math.exp(-.5*((t-.5)/.15)**2),e=g(0);return Math.max(0,(g(x)-e)/(1-e));},x=>1-Math.abs(2*x-1),x=>x<=0||x>=1?0:1];
+const envPath=(f,w,h,pad=2)=>{let d='';for(let i=0;i<=40;i++){const x=i/40;d+=(i?'L':'M')+(pad+x*(w-2*pad)).toFixed(1)+' '+(h-pad-f(x)*(h-2*pad)).toFixed(1);}return d;};
+keys($('#envKeys'),'envelopeShape',['Hann','Tukey','Gauss','Triangle','Rect'],{cls:'key envkey',h:52,svg:i=>`<svg viewBox="0 0 40 22" aria-hidden="true"><path d="${envPath(ENV[i],40,22)}"/></svg>`});
+$('#envKeys').querySelectorAll('.key').forEach((b,i)=>b.dataset.hint='Envelope '+P.envelopeShape.choices[i]+': grain amplitude shape.');
+const envCv=$('#envBig');
+function drawEnvBig(){const c=envCv,dpr=(window.devicePixelRatio||1)*stageScale;c.width=200*dpr;c.height=36*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
+  g.fillStyle='#0B0C0D';g.fillRect(0,0,200,36);const f=ENV[Math.round(P.envelopeShape.v)];
+  g.beginPath();for(let i=0;i<=110;i++){const x=i/110;g.lineTo(4+x*192,33-f(x)*28);}g.lineTo(196,33);g.lineTo(4,33);g.closePath();g.fillStyle='rgba(157,176,196,.18)';g.fill();
+  g.beginPath();for(let i=0;i<=110;i++){const x=i/110;g[i?'lineTo':'moveTo'](4+x*192,33-f(x)*28);}g.strokeStyle='#9DB0C4';g.lineWidth=1.5;g.stroke();
+  $('#envLenV').textContent=text(P.grainSize);}
+on('envelopeShape',drawEnvBig);on('grainSize',drawEnvBig);
+
+// ---------- motion / color ----------
+const mb=$('#motionBody');[['wowDepth','Wow'],['wowRate','Rate'],['flutterDepth','Flutter'],['flutterRate','Rate'],['driftAmount','Drift'],['crackleLevel','Crackle'],['crackleColor','Tone']].forEach(([id,l],i)=>encoder(mb,id,8+i*57+(i>=2?4:0)+(i>=4?4:0)+(i>=5?4:0),14,53,l));
+[120,238,298].forEach(x=>{const d=document.createElement('div');d.className='abs';d.style.cssText=`left:${x}px;top:10px;width:1px;height:96px;background:var(--line)`;mb.appendChild(d);});
+const cb=$('#colorBody');[['saturate','Saturate'],['decimate','Decimate'],['tiltEq','Tilt'],['verbMix','Verb']].forEach(([id,l],i)=>encoder(cb,id,8+i*61,14,59,l));
+
+// ---------- pattern ----------
+keys($('#trigKeys'),'triggerMode',['Free','Sync','Euclid','Audio'],{cls:'key tkey',w:52,h:28});
+$('#trigKeys').querySelectorAll('.key').forEach((b,i)=>b.dataset.hint='Trigger '+P.triggerMode.choices[i]+': '+['grains follow Density and Timing','one grain per host-synced step','Euclidean rhythm locked to the host grid','grains fire on input transients'][i]+'.');
+const divSel=$('#divSel'),scaleSel=$('#scaleSel');
+P.syncDivision.choices.forEach((c,i)=>divSel.add(new Option(c,i)));P.quantizeScale.choices.forEach((c,i)=>scaleSel.add(new Option(c,i)));
+divSel.onchange=()=>{const was=P.syncDivision.v;set('syncDivision',+divSel.value);command(P.syncDivision,was);};scaleSel.onchange=()=>{const was=P.quantizeScale.v;set('quantizeScale',+scaleSel.value);command(P.quantizeScale,was);};
+on('syncDivision',p=>divSel.value=p.v);on('quantizeScale',p=>scaleSel.value=p.v);
+const pb=$('#patternBody'),ctx=$('#ctxBox');
+function vstrip(parent,id,x,y,w,label,{axisPx=120}={}){const p=P[id];const el=document.createElement('div');el.className='vs';el.style.cssText=`left:${x}px;top:${y}px;width:${w}px`;el.tabIndex=0;
+  el.setAttribute('role','slider');el.setAttribute('aria-label',fullName(p));el.dataset.hint=hintOf(id);el.innerHTML=`<span class="n">${label||p.label}</span><span class="v"></span><i></i>`;parent.appendChild(el);
+  const draw=()=>{el.querySelector('.v').innerHTML=valHTML(p);el.querySelector('i').style.width=(norm(p)*100)+'%';el.classList.toggle('is-mod',!!modAmt[id]);};on(id,draw);draw();bindDrag(el,id,'x',{px:axisPx});modTargets[id]=el;el._draw=draw;return el;}
+const EU=[vstrip(ctx,'euclidPulses',82,8,66,'Puls',{axisPx:180}),vstrip(ctx,'euclidSteps',82,42,66,'Step',{axisPx:180}),vstrip(ctx,'euclidRotation',82,76,66,'Rot',{axisPx:180})];
+const SENS=encoder(ctx,'transientSensitivity',10,4,62,'Sens');
+const PR=[vstrip(pb,'probability',392,12,84,'Prob'),vstrip(pb,'reverseProb',392,46,84,'Rev'),vstrip(pb,'spray',392,80,84,'Spray')];
+function layoutPattern(){const m=Math.round(P.triggerMode.v),eu=m===2,sy=m===1,au=m===3;
+  EU.forEach(e=>e.hidden=!eu);$('#eucSvg').style.display=eu?'block':'none';SENS.hidden=!au;$('#divBox').style.display=(eu||sy)?'flex':'none';
+  $('#scaleBox').style.top=(eu||sy)?'84px':'46px';
+  const info=$('#ctxInfo');info.hidden=eu;info.style.left=au?'82px':'10px';info.style.width=au?'70px':'140px';
+  info.textContent=m===0?'Grains follow Density and the Timing distribution.':sy?'One grain per '+P.syncDivision.choices[Math.round(P.syncDivision.v)]+' step, locked to host tempo.':au?'Input hits fire grains.':'';}
+on('triggerMode',layoutPattern);on('syncDivision',layoutPattern);
+// euclid ring
+let eucStep=0;
+function euclid(k,n,r){const out=[];for(let i=0;i<n;i++)out.push(((i*k)%n)<k?1:0);return out.map((_,i)=>out[(i-r%n+n)%n]);}
+function drawEuclid(){const k=Math.min(P.euclidPulses.v,P.euclidSteps.v),n=P.euclidSteps.v,pat=euclid(k,n,P.euclidRotation.v);let s='<circle cx="40" cy="40" r="30" fill="none" stroke="#2C2F35" stroke-width="1"/>';
+  pat.forEach((h,i)=>{const a=i/n*2*Math.PI-Math.PI/2,x=40+30*Math.cos(a),y=40+30*Math.sin(a),cur=i===eucStep%n;s+=`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${n>20?2.6:3.6}" fill="${h?(cur?'#FFFFFF':'#55CC92'):(cur?'#8C887F':'#0B0C0D')}" stroke="${h?'none':'#4A4E56'}" stroke-width="1"/>`;});
+  s+=`<text x="40" y="44" text-anchor="middle" font-family="Martian Mono, monospace" font-size="11" fill="#FFB547">${k}/${n}</text>`;$('#eucSvg').innerHTML=s;}
+['euclidPulses','euclidSteps','euclidRotation'].forEach(id=>on(id,drawEuclid));
+
+// ---------- LFOs ----------
+const WAVES=[x=>Math.sin(2*Math.PI*x),x=>1-4*Math.abs(((x+.25)%1)-.5),x=>2*((x+.5)%1)-1,x=>x%1<.5?1:-1,null,null];
+const rnd=[.2,-.7,.9,-.1,.5,-.9,.3,.7,-.4,.1,-.6,.8];
+const smoothRnd=x=>{const t=x*6,i=Math.floor(t),f=t-i,a=rnd[i%12],b=rnd[(i+1)%12],u=f*f*(3-2*f);return a+(b-a)*u;};
+const sh=x=>rnd[Math.floor(x*6)%12];
+WAVES[4]=smoothRnd;WAVES[5]=sh;
+const wIcon=i=>{let d='';for(let k=0;k<=24;k++){const x=k/24;const y=i===4?smoothRnd(x*.5):i===5?sh(x*.5):WAVES[i](x);d+=(k?'L':'M')+(x*20).toFixed(1)+' '+(6-y*5).toFixed(1);}return `<svg viewBox="0 0 20 12" aria-hidden="true"><path d="${d}"/></svg>`;};
+const lfoCv={};
+for(const n of [1,2]){const body=$('#lfo'+n+'Body');
+  body.innerHTML=`<canvas class="abs" style="left:10px;top:4px;width:140px;height:52px"></canvas><div class="abs" style="left:10px;top:60px;display:grid;grid-template-columns:repeat(6,1fr);gap:2px;width:140px" data-w></div>
+  <button class="key" style="position:absolute;left:10px;top:86px;width:140px;height:24px;font-size:13px;--lit:var(--m-mod)" data-sync>Sync to host · off</button>`;
+  lfoCv[n]=body.querySelector('canvas');
+  keys(body.querySelector('[data-w]'),`lfo${n}Waveform`,['','','','','',''],{cls:'key wavekey',h:22,svg:wIcon});
+  body.querySelectorAll('.wavekey').forEach((b,i)=>b.dataset.hint=`LFO ${n} waveform: ${P['lfo1Waveform'].choices[i]}.`);
+  encoder(body,`lfo${n}Rate`,160,0,62,'Rate');encoder(body,`lfo${n}Depth`,226,0,62,'Depth');
+  vstrip(body,`lfo${n}Phase`,160,82,128,'Phase',{axisPx:200});
+  const sb=body.querySelector('[data-sync]');sb.dataset.hint=`LFO ${n} Sync: lock rate to host tempo.`;sb.onclick=()=>{const was=P[`lfo${n}Sync`].v;set(`lfo${n}Sync`,1-was);command({...P[`lfo${n}Sync`],full:`LFO ${n} Sync`,fmt:v=>v?'on':'off'},was);};
+  on(`lfo${n}Sync`,p=>{sb.classList.toggle('on',!!p.v);sb.textContent='Sync to host · '+(p.v?'on':'off');});
+}
+
+// ---------- matrix ----------
+const mr=$('#matRows');
+for(let i=1;i<=8;i++){const r=document.createElement('div');r.className='mrow';
+  r.innerHTML=`<span class="sn">${i}</span><span class="srcs"><button class="key" data-s="1" aria-label="Mod ${i} source LFO 1" data-hint="Mod ${i}: route from LFO 1. Click again to unset.">L1</button><button class="key" data-s="2" aria-label="Mod ${i} source LFO 2" data-hint="Mod ${i}: route from LFO 2. Click again to unset.">L2</button></span>
+  <select class="sel" aria-label="Mod ${i} destination" data-hint="Mod ${i} destination."></select><div class="bip" tabindex="0" role="slider" aria-label="Mod ${i} amount" data-hint="Mod ${i} amount: bipolar depth, drag left for negative."><i></i><b></b></div>`;
+  mr.appendChild(r);const sel=r.querySelector('select');DESTS.forEach((d,k)=>sel.add(new Option(d,k)));
+  r.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const was=P[`slot${i}Source`].v,v=+b.dataset.s;set(`slot${i}Source`,was===v?0:v);command(P[`slot${i}Source`],was);});
+  sel.onchange=()=>{const was=P[`slot${i}Dest`].v;set(`slot${i}Dest`,+sel.value);command(P[`slot${i}Dest`],was);};
+  const bip=r.querySelector('.bip');bindDrag(bip,`slot${i}Amount`,'x',{px:90});
+  const draw=()=>{const s=P[`slot${i}Source`].v,d=P[`slot${i}Dest`].v,a=P[`slot${i}Amount`].v;r.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',+b.dataset.s===s));sel.value=d;
+    const I=bip.querySelector('i');I.style.left=(a<0?50+a*50:50)+'%';I.style.width=Math.abs(a)*50+'%';bip.querySelector('b').textContent=text(P[`slot${i}Amount`]);r.classList.toggle('dead',!s||!d);refreshMods();};
+  ['Source','Dest','Amount'].forEach(k=>on(`slot${i}${k}`,draw));}
+function refreshMods(){for(const k in modAmt)delete modAmt[k];
+  for(let i=1;i<=8;i++){const s=P[`slot${i}Source`].v,d=P[`slot${i}Dest`].v,a=P[`slot${i}Amount`].v;if(s&&d&&a){const id=DEST_ID[d];const depth=P[`lfo${s}Depth`].v;modAmt[id]=(modAmt[id]||0)+a*depth*.5;}}
+  for(const id in modTargets){const el=modTargets[id];if(el.classList.contains('ch')){const m=modAmt[id];el.classList.toggle('is-mod',!!m);el.querySelector('.strip').classList.toggle('is-mod',!!m);
+      if(m){const tr=el.querySelector('.track'),H=tr.offsetHeight,n=norm(P[id]),a=Math.abs(m);const top=10+(1-Math.min(1,n+a))*(H-20),bot=10+(1-Math.max(0,n-a))*(H-20);const rg=el.querySelector('.range');rg.style.top=top+'px';rg.style.height=(bot-top)+'px';}}
+    else el._draw&&el._draw();}}
+on('*',p=>{if(p.id in modAmt&&modTargets[p.id]?.classList.contains('ch'))refreshMods();});
+
+// ---------- toggles (module on keys) ----------
+document.querySelectorAll('[data-toggle]').forEach(b=>{const id=b.dataset.toggle;b.setAttribute('aria-label',P[id].label+' on/off');
+  b.onclick=e=>{e.stopPropagation();const was=P[id].v;touchBank(b);set(id,1-was);command({...P[id],full:P[id].label,fmt:v=>v?'on':'bypassed'},was);};
+  on(id,p=>{b.classList.toggle('on',!!p.v);b.setAttribute('aria-pressed',!!p.v);b.textContent=p.v?'On':'Off';const bank=b.closest('.bank');if(bank&&/Enabled$/.test(id)&&['motionEnabled','colorEnabled','patternEnabled'].includes(id))bank.classList.toggle('is-off',!p.v);});});
+
+// ---------- monitor ----------
+const mon=$('#monitor'),cv=$('#monCv');let peaks=[];
+function buildWave(){const st=slotState[shownSlot];mon.classList.toggle('is-empty',!st);
+  $('#monName').textContent=st?st.name:'';$('#monMeta').textContent=st?`${st.dur.toFixed(2)} s · ${st.sr} kHz · ${st.ch}`:'';$('#monEnd').textContent=st?st.dur.toFixed(2)+' s':'';
+  peaks=[];if(!st)return;let seed=shownSlot*977+13;const r=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  for(let i=0;i<580;i++){const x=i/580;const env=shownSlot===1?Math.exp(-x*5)*(x<.02?x/.02:1):shownSlot===2?.55+.25*Math.sin(x*9):.35+.45*Math.abs(Math.sin(x*23+Math.sin(x*7)*2))*(1-.4*x);
+    peaks.push(Math.min(1,env*(.55+.45*r())));}}
+const grains=[];let lastT=performance.now(),acc=0,sweep=0,warm=0;
+function setPosFromMouse(e){const r=mon.getBoundingClientRect();const x=((e.clientX-r.left)/r.width*1168-14)/(1168-28);const was=P.position.v;set('position',x);command(P.position,was);}
+mon.addEventListener('pointerdown',e=>{if(!slotState[shownSlot])return;mon.setPointerCapture(e.pointerId);setPosFromMouse(e);touchBank(mon);});
+mon.addEventListener('pointermove',e=>{if(mon.hasPointerCapture(e.pointerId))setPosFromMouse(e);});
+mon.addEventListener('dragover',e=>e.preventDefault());
+mon.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(!f)return;slotState[shownSlot]={name:f.name,dur:3.0,sr:48,ch:'stereo'};drawSlots();buildWave();cmdMsg('Slot '+(shownSlot+1),'loaded');});
+function sizeCanvas(c,w,h){const dpr=(window.devicePixelRatio||1)*stageScale;c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);c.style.width=w+'px';c.style.height=h+'px';const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);return g;}
+let mg; function resizeCanvases(){mg=sizeCanvas(cv,1168,118);for(const n of [1,2])lfoCv[n]._g=sizeCanvas(lfoCv[n],140,52);drawEnvBig();}
+const W=1168,H=118,top=30,bot=92,X0=14,XW=1168-28;
+function frame(t){let dt=Math.min(.1,(t-lastT)/1000);lastT=t;if(warm>0){const w=warm;warm=0;for(let k=0;k<Math.round(w*30);k++){simOnly=true;frame._sim(1/30);}simOnly=false;}
+  const st=slotState[shownSlot],g=mg; g.clearRect(0,0,W,H);
+  // grid
+  g.fillStyle='#0B0C0D';g.fillRect(0,0,W,H);g.strokeStyle='#17191C';g.lineWidth=1;for(let i=1;i<10;i++){g.beginPath();g.moveTo(Math.round(i*W/10)+.5,top-6);g.lineTo(Math.round(i*W/10)+.5,bot+6);g.stroke();}
+  if(st){const mid=(top+bot)/2,amp=(bot-top)/2;
+    let pos=P.position.v; if(P.loop.v){sweep=(sweep+dt/st.dur)%1;pos=(pos+sweep)%1;}else sweep=0;
+    const jit=P.positionJitter.v,sizeFrac=(P.grainSize.v/1000)/st.dur;
+    // jitter span + size shadow
+    g.fillStyle='rgba(236,231,218,.06)';g.fillRect(X0+Math.max(0,(pos-jit/2))*XW,top-6,Math.min(1,jit)*XW,bot-top+12);
+    g.fillStyle='rgba(255,181,71,.10)';g.fillRect(X0+pos*XW,top-6,Math.max(2,sizeFrac*XW),bot-top+12);
+    // waveform
+    g.fillStyle='#4C5058';const bw=XW/peaks.length;peaks.forEach((p,i)=>{const h=Math.max(1,p*amp);g.fillRect(X0+i*bw,mid-h,Math.max(1,bw-.6),h*2);});
+    // spawn grains
+    const tm=P.patternEnabled.v?Math.round(P.triggerMode.v):0;const beats=[1,.5,.25,.125,.0625,2/3,1/3,1/6,1.5,.75][Math.round(P.syncDivision.v)];const stepsPerSec=2/beats; /* 120 BPM */
+    const rate=tm===1?stepsPerSec:tm===2?stepsPerSec*Math.min(P.euclidPulses.v,P.euclidSteps.v)/P.euclidSteps.v:tm===3?4:P.density.v;acc+=dt*rate*(P.patternEnabled.v?P.probability.v:1);if(acc>24)acc=24;
+    while(acc>=1&&grains.length<256){acc-=1;const sub=P.subGrainDepth.v;const n=1+(sub?2+Math.floor(Math.random()*3)*sub:0);const gp=(pos+(Math.random()-.5)*jit+1)%1;
+      for(let k=0;k<n;k++)grains.push({p:(gp+(k?Math.random()*sizeFrac:0))%1,y:mid+(Math.random()-.5)*amp*1.5,age:-(k?Math.random()*.6:0),life:P.grainSize.v/1000*(k?.5:1)*(P.patternEnabled.v?Math.pow(2,(Math.random()*2-1)*P.spray.v):1),rev:Math.random()<(P.patternEnabled.v?P.reverseProb.v:0)});}
+    const env=ENV[Math.round(P.envelopeShape.v)];
+    for(let i=grains.length-1;i>=0;i--){const gr=grains[i];gr.age+=dt;const x=gr.age/gr.life;if(x>1.12){grains.splice(i,1);continue;}if(x<0)continue;
+      const a=x<=1?env(Math.min(.999,Math.max(.001,x))):Math.max(0,1-(x-1)/.12)*.2;const px=X0+(gr.p+(gr.rev?-1:1)*Math.min(1,x)*sizeFrac*(1+P.pitchShift.v/24))*XW;
+      const x0=X0+gr.p*XW;const al=(.2+.8*a).toFixed(2);g.fillStyle=`rgba(255,${Math.round(205-55*a)},${Math.round(110-50*a)},${(a*.45).toFixed(2)})`;
+      g.fillRect(Math.min(x0,px),gr.y-1.5,Math.max(1.5,Math.abs(px-x0)),3);
+      g.fillStyle=`rgba(255,${Math.round(205-55*a)},${Math.round(110-50*a)},${al})`;g.beginPath();g.arc(px,gr.y,2+a*2.6,0,Math.PI*2);g.fill();}
+    // playhead
+    const phx=X0+pos*XW;g.fillStyle='#FFFFFF';g.fillRect(Math.round(phx),top-8,1.5,bot-top+16);g.beginPath();g.arc(phx+.75,top-10,3,0,Math.PI*2);g.fill();
+    if(P.loop.v){g.fillStyle='#FFB547';g.font='600 10px Archivo, sans-serif';g.font='600 12px Archivo, sans-serif';g.fillText('LOOP',Math.min(W-44,phx+7),top-5);}
+  } else grains.length=0;
+  const live=grains.filter(gg=>gg.age>=0).length;$('#monGrains').textContent=live+(live===1?' grain':' grains');$('#stGr').textContent=live;$('#stGrW').textContent=live===1?'grain':'grains';
+  $('#stCpu').textContent=Math.max(2,Math.round(2+live*.05+(P.feedbackEnabled.v?2:0)+(P.spectralEnabled.v?1:0)))+' %';
+  // meter
+  const lvl=st?Math.min(1.05,(.25+Math.sqrt(live)/12)*Math.pow(10,P.masterVolume.v/20)*(.9+Math.random()*.15)):0;
+  $('#mL').style.setProperty('--lv',(Math.min(1,lvl)*100).toFixed(1)+'%');$('#mR').style.setProperty('--lv',(Math.min(1,lvl*(0.85+0.3*P.stereoSpread.v*Math.random()))*100).toFixed(1)+'%');
+  $('#clip').classList.toggle('hot',lvl>1);
+  // LFO previews
+  for(const n of [1,2]){const c=lfoCv[n],L=c._g;if(!L)continue;L.fillStyle='#0B0C0D';L.fillRect(0,0,140,52);L.strokeStyle='#1B1D21';L.beginPath();L.moveTo(0,26.5);L.lineTo(140,26.5);L.stroke();
+    const w=WAVES[Math.round(P[`lfo${n}Waveform`].v)],dep=P[`lfo${n}Depth`].v,ph=P[`lfo${n}Phase`].v/360,rate=P[`lfo${n}Rate`].v;
+    L.strokeStyle='#4FB0F7';L.lineWidth=1.5;L.beginPath();for(let i=0;i<=140;i++){const x=i/140;const y=w((x+ph)%1);L[i?'lineTo':'moveTo'](i,26-y*dep*21);}L.stroke();
+    if(rate<25){c._ph=((c._ph||0)+dt*rate)%1;const x=c._ph;L.fillStyle='#FFFFFF';L.beginPath();L.arc(x*140,26-w((x+ph)%1)*dep*21,3,0,Math.PI*2);L.fill();}
+    else{L.fillStyle='#FFB547';L.font='600 13px Archivo, sans-serif';L.fillText('AUDIO RATE',6,15);}}
+  // euclid step
+  if(Math.round(P.triggerMode.v)===2){eucStep+=dt*4;const s=Math.floor(eucStep);if(s!==frame._s){frame._s=s;drawEuclid();}}
+  requestAnimationFrame(frame);}
+
+let simOnly=false;
+frame._sim=function(dt){const st=slotState[shownSlot];if(!st)return;const mid=(top+bot)/2,amp=(bot-top)/2;
+  let pos=P.position.v;if(P.loop.v)pos=(pos+sweep)%1;const jit=P.positionJitter.v,sizeFrac=(P.grainSize.v/1000)/st.dur;
+  const tm=P.patternEnabled.v?Math.round(P.triggerMode.v):0;const beats=[1,.5,.25,.125,.0625,2/3,1/3,1/6,1.5,.75][Math.round(P.syncDivision.v)];const sps=2/beats;
+  const rate=tm===1?sps:tm===2?sps*Math.min(P.euclidPulses.v,P.euclidSteps.v)/P.euclidSteps.v:tm===3?4:P.density.v;acc+=dt*rate*(P.patternEnabled.v?P.probability.v:1);
+  while(acc>=1&&grains.length<256){acc-=1;const sub=P.subGrainDepth.v;const n=1+(sub?2+Math.floor(Math.random()*3)*sub:0);const gp=(pos+(Math.random()-.5)*jit+1)%1;
+    for(let k=0;k<n;k++)grains.push({p:(gp+(k?Math.random()*sizeFrac:0))%1,y:mid+(Math.random()-.5)*amp*1.5,age:-(k?Math.random()*.6:0),life:P.grainSize.v/1000*(k?.5:1)*(P.patternEnabled.v?Math.pow(2,(Math.random()*2-1)*P.spray.v):1),rev:Math.random()<(P.patternEnabled.v?P.reverseProb.v:0)});}
+  for(let i=grains.length-1;i>=0;i--){const gr=grains[i];gr.age+=dt;if(gr.age/gr.life>1.12)grains.splice(i,1);}};
+// ---------- hints ----------
+const hint=$('#hint'),defHint=hint.innerHTML;
+stage.addEventListener('pointerover',e=>{const h=e.target.closest('[data-hint]');hint.innerHTML=h?h.dataset.hint:defHint;});
+stage.addEventListener('pointerleave',()=>hint.innerHTML=defHint);
+stage.querySelectorAll('[data-hint]').forEach(el=>{if(!el.title)el.title=el.dataset.hint;});
+const mo=new MutationObserver(()=>stage.querySelectorAll('[data-hint]:not([title])').forEach(el=>el.title=el.dataset.hint));mo.observe(stage,{subtree:true,childList:true});
+
+// ---------- states ----------
+function applyDefaults(){for(const k in P)set(k,P[k].d);for(let i=0;i<4;i++)snaps[i]=null;liveSnap=-1;slotState.splice(0,4,{name:'field-rain.wav',dur:2.41,sr:48,ch:'stereo'},null,null,null);shownSlot=0;}
+function applyDense(){applyDefaults();
+  const v={grainSize:220,density:85,position:.38,positionJitter:.22,pitchShift:-5,stereoSpread:.8,masterVolume:-3.2,loop:1,subGrainDepth:2,stochasticDist:5,feedbackEnabled:1,feedbackGain:.62,feedbackDamp:.45,spectralEnabled:1,spectralMode:1,spectralBlurAmount:.35,
+    slot0Weight:1,slot1Weight:.6,slot2Weight:.35,slot3Weight:.8,envelopeShape:1,motionEnabled:1,wowDepth:.3,wowRate:.4,flutterDepth:.15,flutterRate:9,driftAmount:.25,crackleLevel:-34,crackleColor:.6,
+    colorEnabled:1,saturate:.4,decimate:.12,tiltEq:-.25,verbMix:.35,patternEnabled:1,triggerMode:0,syncDivision:2,euclidPulses:5,euclidSteps:13,euclidRotation:2,probability:.85,reverseProb:.3,quantizeScale:8,spray:.4,
+    lfo1Rate:.6,lfo1Waveform:0,lfo1Depth:.7,lfo2Rate:6.5,lfo2Waveform:5,lfo2Depth:.5,lfo2Sync:1,
+    slot1Source:1,slot1Dest:3,slot1Amount:.35,slot2Source:2,slot2Dest:5,slot2Amount:-.5,slot3Source:1,slot3Dest:1,slot3Amount:.4,slot4Source:2,slot4Dest:18,slot4Amount:.6,slot5Source:1,slot5Dest:6,slot5Amount:.8,slot6Source:2,slot6Dest:15,slot6Amount:.25};
+  for(const k in v)set(k,v[k]);
+  slotState.splice(0,4,{name:'field-rain.wav',dur:2.41,sr:48,ch:'stereo'},{name:'glass-bowl.aif',dur:1.18,sr:48,ch:'stereo'},{name:'choir-pad.wav',dur:6.02,sr:48,ch:'mono'},{name:'metal-scrape.flac',dur:3.37,sr:96,ch:'stereo'});
+  snaps[0]=capture();snaps[1]=capture();snaps[2]=capture();liveSnap=2;}
+function refreshAll(){drawSlots();buildWave();drawSnaps();for(const k in P)set(k,P[k].v);refreshMods();layoutPattern();drawEuclid();}
+$('#stDefault').onclick=()=>{applyDefaults();refreshAll();pressSeg('#stDefault','#stDense');command(P.grainSize);warm=1.2;};
+$('#stDense').onclick=()=>{applyDense();refreshAll();pressSeg('#stDense','#stDefault');prevVal.grainSize=180;command(P.grainSize);warm=1.2;};
+function pressSeg(a,b){$(a).setAttribute('aria-pressed','true');$(b).setAttribute('aria-pressed','false');}
+
+// ---------- scale ----------
+let stageScale=1,scaleMode='fit';const wrap=$('#stageWrap');
+function fit(){const avail=Math.min(document.documentElement.clientWidth-32,1200*1.6);stageScale=scaleMode==='fit'?Math.min(avail/1200,1.6):+scaleMode;
+  if(scaleMode!=='fit'&&1200*stageScale>avail)stageScale=avail/1200;
+  stage.style.transform=`scale(${stageScale})`;wrap.style.width=1200*stageScale+'px';wrap.style.height=780*stageScale+'px';resizeCanvases();}
+document.querySelectorAll('[data-scale]').forEach(b=>b.onclick=()=>{scaleMode=b.dataset.scale;document.querySelectorAll('[data-scale]').forEach(x=>x.setAttribute('aria-pressed',x===b));fit();});
+addEventListener('resize',fit);
+
+function fromHash(){if(location.hash==='#dense')$('#stDense').click();else $('#stDefault').click();}
+applyDefaults();fit();refreshAll();command(P.grainSize);fromHash();addEventListener('hashchange',fromHash);requestAnimationFrame(frame);
+})();
+</script>

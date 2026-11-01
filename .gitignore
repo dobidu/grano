@@ -105,3 +105,6 @@ DEMO_SCRIPT.md
 # PAUL state + Claude tooling (local-only, not versioned)
 .claude/
 .paul/
+
+# impeccable design tooling (local)
+.impeccable/
