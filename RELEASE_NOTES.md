@@ -1,10 +1,40 @@
 # Grano — Release Notes
 
-## v1.0.0-beta.3 (unreleased)
+## v1.0.0-beta.3 (2026-11-01)
 
-A correctness release: a full code review (08-08) found that several features
-produced wrong audio. **Existing projects and presets will sound different** —
-mostly closer to what the controls always claimed to do.
+A new editor and a correctness release. A full code review (08-08) found that
+several features produced wrong audio. **Existing projects and presets will sound
+different**, mostly closer to what the controls always claimed to do.
+
+### New editor
+
+The tabbed editor is replaced by a single-screen console. Every parameter is
+visible at once.
+
+- **One screen, no tabs.** The window scales from 0.75× to 1.6× at a fixed aspect
+  ratio, and text stays sharp.
+- **Every control shows its value and unit** on a scribble strip. Double-click resets
+  to default; Ctrl/Cmd-drag gives fine control; the mouse wheel and arrow keys step.
+- **Command line** in the header names the control you touch, with its previous and
+  default values. The status strip shows a hint for whatever is under the pointer,
+  plus the grain count, CPU load and number of loaded slots.
+- **Monitor** shows the selected slot's waveform with the live grains, the
+  loop-swept read head, the jitter span and the grain-size shadow. Click or drag on
+  it to set Position.
+- **Slot strips** show the filename, weight, and loaded / empty / failed state for
+  each of the 4 slots. Click a strip to load a file; drop a file onto the editor to
+  load it into the selected slot.
+- **Snapshots A–D:** click to recall (or to store into an empty slot), Ctrl/Cmd-click
+  to store, right-click for Store / Recall / Clear. The live snapshot is lit.
+- **Master section** has a peak meter (L/R), a clip LED and the volume fader.
+- **Contextual Pattern controls:** Sync division appears in Sync and Euclid, the
+  Euclid ring with Pulses / Steps / Rotation appears in Euclid, and Transient
+  Sensitivity appears in Audio mode.
+- Turning a module off dims its bank and strikes through its title. Modulated
+  parameters carry a blue marker and range bracket.
+- Fonts: Archivo and Martian Mono (SIL OFL), embedded.
+- Reopening the editor or reloading a project shows the loaded waveforms and slot
+  names.
 
 ### Sound changes you will hear
 
