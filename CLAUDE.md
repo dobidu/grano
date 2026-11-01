@@ -140,7 +140,7 @@ graphify-out/                   Knowledge graph (consult before reads)
 
 - UI → Audio: via APVTS atomics. UI sets parameter, audio reads atomically. Lock-free.
 - Message thread → Audio: sample buffers via `SampleBuffer` pending record `{buffer, length, generation}`, swapped in one atomic exchange; old buffers retire through an `AbstractFifo` and are freed on the message thread. The audio thread never allocates or frees.
-- Audio → UI: grain snapshot array + atomic count, loop-sweep fraction, sampled by UI `Timer` callbacks (WaveformDisplay 30 Hz, editor footer 10 Hz).
+- Audio → UI: grain snapshot array + atomic count, loop-sweep fraction, output peaks and CPU load, sampled by the single `ConsoleView` timer (monitor + meter 30 Hz, slots / mod marks / snapshots / status 10 Hz).
 
 **What never happens:**
 

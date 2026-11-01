@@ -47,7 +47,7 @@ public:
     const float* getReadPointer(int slot) const noexcept;
     int          getNumSamples(int slot)  const noexcept;
 
-    // Reference to a specific slot's SampleBuffer (e.g. slot 0 for WaveformDisplay).
+    // Reference to a specific slot's SampleBuffer (e.g. the slot shown in the editor's Monitor).
     SampleBuffer& getSlot(int slot) noexcept { return slots_[slot]; }
 
 private:

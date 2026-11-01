@@ -55,9 +55,6 @@ add_executable(GranoTests
     ${CMAKE_SOURCE_DIR}/Source/Modulation/Lfo.cpp
     ${CMAKE_SOURCE_DIR}/Source/Modulation/ModMatrix.cpp
     ${CMAKE_SOURCE_DIR}/Source/Modulation/Snapshots.cpp
-    # F5 — UI panels (needed because PluginEditor.cpp is compiled into GranoTests)
-    # F6e — CurveEditor (PluginEditor.h includes it)
-    # F8-UX — ModuleTabPanel (PluginEditor.h includes it)
     test_modulation.cpp
     test_subgrain.cpp
     test_stochastic.cpp

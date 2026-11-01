@@ -8,7 +8,7 @@ A granular synthesis instrument for experimental sound design.
 
 ![Grano user interface](screenshot.png)
 
-*The Grano interface: waveform display with live grain particles up top, the core granular controls (Size, Density, Jitter, Pitch, Volume) below, multi-sample slot weights, and the module rack (Engine, Motion, Color, Pattern, LFO, Mod) along the bottom.*
+*One screen, no tabs. Header: command line, snapshots A–D, Loop and master meter. Below it: the monitor with live grains on the loop-swept read head, four sample slots, then the GRAIN / ENGINE / ENVELOPE, MOTION / COLOR / PATTERN and LFO / MOD MATRIX banks. See [The console](#the-console) for a tour.*
 
 ---
 
@@ -19,31 +19,32 @@ A granular synthesis instrument for experimental sound design.
    - [Windows](#windows)
    - [macOS](#macos)
    - [Linux](#linux)
-3. [Loading a sample](#loading-a-sample)
-4. [Core parameters](#core-parameters)
-5. [User manual](#user-manual)
+3. [The console](#the-console)
+4. [Loading a sample](#loading-a-sample)
+5. [Core parameters](#core-parameters)
+6. [User manual](#user-manual)
    - [First use walkthrough](#first-use-walkthrough)
    - [Sound design recipes](#sound-design-recipes)
    - [Understanding grain density vs. texture](#understanding-grain-density-vs-texture)
    - [Source priority explained](#source-priority-explained)
    - [Modulation routing examples](#modulation-routing-examples)
    - [Snapshot performance technique](#snapshot-performance-technique)
-6. [MOTION module](#motion-module)
-7. [COLOR module](#color-module)
-8. [PATTERN module](#pattern-module)
-9. [Modulation](#modulation)
+7. [MOTION module](#motion-module)
+8. [COLOR module](#color-module)
+9. [PATTERN module](#pattern-module)
+10. [Modulation](#modulation)
    - [LFO 1 & 2](#lfo-1--2)
    - [Modulation matrix](#modulation-matrix)
    - [Snapshots A/B/C/D](#snapshots-abcd)
-10. [Advanced engine](#advanced-engine)
+11. [Advanced engine](#advanced-engine)
     - [Sub-grain recursion](#sub-grain-recursion)
     - [Stochastic timing](#stochastic-timing)
     - [Feedback path](#feedback-path)
     - [Spectral processor](#spectral-processor)
-11. [Performance notes](#performance-notes)
-12. [Building from source](#building-from-source)
-13. [Parameter reference](#parameter-reference)
-14. [Troubleshooting](#troubleshooting)
+12. [Performance notes](#performance-notes)
+13. [Building from source](#building-from-source)
+14. [Parameter reference](#parameter-reference)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -132,6 +133,81 @@ Linux builds are VST3 + Standalone only. AU is macOS-exclusive.
 
 ---
 
+## The console
+
+Grano's editor is laid out like a lighting desk: every parameter is a channel
+with a scribble strip (name and value in amber), channels are grouped in banks
+with a tape label, and the command line spells out whatever you touch. Nothing
+is hidden behind tabs.
+
+**Working any control**
+
+| Action | Result |
+|--------|--------|
+| Drag | Change the value (vertical for faders and encoders, horizontal for strips) |
+| Ctrl/Cmd + drag | Fine adjustment (×0.1) |
+| Double-click | Reset to default |
+| Mouse wheel / arrow keys | Step (arrows when focused with Tab) |
+| Hover | Tooltip, plus a hint in the status strip at the bottom |
+
+The window scales from 0.75× to 1.6× at a fixed aspect ratio; drag the corner.
+
+### Header
+
+![Header: command line, snapshots, loop, master](docs/images/header.png)
+
+- **Command line** — the full name of the last control you touched, its previous
+  value and default, and the current value in large type. It also reports
+  snapshot and slot actions.
+- **Snapshots A–D** — the lit white key is *live* (last stored or recalled); an
+  amber letter means stored. See [Snapshots](#snapshots-abcd).
+- **Loop** — lit when the read head sweeps through the sample.
+- **Master** — output level in dB, clip LED (holds 1.5 s), L/R peak meter and the
+  volume fader.
+
+### Monitor and slots
+
+![Monitor with live grains, and the four sample slots](docs/images/monitor-slots.png)
+
+The monitor shows the waveform of the selected slot. The white line is the read
+head (Position, plus the loop sweep when Loop is on); the shaded band is the
+Position Jitter span; the amber band is one grain length. Orange dots are the
+grains playing right now, with a short trace of how far each has read. Click or
+drag on the monitor to set Position.
+
+Each slot strip has a number key (lit = shown in the monitor), the filename
+(click to load), a weight fader and a clear key. A failed load shows
+"load failed" in red; hover for the reason.
+
+### Banks
+
+![GRAIN, ENGINE and ENVELOPE banks](docs/images/grain-engine-envelope.png)
+
+**GRAIN** holds the six core faders. **ENGINE** holds Sub-grain depth, the
+Timing distribution, Feedback and Spectral. **ENVELOPE** selects the grain
+window and previews it at the current grain length.
+
+![MOTION, COLOR and PATTERN banks](docs/images/motion-color-pattern.png)
+
+MOTION, COLOR and PATTERN each have an **On** key on their tape. When a module
+is off, its bank dims and the title is struck through, but you can still edit
+it.
+
+![PATTERN bank in Free, Sync, Euclid and Audio modes](docs/images/pattern-modes.png)
+
+PATTERN shows only the controls the current trigger mode uses: **Div** in Sync
+and Euclid; the Euclid ring with Pulses / Steps / Rotation in Euclid;
+**Sensitivity** in Audio.
+
+![LFO 1, LFO 2 and the modulation matrix](docs/images/lfo-matrix.png)
+
+The **LFO** banks preview the waveform at the current rate, phase and depth. Each
+**MOD MATRIX** row picks a source (L1 / L2), a destination and a bipolar amount.
+A parameter that is being modulated gets a blue marker on its strip and a range
+bracket on its fader or arc on its encoder.
+
+---
+
 ## Loading a sample
 
 Grano does not synthesize audio from scratch — it granulates source audio you provide.
@@ -144,7 +220,7 @@ Click or drag on the monitor to set **Position**. The command line at the top sp
 
 Supported formats: WAV, AIFF, FLAC, OGG, MP3.
 
-Once loaded, the waveform appears in the display. The engine starts granulating immediately. If no sample is loaded, Grano falls back to an internal 440 Hz sine tone so you can still hear the engine parameters in action.
+Once loaded, the waveform appears in the monitor. The engine starts granulating immediately. If no sample is loaded, Grano falls back to an internal 440 Hz sine tone so you can still hear the engine parameters in action.
 
 ---
 
@@ -185,17 +261,17 @@ Install the plugin as described in [Installing Grano](#installing-grano). Open y
 
 **Step 2 — Load a sample**
 
-Drag any WAV or AIFF file onto the waveform display. A spoken word recording, a short musical phrase, or a sustained instrument note all work well for a first session. The waveform renders in the display and the engine begins granulating immediately.
+Drag any WAV or AIFF file onto the Grano window (it loads into slot 1, the lit slot). A spoken word recording, a short musical phrase, or a sustained instrument note all work well for a first session. The waveform renders in the monitor and the engine begins granulating immediately.
 
 If you have no suitable file at hand, skip this step — the engine falls back to an internal 440 Hz sine tone, which is enough to understand all controls.
 
 **Step 3 — Confirm you have output**
 
-Check that `masterVolume` is at 0 dB (not −60 dB). You should hear a continuous texture. If the sample is very quiet, raise `masterVolume` by 3–6 dB.
+Check that the MASTER fader reads 0 dB (not −60 dB) and that the meter moves. You should hear a continuous texture. If the sample is very quiet, raise `masterVolume` by 3–6 dB.
 
 **Step 4 — Explore Grain Size**
 
-Turn `grainSize` slowly from its default of 100 ms down to 10 ms. The texture becomes more granular and diffuse — individual pitch content dissolves into a cloud. Bring it back up to 300–400 ms and the sample's pitch and timbre become more recognisable. This is the most fundamental trade-off in granular synthesis.
+Drag the GRAIN **Size** fader slowly from its default of 100 ms down to 10 ms. The texture becomes more granular and diffuse — individual pitch content dissolves into a cloud. Bring it back up to 300–400 ms and the sample's pitch and timbre become more recognisable. This is the most fundamental trade-off in granular synthesis.
 
 **Step 5 — Explore Density**
 
@@ -454,26 +530,26 @@ Snapshots A, B, C, and D each store a complete state of all 79 parameters. The i
 
 **Setting up an A/B contrast for live switching:**
 
-1. Dial in your primary texture — the sound you want for the verse or background state. Right-click **Snapshot A** and select "Save current state". Snapshot A is now locked to this configuration.
+1. Dial in your primary texture — the sound you want for the verse or background state. Ctrl/Cmd-click **Snapshot A** (or right-click it and choose **Store current**). Snapshot A is now locked to this configuration.
 
-2. Without disturbing Snapshot A, modify the parameters to create a contrasting state. Useful contrasts: sparse vs. dense (`density` 3 vs. 40), dry vs. wet (`verbMix` 0% vs. 60%), frozen vs. moving (`positionJitter` 5% vs. 80%), or quiet vs. loud (`masterVolume` −12 dB vs. 0 dB). Right-click **Snapshot B** and select "Save current state".
+2. Without disturbing Snapshot A, modify the parameters to create a contrasting state. Useful contrasts: sparse vs. dense (`density` 3 vs. 40), dry vs. wet (`verbMix` 0% vs. 60%), frozen vs. moving (`positionJitter` 5% vs. 80%), or quiet vs. loud (`masterVolume` −12 dB vs. 0 dB). Ctrl/Cmd-click **Snapshot B**.
 
-3. Click Snapshot A, then Snapshot B, then A again. The switch is instantaneous — all parameters jump to the stored values simultaneously. There is no crossfade; the transition is a hard cut.
+3. Click Snapshot A, then Snapshot B, then A again. The live key lights white. The switch is instantaneous — all parameters jump to the stored values simultaneously. There is no crossfade; the transition is a hard cut.
 
 4. For a performance with more variety, set up C and D as intermediate states or entirely different textures (e.g., C = feedback loop active, D = spectral shimmer). You can cycle through all four during a set.
 
 **Practical notes:**
 
 - Snapshots persist with the DAW project file. They are available after the project is reopened.
-- Right-click any Snapshot button to overwrite it with the current state. There is no undo for snapshot overwrite, so save your project first if you need to preserve a previous state.
-- MIDI mapping: if your DAW supports MIDI learn on plugin controls, map each Snapshot button to a pad or key for hands-free switching during recording.
+- Ctrl/Cmd-click a stored Snapshot key (or right-click → **Store current**) to overwrite it with the current state. There is no undo for snapshot overwrite, so save your project first if you need to preserve a previous state.
+- MIDI mapping: if your DAW supports MIDI learn on plugin controls, map each Snapshot key to a pad or key for hands-free switching during recording.
 - Snapshots store the state of all modules including `feedbackEnabled` and `spectralEnabled`. Switching from a snapshot with Feedback on to one with Feedback off does not flush the feedback buffer — the tail may still be audible for a few seconds. This can be used intentionally for smooth exits from feedback textures.
 
 ---
 
 ## MOTION module
 
-MOTION introduces organic instability to the granular stream. Enable with the **MOTION** toggle.
+MOTION introduces organic instability to the granular stream. Enable with the **On** key on the MOTION tape.
 
 | Parameter | Range | Default | Description |
 |-----------|-------|---------|-------------|
@@ -491,7 +567,7 @@ MOTION is bypassed by default — at 0% depth all parameters have no effect even
 
 ## COLOR module
 
-COLOR applies spectral processing to the engine output. Enable with the **COLOR** toggle.
+COLOR applies spectral processing to the engine output. Enable with the **On** key on the COLOR tape.
 
 | Parameter | Range | Default | Description |
 |-----------|-------|---------|-------------|
@@ -504,7 +580,7 @@ COLOR applies spectral processing to the engine output. Enable with the **COLOR*
 
 ## PATTERN module
 
-PATTERN controls how grains are triggered over time. It replaces or modifies the engine's timing logic. Enable with the **PATTERN** toggle.
+PATTERN controls how grains are triggered over time. It replaces or modifies the engine's timing logic. Enable with the **On** key on the PATTERN tape.
 
 ### Trigger Mode
 
@@ -545,7 +621,7 @@ Two LFOs, freely routable to any parameter via the Modulation Matrix.
 | Parameter | Range | Default | Description |
 |-----------|-------|---------|-------------|
 | **Rate** | 0.01–8000 Hz | 1 Hz | LFO frequency. The LFO is evaluated every 32 samples (≈ 1500 times per second at 48 kHz) regardless of the host buffer size, so rates above a few hundred Hz alias into per-grain randomization rather than smooth audio-rate FM. |
-| **Waveform** | Sine / Triangle / Saw / Square / Random / S&H / Drawable | Sine | LFO waveform. *Drawable* lets you sketch a custom one-cycle shape. |
+| **Waveform** | Sine / Triangle / Saw / Square / Random / S&H | Sine | LFO waveform, picked with the six icon keys. (The parameter also has a *Drawable* entry reserved for a future shape editor; it currently plays a sine.) |
 | **Sync** | On / Off | Off | When on, Rate locks to the DAW tempo (one cycle per quarter note). |
 | **Phase** | 0–360° | 0° | Start phase offset. Useful for stereo LFO pairs. |
 | **Depth** | 0–100% | 50% | LFO output amplitude (before the modulation matrix amount scaling). |
@@ -907,7 +983,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 2
 
 ## Status
 
-All core features complete. QA and manual acceptance testing (F8) in progress.
+All core features complete. Latest release: **v1.0.0-beta.3** (new console editor, correctness fixes). QA and manual acceptance testing (F8) continue toward v1.0.0.
 
 | Phase | Status |
 |-------|--------|
@@ -919,7 +995,7 @@ All core features complete. QA and manual acceptance testing (F8) in progress.
 | F5 LFOs + Modulation Matrix + Snapshots | ✅ Complete |
 | F6 UI Polish + Advanced Engine | ✅ Complete |
 | F7 Release | ✅ Complete (v1.0.0-beta.1 tagged) |
-| F8 QA + Manual Acceptance | 🔄 In progress |
+| F8 QA + Manual Acceptance | 🔄 In progress (beta.2, beta.3 released) |
 
 ---
 

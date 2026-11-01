@@ -95,7 +95,7 @@ host grid. It was replaced by a sample clock on the audio thread; see R-01 in
 | UI → Audio (parameter changes) | APVTS atomic load | Lock-free, host automation works. |
 | Message thread → Audio (sample swap) | `SampleBuffer` pending record `{buffer, length, generation}` swapped atomically; old buffer leaves in the same record through an `AbstractFifo` retire queue | One pointer exchange keeps buffer and length paired. The audio thread never allocates or frees: if the retire queue is full the swap waits a block. |
 | Audio → Message (spectral source ready) | Slot load generation (`getCurrentGeneration`) | The FFT waits until slot 0 holds the generation that was just loaded, so it never reads the previous sample. |
-| Audio → UI (telemetry) | Grain snapshot array + `std::atomic<int>` count; atomic loop-sweep fraction | UI reads opportunistically at 30 Hz; visual tearing accepted. |
+| Audio → UI (telemetry) | Grain snapshot array + `std::atomic<int>` count; atomic loop-sweep fraction; per-channel max-hold output peaks (`consumeOutputPeak`); `AudioProcessLoadMeasurer` (`getCpuLoad`); slot state generation | UI reads opportunistically at 30 Hz; visual tearing accepted. |
 
 ---
 

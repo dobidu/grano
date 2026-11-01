@@ -1,12 +1,12 @@
 # TESTING.md — Grano Manual Acceptance Test
 
-**Version:** v1.1 (multi-platform)
+**Version:** v1.2 (multi-platform, console editor)
 
 | Field          | Windows                     | macOS                        |
 |----------------|-----------------------------|------------------------------|
 | Tester         |                             |                              |
 | Date           |                             |                              |
-| Build          | v1.0.0-beta.2               | v1.0.0-beta.2                |
+| Build          | v1.0.0-beta.3               | v1.0.0-beta.3                |
 | DAW / Host     |                             |                              |
 | OS Version     |                             |                              |
 | Plugin formats | VST3 in DAW, Standalone     | VST3, AU, Standalone         |
@@ -24,7 +24,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 2. Create a new audio or instrument track.
 3. Insert Grano as a VST3 (Windows/Linux) or AU (macOS) plugin.
 
-**Expected result:** Plugin window opens with no error dialogs. All UI panels visible. No audio glitches or crashes.  
+**Expected result:** Plugin window opens with no error dialogs. The whole console is visible on one screen (header, monitor, 4 slots, 9 banks, status strip). No audio glitches or crashes.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -33,18 +33,18 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 1.2 Default state on init
 **Setup:** Plugin just loaded (step 1.1 complete).  
 **Steps:**
-1. Inspect all knobs and controls.
+1. Read every scribble strip (each control shows its value and unit).
 
 **Expected result:**
 - Grain Size ≈ 100ms, Density ≈ 10 g/s, Position = 0%, Position Jitter = 0%.
 - Pitch Shift = 0st, Stereo Spread = 50%, Master Volume = 0dB, Loop = off.
-- MOTION, COLOR, PATTERN modules bypassed.
-- LFO 1 and LFO 2 Rate = 1Hz, Sine waveform, Depth = 0.
+- MOTION, COLOR, PATTERN off: banks dimmed, tape titles struck through, On keys read OFF.
+- LFO 1 and LFO 2 Rate = 1Hz, Sine waveform, Depth = 50%.
 - Modulation matrix: all 8 slots = None → None × 0%.
-- Snapshots A/B/C/D show no stored state.
+- Snapshots A/B/C/D read EMPTY.
 - Sub-grain Depth = 0, Stochastic Distribution = Uniform.
 - Feedback off, Spectral off.
-- Waveform display is empty (no sample loaded).  
+- Monitor reads "DROP A SAMPLE TO START"; all 4 slot strips read "click to load".  
 
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
@@ -65,27 +65,27 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ## 2. Sample Loading
 
-### 2.1 Load WAV via Load button
+### 2.1 Load WAV via slot strip
 **Setup:** Plugin open, no sample loaded.  
 **Steps:**
-1. Click the **Load** button.
+1. Click slot 1's filename strip ("click to load").
 2. Navigate to a WAV file in the file picker.
 3. Click **Open** (or equivalent).
 
-**Expected result:** Waveform display renders the sample waveform. No error dialog. Playback head appears at position 0.  
+**Expected result:** Monitor renders the waveform with filename, duration · rate · channels. Slot 1 shows the filename. The command line reports the load. Read head at position 0.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
-### 2.2 Load AIFF via Load button
+### 2.2 Load AIFF into another slot
 **Setup:** Plugin open, no sample loaded.  
 **Steps:**
-1. Click the **Load** button.
+1. Click slot 2's filename strip.
 2. Select an AIFF file.
 3. Confirm.
 
-**Expected result:** Waveform display shows AIFF content. Granular engine outputs audio when the host is playing.  
+**Expected result:** Slot 2 shows the filename; its weight fader is raised to 50% if it was at 0. Click slot number **2**: the monitor shows the AIFF. Engine outputs audio when the host is playing.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -94,9 +94,9 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 2.3 Load FLAC via drag-and-drop
 **Setup:** Plugin open, no sample loaded. File manager open beside the DAW.  
 **Steps:**
-1. Drag a FLAC file from the file manager and drop it onto the waveform display area.
+1. Drag a FLAC file from the file manager over the Grano window (amber outline appears) and drop it.
 
-**Expected result:** FLAC sample loads. Waveform renders. No crash or silent failure.  
+**Expected result:** FLAC loads into the slot shown in the monitor (lit slot number). Waveform renders. No crash or silent failure.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -105,7 +105,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 2.4 Load OGG via drag-and-drop
 **Setup:** Plugin open, no sample loaded.  
 **Steps:**
-1. Drag an OGG file onto the waveform display.
+1. Drag an OGG file onto the Grano window.
 
 **Expected result:** OGG sample loads and waveform renders correctly.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
@@ -116,7 +116,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 2.5 Load MP3 via drag-and-drop
 **Setup:** Plugin open, no sample loaded.  
 **Steps:**
-1. Drag an MP3 file onto the waveform display.
+1. Drag an MP3 file onto the Grano window.
 
 **Expected result:** MP3 sample loads and waveform renders correctly.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
@@ -127,9 +127,9 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 2.6 Invalid file rejected gracefully
 **Setup:** Plugin open.  
 **Steps:**
-1. Drag a non-audio file (e.g., a `.txt` or `.png`) onto the waveform display.
+1. Drag a non-audio file (e.g., a `.txt` or `.png`) onto the Grano window, then load one via a slot strip.
 
-**Expected result:** File is rejected. No crash. Previously loaded sample (if any) remains unchanged. Optional: brief error message or no response.  
+**Expected result:** File is rejected. No crash. Previously loaded sample (if any) remains unchanged. Via the slot strip, the strip reads "load failed" in red (hover for the reason) and the command line reports the failure.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -139,7 +139,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 **Setup:** WAV sample loaded (test 2.1). Host is playing or standalone is running.  
 **Steps:**
 1. Ensure host transport is running.
-2. Monitor the output meter or listen through monitors.
+2. Watch the MASTER meter and listen through monitors.
 
 **Expected result:** Audible granular output. Grains are heard at roughly the expected density.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
@@ -328,10 +328,10 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 4.1 MOTION bypass toggle
 **Setup:** Default state + sample loaded. MOTION module bypassed.  
 **Steps:**
-1. Enable MOTION (turn off bypass).
+1. Click the **On** key on the MOTION tape (bank undims).
 2. Set Wow Depth = 50%, Wow Rate = 0.5Hz.
 3. Listen.
-4. Re-enable bypass (MOTION off).
+4. Click the On key again (MOTION off; bank dims, title struck through).
 
 **Expected result:** With MOTION on: slow pitch wavering (wow) audible. With MOTION off (bypass): wow disappears. Clean before/after comparison.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
@@ -723,13 +723,13 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-### 7.8 LFO 1 — Waveform: Drawable
+### 7.8 LFO 1 — Waveform keys and preview
 **Setup:** Same as 7.2.  
 **Steps:**
-1. Select Drawable waveform.
-2. Draw a custom shape in the LFO curve editor.
+1. Click each of the six waveform keys in turn.
+2. Change Rate, Phase and Depth.
 
-**Expected result:** Pitch modulation follows the drawn shape. Output changes as the shape is edited.  
+**Expected result:** Exactly six keys (Sine, Triangle, Saw, Square, Random, S&H; the Drawable choice is not offered in v1.0). The LFO preview redraws for each waveform, phase and depth. Hovering a key names the waveform.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -822,7 +822,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 8.4 Verify all 29 destinations are selectable
 **Setup:** Any single matrix slot.  
 **Steps:**
-1. Click the Destination dropdown for any slot.
+1. Click the destination select of any MOD MATRIX row.
 2. Count/verify all destination options appear.
 
 **Expected result:** Exactly 29 destinations listed. No blank entries, no duplicates. All parameter names are legible.  
@@ -834,7 +834,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 8.5 Clear a slot (Source = None)
 **Setup:** Slot 1 active with LFO1 → Pitch Shift.  
 **Steps:**
-1. Set Source of slot 1 to None.
+1. Click the lit **L1** key in row 1 so neither L1 nor L2 is lit (Source = None).
 
 **Expected result:** Modulation stops immediately. Pitch Shift returns to its static value.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
@@ -848,9 +848,9 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 **Setup:** Default state + sample loaded.  
 **Steps:**
 1. Set Grain Size = 50ms, Density = 80 g/s, Pitch Shift = +7st.
-2. Long-press or right-click Snapshot **A** and select "Save" (or use the save action per the UI design).
+2. Click the empty Snapshot **A** key (or Ctrl/Cmd-click it, or right-click → **Store current**).
 
-**Expected result:** Snapshot A now holds the modified parameter state. Visual indicator on A confirms it has saved content.  
+**Expected result:** A is lit white and reads LIVE. The command line reports the store. After storing B, A reads STORED (amber letter).  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -862,7 +862,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 1. Adjust Grain Size = 200ms, Density = 5 g/s, Pitch Shift = 0st.
 2. Click Snapshot **A** to recall.
 
-**Expected result:** All parameters snap back to the values saved in step 9.1: Grain Size = 50ms, Density = 80 g/s, Pitch Shift = +7st.  
+**Expected result:** All parameters snap back to the values saved in step 9.1: Grain Size = 50ms, Density = 80 g/s, Pitch Shift = +7st. A is lit white (LIVE).  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -1138,14 +1138,14 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-## 14. Waveform Display
+## 14. Monitor
 
 ### 14.1 Waveform renders after sample load
 **Setup:** No sample loaded.  
 **Steps:**
 1. Load a WAV file (any length).
 
-**Expected result:** Waveform display renders the sample amplitude envelope. Shape is recognizable and matches the audio file's content.  
+**Expected result:** Monitor renders the sample amplitude envelope. Shape is recognizable and matches the audio file's content.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -1154,15 +1154,15 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 14.2 Grain particle visualization
 **Setup:** Sample loaded. Density = 30 g/s. Host playing.  
 **Steps:**
-1. Observe the waveform display.
+1. Observe the monitor.
 
-**Expected result:** Grain particles appear on the waveform at the current grain read positions. Particles update in real time as grains spawn.  
+**Expected result:** Grain dots appear on the waveform at the current grain read positions, with a short read trace. The grain count under the waveform and in the status strip updates in real time.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
 ---
 
-### 14.3 Particle density matches Density knob
+### 14.3 Particle density matches Density fader
 **Setup:** Sample loaded. Host playing.  
 **Steps:**
 1. Set Density = 5 g/s. Observe particle count.
@@ -1180,7 +1180,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 1. Set Position Jitter = 0%. Observe particle positions.
 2. Set Position Jitter = 100%. Observe.
 
-**Expected result:** At 0%: particles cluster tightly around the 50% position marker. At 100%: particles scatter across the full waveform width.  
+**Expected result:** At 0%: particles cluster tightly around the read head. At 100%: the jitter span covers the full width and particles scatter across it.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -1196,7 +1196,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 3. Close the project.
 4. Reopen the project.
 
-**Expected result:** All parameter values are restored exactly. Sample is reloaded. Module bypass states are correct. Output sounds identical to before saving.  
+**Expected result:** All parameter values are restored exactly. All loaded slots reload (filenames in the slot strips, waveform in the monitor). Module On states and snapshots are correct. Output sounds identical to before saving.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -1271,7 +1271,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ---
 
 ### 16.4 Memory usage with 4 samples loaded (MultiSampleBank)
-**Setup:** (If the 4-slot MultiSampleBank UI is exposed in v1.0.) Load 4 large samples (> 30MB each).  
+**Setup:** Load 4 large samples (> 30MB each), one per slot strip.  
 **Steps:**
 1. Load four distinct large samples into all four bank slots.
 2. Monitor RAM usage via OS task manager or DAW diagnostics.
@@ -1286,7 +1286,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 ### 16.5 No crash on rapid bypass toggling
 **Setup:** Sample loaded, all three modules (MOTION, COLOR, PATTERN) enabled.  
 **Steps:**
-1. Rapidly toggle the bypass switches for MOTION, COLOR, and PATTERN in quick succession for 10 seconds.
+1. Rapidly toggle the On keys for MOTION, COLOR, and PATTERN in quick succession for 10 seconds.
 
 **Expected result:** No crash or audio blowup. Bypass toggles cleanly with at most a brief audio artifact on the toggle edge.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
@@ -1331,6 +1331,130 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
+## 17. Editor (console)
+
+> The editor was redesigned in beta.3. See README "The console" for the layout.
+
+### 17.1 Window scaling
+**Setup:** Plugin open in a DAW, then in Standalone.  
+**Steps:**
+1. Drag the window corner to the smallest size, then the largest.
+2. Close and reopen the editor.
+
+**Expected result:** Window scales 0.75×–1.6× keeping its aspect ratio. Text stays sharp and legible at the minimum size; nothing overlaps or clips. Size is consistent after reopen.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.2 Every control readable and resettable
+**Setup:** Default state.  
+**Steps:**
+1. Hover several controls in each bank.
+2. Drag a GRAIN fader, then hold Ctrl/Cmd and drag again.
+3. Double-click the control.
+
+**Expected result:** Each control shows name + value + unit on its strip, and a tooltip plus a status-strip hint on hover. Ctrl/Cmd-drag moves ~10× finer. Double-click resets to default. The command line shows the full name, previous value and default.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.3 Keyboard and screen reader
+**Setup:** Default state. OS screen reader optional.  
+**Steps:**
+1. Press Tab repeatedly.
+2. Use the arrow keys on a focused control.
+
+**Expected result:** Focus moves through the controls; arrows step the focused value. With a screen reader, each control announces its name and value text.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.4 Pattern contextual controls
+**Setup:** PATTERN on.  
+**Steps:**
+1. Select Free, Sync, Euclid, Audio in turn.
+
+**Expected result:** Free: info line, no Div. Sync: Div select + info line. Euclid: Div, ring, Pulses / Steps / Rotation; the ring updates as you edit them. Audio: Sensitivity encoder. Probability / Reverse / Spray and Scale are always present.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.5 Slots: show, weight, clear
+**Setup:** Samples loaded in slots 1 and 2.  
+**Steps:**
+1. Click slot number 2, then 1.
+2. Drag slot 2's weight fader.
+3. Click slot 2's clear (×) key.
+
+**Expected result:** The lit number and monitor follow the selection. The weight changes and is automatable. Clear empties the strip ("click to load", weight dimmed) and the command line reports it. The status strip counts loaded slots.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.6 Snapshot clear and live state
+**Setup:** Snapshots A and B stored.  
+**Steps:**
+1. Right-click B → **Clear**.
+2. Change a parameter, then recall A.
+
+**Expected result:** B reads EMPTY. A lights white (LIVE) after recall. The right-click menu offers Store current / Recall / Clear.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.7 Master meter and clip LED
+**Setup:** Sample loaded, host playing.  
+**Steps:**
+1. Watch the MASTER meter.
+2. Raise Master Volume to +6 dB with dense settings until the output clips.
+
+**Expected result:** The L/R meter follows the output level. The dB readout matches the fader. When the output exceeds 0 dBFS the clip LED lights and holds ~1.5 s.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.8 Modulation marks
+**Setup:** LFO 1 Depth 70%.  
+**Steps:**
+1. Route LFO 1 → Grain Size at +50% in matrix row 1.
+2. Route LFO 2 → Saturate in row 2.
+
+**Expected result:** Grain Size's strip gets a blue marker and its fader a range bracket; Saturate's encoder gets a blue arc. The marks disappear when the routes are cleared.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.9 Editor survives reopen and project reload
+**Setup:** Samples in slots 1–3, non-default values, snapshot A stored.  
+**Steps:**
+1. Close and reopen the editor.
+2. Save, close and reopen the project.
+
+**Expected result:** Waveform, slot filenames, weights, values, the live snapshot and module On states all reappear as they were.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
+### 17.10 Drag and drop (Windows Explorer)
+**Setup:** Windows, Grano in a DAW and in Standalone.  
+**Steps:**
+1. Drag a WAV from Explorer over the window and drop it.
+
+**Expected result:** Copy cursor and amber outline while dragging; the file loads into the slot shown in the monitor.  
+**Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
+**macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
+
+---
+
 ## Sign-off
 
 | Platform | Tester | Date | Result |
@@ -1342,4 +1466,4 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-*End of TESTING.md — v1.1*
+*End of TESTING.md — v1.2*

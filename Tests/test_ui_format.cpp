@@ -9,6 +9,7 @@
 #include "UI/Console.h"
 #include "UI/Monitor.h"
 #include "UI/Header.h"
+#include "UI/ConsoleView.h"
 #include <set>
 
 namespace
@@ -175,6 +176,13 @@ TEST_CASE("Editor screenshots", "[.][screenshot]")
             for (auto* ch : c.getChildren()) tick(*ch);
         };
         tick(*ed);
+        std::function<void(juce::Component&)> telemetry = [&](juce::Component& c)
+        {
+            if (auto* v = dynamic_cast<ConsoleView*>(&c))
+                for (int i = 0; i < 4; ++i) { proc.processBlock(io, midi); v->tickTelemetry(); }
+            for (auto* ch : c.getChildren()) telemetry(*ch);
+        };
+        telemetry(*ed);
         const auto img = ed->createComponentSnapshot(ed->getLocalBounds(), true, 2.0f);
         juce::File out = juce::File(outDir).getChildFile(name);
         out.deleteFile();
@@ -219,10 +227,24 @@ TEST_CASE("Editor screenshots", "[.][screenshot]")
         proc.getSnapshots().save(0, a.copyState());
         proc.getSnapshots().save(1, a.copyState());
         proc.getSnapshots().save(2, a.copyState());
+        auto set = [&](const char* id, float val)
+        {
+            auto* p = a.getParameter(id);
+            p->setValueNotifyingHost(p->convertTo0to1(val));
+        };
         shoot(proc, "grano-dense.png");
 
-        a.getParameter("triggerMode")->setValueNotifyingHost(a.getParameter("triggerMode")->convertTo0to1(0));
-        a.getParameter("patternEnabled")->setValueNotifyingHost(0.0f);
-        shoot(proc, "grano-dense-free.png");
+        // Pattern modes (Euclid is the dense shot above).
+        set("triggerMode", 1); shoot(proc, "grano-pattern-sync.png");
+        set("triggerMode", 3); shoot(proc, "grano-pattern-audio.png");
+        set("triggerMode", 0); shoot(proc, "grano-pattern-free.png");
+        set("patternEnabled", 0); shoot(proc, "grano-dense-free.png");
+
+        // Hero: Free trigger, sample source (no feedback / spectral), so grains
+        // spread across the monitor.
+        set("patternEnabled", 1);
+        set("feedbackEnabled", 0); set("spectralEnabled", 0);
+        set("positionJitter", 0.55f); set("density", 60);
+        shoot(proc, "grano-hero.png");
     }
 }

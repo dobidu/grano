@@ -398,4 +398,4 @@ CI cache: JUCE clone cached by version tag + OS. CMake build dir cached by confi
 - Delete `build/CMakeCache.txt` and reconfigure. Sometimes IDE-generated cache fights with command-line CMake.
 
 **Standalone shows white window on launch (Windows)**
-- Likely a font loading issue. Confirm Inter and JetBrains Mono are embedded in `BinaryData`. Add a fallback to `juce::Font::getDefaultMonospacedFontName()`.
+- Likely a font loading issue. Confirm the `GranoFonts` binary-data target (Archivo + Martian Mono from `Resources/Fonts/`) is linked and that `Theme::font` in `Source/UI/LookAndFeel/GranoTheme.cpp` gets non-null typefaces.

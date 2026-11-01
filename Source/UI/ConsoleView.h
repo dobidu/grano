@@ -25,6 +25,8 @@ public:
     // Load a file into the slot shown in the monitor (drag-and-drop).
     void loadIntoShownSlot(const juce::File&);
     void setDragHighlight(bool b) { monitor_.setDragHighlight(b); }
+    // Run one telemetry tick by hand (headless tests have no message loop).
+    void tickTelemetry() { timerCallback(); }
 
     void paint(juce::Graphics&) override;
     void resized() override;
