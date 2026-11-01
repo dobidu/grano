@@ -9,3 +9,11 @@
 mutex:juce::WaitableEvent::signal
 mutex:juce::Timer::TimerThread
 mutex:juce::SharedResourcePointer
+
+# Two APVTS instances in one process: the second constructor's startTimerHz()
+# calls TimerThread::addTimer (holds the timer list lock, then notify() takes
+# the WaitableEvent mutex) while the running TimerThread::run() holds the
+# WaitableEvent mutex in wait() and later takes the timer list lock. JUCE
+# internal lock ordering; reported as lock-order-inversion. No user frames.
+deadlock:juce::Timer::TimerThread::addTimer
+deadlock:juce::Timer::TimerThread::getTimeUntilFirstTimer

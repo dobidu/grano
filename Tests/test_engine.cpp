@@ -414,14 +414,17 @@ namespace
             engine.prepare(sampleRate, 512);
         }
 
-        // Runs blocks over ~ms of wall time, returns max grain srcFraction seen.
+        // Renders ~ms of AUDIO time (48 kHz, 512-sample blocks) and returns
+        // the max grain srcFraction seen. Audio time, not wall time: the engine
+        // runs on a sample clock, so wall-clock loops made this flaky on slow
+        // CI runners (sleep overshoot = fewer blocks rendered).
         float maxSrcFractionOver(int ms, ModMatrix* matrix = nullptr)
         {
             juce::AudioBuffer<float> out(2, 512);
             std::array<GranularEngine::GrainSnapshot, 256> snaps{};
             float maxFrac = 0.0f;
-            const auto tEnd = juce::Time::getMillisecondCounter() + (juce::uint32)ms;
-            while (juce::Time::getMillisecondCounter() < tEnd)
+            const int numBlocks = (int)std::ceil((double)ms * 48.0 / 512.0);
+            for (int b = 0; b < numBlocks; ++b)
             {
                 if (matrix) matrix->processBlock(512, 120.0);
                 out.clear();
@@ -429,7 +432,6 @@ namespace
                 const int n = engine.getGrainSnapshots(snaps.data(), 256);
                 for (int i = 0; i < n; ++i)
                     maxFrac = std::max(maxFrac, snaps[(size_t)i].srcFraction);
-                juce::Thread::sleep(10);
             }
             return maxFrac;
         }
