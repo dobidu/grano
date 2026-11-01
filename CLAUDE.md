@@ -105,16 +105,17 @@ Source/
 │   ├── Lfo.{h,cpp}             2 LFOs, audio-rate capable (F5)
 │   ├── ModMatrix.{h,cpp}       8-slot routing matrix (F5)
 │   └── Snapshots.{h,cpp}       A/B/C/D parameter snapshots (F5)
-├── UI/
+├── UI/                         Lighting-console editor (08-09); see DESIGN_SPEC.md
 │   ├── LookAndFeel/
-│   │   └── GranoLAF.{h,cpp}    Custom LookAndFeel (F3+, polished F6)
-│   ├── Knob.{h,cpp}            Custom knob component (F3)
-│   ├── Slider.{h,cpp}          Custom slider component (F3)
-│   ├── WaveformDisplay.{h,cpp} Waveform + playhead + particles (F2+)
-│   ├── LfoPanel.{h,cpp}        LFO controls, LFO1/LFO2 tabs (F5)
-│   ├── ModulationMatrixView.{h,cpp} Matrix editor (F5)
-│   ├── ModuleTabPanel.{h,cpp}  ENGINE/MOTION/COLOR/PATTERN/LFO/MOD tabs (F6)
-│   └── CurveEditor.{h,cpp}     Envelope shape selector, 5 thumbnails (F6)
+│   │   ├── GranoTheme.{h,cpp}  Colour tokens + embedded fonts (single source)
+│   │   └── GranoLAF.{h,cpp}    ComboBox / PopupMenu / tooltip / button styling
+│   ├── ParamFormat.{h,cpp}     Display text, names, hints, mod-dest table
+│   ├── Console.{h,cpp}         Widget kit: faders, encoders, strips, keys, banks
+│   ├── ConsoleView.{h,cpp}     1200x780 root: layout, timer, command line, hints
+│   ├── Header.{h,cpp}          Command line, snapshots, loop, master meter
+│   ├── Monitor.{h,cpp}         Waveform + grains + loop playhead + click-to-position
+│   ├── SlotStrip.{h,cpp}       Sample slot: show / load / weight / clear
+│   └── Banks.{h,cpp}           GRAIN ENGINE ENVELOPE MOTION COLOR PATTERN LFO MATRIX
 └── Utils/                      (empty — constants live in their owning headers;
                                  Spectrogram display deferred post-v1.0)
 

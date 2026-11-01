@@ -137,8 +137,10 @@ Linux builds are VST3 + Standalone only. AU is macOS-exclusive.
 Grano does not synthesize audio from scratch — it granulates source audio you provide.
 
 **To load a sample:**
-- Drag a WAV, AIFF, or MP3 file onto the waveform display area.
-- Or click the **Load** button in the top bar and browse to a file.
+- Drag a WAV, AIFF, FLAC, OGG or MP3 file onto the plugin window: it loads into the slot shown in the monitor (the lit slot number).
+- Or click a slot's filename strip ("click to load") and browse to a file. Each of the 4 slots has a weight fader and a clear key; click a slot number to show that sample in the monitor.
+
+Click or drag on the monitor to set **Position**. The command line at the top spells out whichever control you touch, with its previous and default values. Double-click any control to reset it; hold Ctrl/Cmd while dragging for fine adjustment. The window scales from 0.75× to 1.6×.
 
 Supported formats: WAV, AIFF, FLAC, OGG, MP3.
 
@@ -564,8 +566,9 @@ Destinations active in v1.0: **Grain Size, Density, Position, Position Jitter, P
 
 Four complete parameter states that can be stored and recalled instantly.
 
-- **Save:** Ctrl+click (Cmd+click on macOS) a Snapshot button to store the current state.
-- **Recall:** click a Snapshot button to instantly switch all parameters to that stored state.
+- **Save:** Ctrl+click (Cmd+click on macOS) a Snapshot key, or right-click it and choose **Store current**. Clicking an empty key also stores.
+- **Recall:** click a stored Snapshot key (amber letter) to instantly switch all parameters to that state. The key of the snapshot you last stored or recalled is lit white ("live").
+- **Clear:** right-click a key and choose **Clear**.
 - **Persist:** snapshots are saved with the plugin state and reload with your DAW project.
 
 Snapshots are useful for creating contrasting sections in a performance (e.g., A = sparse/dry, B = dense/wet) or for A/B comparison while sound designing.

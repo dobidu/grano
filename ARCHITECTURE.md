@@ -36,11 +36,10 @@ For project-level context (goals, stack, ADRs), see `.paul/PROJECT.md`. For the 
                                │ contains
                                ▼
                   ┌──────────────────┐
-                  │ WaveformDisplay  │
-                  │ Knobs / Sliders  │
-                  │ Module panels    │
-                  │ LFO panel        │
-                  │ Snapshot bar     │
+                  │ ConsoleView      │
+                  │  header, monitor │
+                  │  slot strips     │
+                  │  module banks    │
                   └──────────────────┘
 ```
 
@@ -209,48 +208,31 @@ Snapshots A/B/C/D are `juce::ValueTree` subtrees stored as `apvts.state` childre
 
 ## UI architecture
 
+See `DESIGN_SPEC.md` for the visual system and `design/mock/grano-ui.html` for the approved layout.
+
 ### `GranoAudioProcessorEditor`
 
-Owns:
+Thin shell: owns `GranoLAF`, a `juce::TooltipWindow` and one `ConsoleView`. The view is a fixed 1200 × 780 canvas; the editor scales it with `setTransform(AffineTransform::scale(s))`, s = width / 1200, with a fixed-aspect constrainer limiting s to 0.75–1.6. The editor also owns file drag-and-drop, including the Win32 OLE `IDropTarget` (`GranoDropTarget`), and forwards drops to the slot shown in the monitor.
 
-- A custom `juce::LookAndFeel` instance (`GranoLAF`) set as the editor's LookAndFeel.
-- `WaveformDisplay` child component (top third).
-- Six core controls: `Knob`s for Grain Size, Density, Position, Jitter; `Slider`s for Pitch Shift, Stereo Spread.
-- Three module panels: `MotionPanel`, `ColorPanel`, `PatternPanel`, each with its own children.
-- One `LfoPanel` containing both LFO visualizations and edit controls.
-- A header bar with snapshot buttons, loop toggle, master volume.
-- A footer with telemetry (CPU, voices, active grains).
+### `ConsoleView`
 
-Layout uses `juce::FlexBox` (preferred for adaptive panels) and explicit `setBounds` for the major regions. Resizable within the limits set in `setResizeLimits`.
+Lays out every region at absolute base-pixel bounds and owns: `CommandLine`, `SnapshotBar`, `LoopSection`, `MasterSection` (meter + volume), `Monitor`, four `SlotStrip`s and the module banks (`Banks::GrainBank`, `EngineBank`, `EnvelopeBank`, `MotionBank`, `ColorBank`, `PatternBank`, two `LfoBank`s, `MatrixBank`). It implements `Console::TouchSink`: controls report gesture start / value change, and the view writes the command line (full name, previous and default value, current value). One 30 Hz timer drives the monitor and meter; at 10 Hz it polls the processor's slot-state generation, recomputes modulation marks from the matrix parameters, refreshes snapshot state and the status strip.
 
-### `WaveformDisplay`
+### Console widgets (`Source/UI/Console.h`)
 
-Renders three layers:
+Custom components bound straight to parameters with `juce::ParameterAttachment` (gestures, automation, host sync handled by JUCE): `ParamControl` base (drag, fine drag, double-click reset, wheel, arrow keys, accessible slider with value text, tooltip) with `Fader`, `Encoder`, `ValueStrip`, `HFader`, `BipolarBar`; `Key`, `ChoiceKeys`, `ToggleKey` (juce::Button based); `ChoiceSelect` (ComboBox); `Bank` and `SubPanel` (bypass dims the body). Display strings come from `ParamFormat` (UI-owned; parameter IDs and ranges are unchanged).
 
-1. **Background grid** (faint divisions every 0.5s).
-2. **Waveform** rendered by `juce::AudioThumbnail` in `#4A4946`.
-3. **Playhead cursor** (1.5 px vertical line in `#7CF5C4`) at the engine's current position.
-4. **Grain particles** overlay: for each active grain (read from a lock-free particle buffer the engine writes), a translucent dot in `#C77CFF` at the grain's source position. Particle alpha equals the grain's current envelope amplitude. Particles fade out over ~60 ms after the grain ends (motion blur trail effect).
+### `Monitor`
 
-Repaints at 30 Hz via a `juce::Timer`. Repaint is region-limited to the affected x-coordinate range to keep paint cost low.
+Paints the selected slot's `juce::AudioThumbnail`, the jitter span and grain-size shadow, live grains from `GranularEngine::getGrainSnapshots` (head size/colour by envelope amplitude), and the read head at Position plus `getLoopSweepFraction()` when Loop is on. Click/drag sets Position through a `ParameterAttachment` gesture.
 
-### `Knob` and `Slider`
+### Telemetry from the processor
 
-Custom components, not `juce::Slider` subclasses (which paint the JUCE default and resist deep customization). Each implements `paint`, `mouseDown`, `mouseDrag`, `mouseUp`, `mouseDoubleClick` (reset to default), `mouseWheelMove`. Value binding via `juce::AudioProcessorValueTreeState::SliderAttachment` (works with any `juce::Slider` subclass; we have a thin `juce::Slider` adapter).
+All lock-free: grain snapshot array, loop-sweep fraction, per-channel output peaks (`consumeOutputPeak`, max-hold until read), `AudioProcessLoadMeasurer` proportion, and message-thread slot metadata (`getSlotInfo`) with an atomic slot-state generation bumped on every load/unload/state restore.
 
-Visual states: idle, hover, focused, modulating. Modulating state shows a ring around the knob in the modulating LFO's color.
+### LookAndFeel (`GranoLAF`) and tokens (`GranoTheme`)
 
-### LookAndFeel (`GranoLAF`)
-
-Subclasses `juce::LookAndFeel_V4`. Overrides:
-
-- `drawRotarySlider` — replaced with a custom knob render.
-- `drawLinearSlider` — replaced with the slider render.
-- `drawButtonBackground`, `drawToggleButton`.
-- `getLabelFont`, `getPopupMenuFont` — return `Inter`. Font embedding via `BinaryData` is planned for v1.0.0 stable; until then, the implementation falls back to `juce::Font::getDefaultSansSerifFontName()`.
-- `drawPopupMenuBackground`, `drawComboBox` — match the carbon palette.
-
-Halo glow on active controls: implemented via `Graphics::drawDropShadow` with the control's accent color, at low opacity, with small radius. Sutil, not loud.
+`GranoTheme.h` holds every colour token and `Theme::font()`, which serves embedded Archivo / Martian Mono cuts from BinaryData. `GranoLAF` styles the stock widgets still in use: ComboBox, PopupMenu, TooltipWindow, TextButton.
 
 ---
 
