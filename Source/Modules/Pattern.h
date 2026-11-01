@@ -65,6 +65,10 @@ public:
     // so Euclidean patterns stay phase-locked to the host timeline.
     bool shouldFireGrainAtStep(long long step) noexcept;
 
+    // Euclidean rhythm (public so the editor's ring display matches the engine).
+    using EuclidPattern = std::array<bool, 32>;
+    static EuclidPattern buildEuclidean(int pulses, int steps, int rotation) noexcept;
+
 private:
     // ── Scale tables ─────────────────────────────────────────────────────────────
     static constexpr int kMaxScaleNotes = 12;
@@ -76,8 +80,6 @@ private:
     float quantizeToScale(float pitchSt, int scaleIdx) noexcept;
 
     // ── Euclidean rhythm ─────────────────────────────────────────────────────────
-    using EuclidPattern = std::array<bool, 32>;
-    static EuclidPattern buildEuclidean(int pulses, int steps, int rotation) noexcept;
     void rebuildEuclidIfNeeded() noexcept;
 
     EuclidPattern euclidPattern_{};

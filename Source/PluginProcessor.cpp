@@ -109,6 +109,7 @@ GranoAudioProcessor::~GranoAudioProcessor()
 
 void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    loadMeasurer_.reset(sampleRate, samplesPerBlock);
     engine_.prepare(sampleRate, samplesPerBlock);
     feedbackPath_.prepare(sampleRate); // clear stale ring, size to session rate (R-25)
     feedbackWasOn_ = false;
@@ -137,6 +138,7 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                        juce::MidiBuffer& /*midiMessages*/)
 {
     juce::ScopedNoDenormals noDenormals;
+    juce::AudioProcessLoadMeasurer::ScopedTimer loadTimer(loadMeasurer_, buffer.getNumSamples());
 
     // Host transport.
     double bpm = 120.0;
@@ -206,6 +208,15 @@ void GranoAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     // Master volume last, ramped per block (R-14).
     engine_.applyMasterGain(buffer);
+
+    // Meter telemetry: hold the max until the editor consumes it.
+    for (int ch = 0; ch < std::min(2, buffer.getNumChannels()); ++ch)
+    {
+        const float m = buffer.getMagnitude(ch, 0, buffer.getNumSamples());
+        auto& peak = outputPeak_[(size_t)ch];
+        if (m > peak.load(std::memory_order_relaxed))
+            peak.store(m, std::memory_order_relaxed);
+    }
 }
 
 juce::AudioProcessorEditor* GranoAudioProcessor::createEditor()
@@ -255,7 +266,12 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
     lastLoadedSampleRate_ = reader->sampleRate;
     lastLoadedNumFrames_  = numFrames;
     if (slot >= 0 && slot < MultiSampleBank::kNumSlots)
+    {
         slotFiles_[static_cast<size_t>(slot)] = file;
+        slotInfo_[static_cast<size_t>(slot)] =
+            { file, reader->sampleRate, numFrames, (int)reader->numChannels };
+    }
+    slotStateGen_.fetch_add(1, std::memory_order_acq_rel);
     const auto gen = sampleBank_.loadSlot(slot, std::move(buf), numFrames);
     if (slot == 0)
     {
@@ -274,6 +290,8 @@ void GranoAudioProcessor::unloadSlot(int slot)
     const bool hadSample = slotFiles_[(size_t)slot].getFullPathName().isNotEmpty()
                            || sampleBank_.getNumSamples(slot) > 0;
     slotFiles_[(size_t)slot] = juce::File();
+    slotInfo_[(size_t)slot]  = {};
+    slotStateGen_.fetch_add(1, std::memory_order_acq_rel);
     if (hadSample)
     {
         sampleBank_.loadSlot(slot, nullptr, 0); // empty record: slot goes silent on swap

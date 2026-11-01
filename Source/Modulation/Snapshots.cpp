@@ -4,13 +4,25 @@ void Snapshots::save(int slot, const juce::ValueTree& state) noexcept
 {
     const int i = juce::jlimit(0, kNumSlots - 1, slot);
     slots_[i] = state.createCopy();
+    live_ = i;
 }
 
-void Snapshots::recall(int slot, juce::AudioProcessorValueTreeState& apvts) const noexcept
+void Snapshots::clearSlot(int slot) noexcept
+{
+    const int i = juce::jlimit(0, kNumSlots - 1, slot);
+    slots_[i] = {};
+    if (live_ == i)
+        live_ = -1;
+}
+
+void Snapshots::recall(int slot, juce::AudioProcessorValueTreeState& apvts) noexcept
 {
     const int i = juce::jlimit(0, kNumSlots - 1, slot);
     if (slots_[i].isValid())
+    {
         apvts.replaceState(slots_[i].createCopy());
+        live_ = i;
+    }
 }
 
 bool Snapshots::isOccupied(int slot) const noexcept

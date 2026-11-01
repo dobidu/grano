@@ -11,9 +11,14 @@ public:
     static constexpr int kNumSlots = 4;
 
     void save   (int slot, const juce::ValueTree& state) noexcept;
-    void recall (int slot, juce::AudioProcessorValueTreeState& apvts) const noexcept;
+    void recall (int slot, juce::AudioProcessorValueTreeState& apvts) noexcept;
     bool isOccupied (int slot) const noexcept;
-    void clear() noexcept { for (auto& s : slots_) s = {}; }
+    void clear() noexcept { for (auto& s : slots_) s = {}; live_ = -1; }
+    void clearSlot(int slot) noexcept;
+
+    // Last stored or recalled slot (-1 none) — the snapshot the sound is
+    // currently based on. UI state, not serialised.
+    int  getLive() const noexcept { return live_; }
 
     juce::ValueTree serialise() const;
     void deserialise(const juce::ValueTree& data);
@@ -22,4 +27,5 @@ public:
 
 private:
     std::array<juce::ValueTree, kNumSlots> slots_{};
+    int live_{ -1 };
 };

@@ -97,6 +97,39 @@ public:
 
     const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
 
+    // Message thread: metadata of the sample loaded into a slot (numFrames 0
+    // when empty). Lets a reopened editor rebuild the waveform and slot strips.
+    struct SlotInfo
+    {
+        juce::File file;
+        double     sampleRate { 0.0 };
+        int        numFrames  { 0 };
+        int        numChannels{ 0 };
+    };
+    SlotInfo getSlotInfo(int slot) const
+    {
+        return (slot >= 0 && slot < MultiSampleBank::kNumSlots)
+            ? slotInfo_[(size_t)slot] : SlotInfo{};
+    }
+
+    // Bumped on every slot load/unload (incl. state restore). The editor
+    // polls it to refresh slot strips and the waveform.
+    juce::uint32 getSlotStateGeneration() const noexcept
+    {
+        return slotStateGen_.load(std::memory_order_acquire);
+    }
+
+    // UI telemetry: peak |sample| per output channel since the last call
+    // (written by the audio thread, consumed by the editor meter).
+    float consumeOutputPeak(int channel) noexcept
+    {
+        return outputPeak_[(size_t)juce::jlimit(0, 1, channel)]
+                   .exchange(0.0f, std::memory_order_relaxed);
+    }
+
+    // UI telemetry: processBlock time as a proportion of the block duration.
+    double getCpuLoad() const { return loadMeasurer_.getLoadAsProportion(); }
+
     SampleBuffer&              getSampleBuffer()  noexcept { return sampleBank_.getSlot(0); }
     MultiSampleBank&           getSampleBank()    noexcept { return sampleBank_; }
     GranularEngine&            getEngine()        noexcept { return engine_; }
@@ -148,6 +181,12 @@ private:
     // Source file per bank slot — message thread only. Serialized in
     // getStateInformation so samples reload with the DAW project.
     std::array<juce::File, MultiSampleBank::kNumSlots> slotFiles_{};
+    std::array<SlotInfo,   MultiSampleBank::kNumSlots> slotInfo_{};
+    std::atomic<juce::uint32> slotStateGen_{ 0 };
+
+    // Editor telemetry (not parameters): output peaks, block load.
+    std::array<std::atomic<float>, 2> outputPeak_{};
+    juce::AudioProcessLoadMeasurer    loadMeasurer_;
 
     // Set by parameterChanged (any thread), consumed on the message thread.
     std::atomic<bool> spectralDirty_{ false };
