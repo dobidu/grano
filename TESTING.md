@@ -1306,13 +1306,14 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-### 16.7 No audio on empty buffer (no sample loaded)
-**Setup:** Fresh plugin instance, no sample loaded.  
+### 16.7 Test-tone fallback (no usable sample)
+**Setup:** Fresh plugin instance, no sample loaded. Spectral and Feedback off.  
 **Steps:**
-1. Run the host transport.
-2. Monitor Grano's output.
+1. Run the host transport and listen.
+2. Load a sample into slot 1. Listen.
+3. Drag slot 1's weight fader to 0 (all slot weights 0). Listen.
 
-**Expected result:** No audio output. No noise floor introduced. Meter reads silence.  
+**Expected result:** Steps 1 and 3: grains of a 440 Hz sine (the built-in test tone), meter moving. Step 2: the sample is heard instead of the tone. No noise or clicks at the switch.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
