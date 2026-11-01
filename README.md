@@ -220,7 +220,7 @@ Click or drag on the monitor to set **Position**. The command line at the top sp
 
 Supported formats: WAV, AIFF, FLAC, OGG, MP3.
 
-Once loaded, the waveform appears in the monitor. The engine starts granulating immediately. If no sample is loaded, Grano falls back to an internal 440 Hz sine tone so you can still hear the engine parameters in action.
+Once loaded, the waveform appears in the monitor. The engine starts granulating immediately. If no sample is loaded (or every loaded slot's weight is at 0), Grano falls back to an internal 440 Hz sine tone so you can still hear the engine parameters in action.
 
 ---
 
