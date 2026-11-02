@@ -1,6 +1,10 @@
 # Grano — Release Notes
 
-## v1.0.0-beta.4 (unreleased)
+## v1.0.0-beta.4 (2026-11-02)
+
+A small release on top of beta.3: you can now choose what Grano plays when it
+has nothing to granulate. Nothing else changes; projects and presets sound the
+same as in beta.3.
 
 ### New
 
@@ -10,6 +14,14 @@
   The selector appears at the bottom of the monitor whenever it applies. It is
   saved with the project and is not automatable. Snapshot recall leaves it
   unchanged. Existing projects keep the test tone.
+- The selector follows the slots immediately, even while nothing is triggering
+  (Sync or Euclid with the transport stopped).
+
+### Note
+
+- With **Feedback** or **Spectral** on, that source replaces the slots even when
+  it holds no audio. With no sample loaded this is silent in either No Source
+  mode, and the selector stays hidden.
 
 ---
 

@@ -179,6 +179,8 @@ When no slot can play (nothing loaded, or every weight at 0, with Feedback and
 Spectral off), a **No Source** selector replaces the grain count at the bottom
 of the monitor: **Test tone** plays a 440 Hz sine, **Silence** plays nothing.
 
+![The No Source selector in an empty monitor](docs/images/monitor-no-source.png)
+
 Each slot strip has a number key (lit = shown in the monitor), the filename
 (click to load), a weight fader and a clear key. A failed load shows
 "load failed" in red; hover for the reason.
@@ -949,6 +951,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 2
 **No sound after loading a sample:**
 - Check Master Volume is not at −60 dB.
 - Check the slot's weight fader is above 0. With every weight at 0 and **No Source** set to Silence, Grano is silent by design.
+- With no sample loaded, turn **Feedback** and **Spectral** off. Either one replaces the slots as the grain source, and with nothing loaded it has no audio to play.
 - Confirm the sample format is supported (WAV, AIFF, FLAC, OGG, MP3). Re-save as WAV if unsure.
 - Verify the sample has non-zero length. A corrupt file may load silently.
 
@@ -989,7 +992,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 2
 
 ## Status
 
-All core features complete. Latest release: **v1.0.0-beta.3** (new console editor, correctness fixes). QA and manual acceptance testing (F8) continue toward v1.0.0.
+All core features complete. Latest release: **v1.0.0-beta.4** (No Source setting; beta.3 brought the new console editor and correctness fixes). QA and manual acceptance testing (F8) continue toward v1.0.0.
 
 | Phase | Status |
 |-------|--------|
@@ -1001,7 +1004,7 @@ All core features complete. Latest release: **v1.0.0-beta.3** (new console edito
 | F5 LFOs + Modulation Matrix + Snapshots | ✅ Complete |
 | F6 UI Polish + Advanced Engine | ✅ Complete |
 | F7 Release | ✅ Complete (v1.0.0-beta.1 tagged) |
-| F8 QA + Manual Acceptance | 🔄 In progress (beta.2, beta.3 released) |
+| F8 QA + Manual Acceptance | 🔄 In progress (beta.2, beta.3, beta.4 released) |
 
 ---
 

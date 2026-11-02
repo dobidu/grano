@@ -1,12 +1,12 @@
 # TESTING.md — Grano Manual Acceptance Test
 
-**Version:** v1.2 (multi-platform, console editor)
+**Version:** v1.3 (multi-platform, console editor, No Source)
 
 | Field          | Windows                     | macOS                        |
 |----------------|-----------------------------|------------------------------|
 | Tester         |                             |                              |
 | Date           |                             |                              |
-| Build          | v1.0.0-beta.3               | v1.0.0-beta.3                |
+| Build          | v1.0.0-beta.4               | v1.0.0-beta.4                |
 | DAW / Host     |                             |                              |
 | OS Version     |                             |                              |
 | Plugin formats | VST3 in DAW, Standalone     | VST3, AU, Standalone         |
@@ -1473,4 +1473,4 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-*End of TESTING.md — v1.2*
+*End of TESTING.md — v1.3*
