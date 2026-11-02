@@ -89,7 +89,7 @@ Write-Step "Locating VST3 artifact"
 if (-not $Vst3Path) {
     Write-Warn "No -Vst3Path provided. Trying gh CLI..."
     try {
-        $runId = (gh run list --workflow=build.yml --status=success --limit=1 --json=databaseId |
+        $runId = (gh run list --workflow=ci.yml --status=success --limit=1 --json=databaseId |
                   ConvertFrom-Json)[0].databaseId
         Write-Warn "Downloading Grano-VST3-Windows from run $runId..."
         gh run download $runId -n "Grano-VST3-Windows" -D "$tempDir\vst3" 2>&1 | Out-Null
@@ -116,7 +116,7 @@ Write-Step "Locating Standalone artifact"
 if (-not $StandalonePath) {
     Write-Warn "No -StandalonePath provided. Trying gh CLI..."
     try {
-        $runId = (gh run list --workflow=build.yml --status=success --limit=1 --json=databaseId |
+        $runId = (gh run list --workflow=ci.yml --status=success --limit=1 --json=databaseId |
                   ConvertFrom-Json)[0].databaseId
         Write-Warn "Downloading Grano-Standalone-Windows from run $runId..."
         gh run download $runId -n "Grano-Standalone-Windows" -D "$tempDir\standalone" 2>&1 | Out-Null
@@ -223,8 +223,7 @@ $sa = if ($saPassed) { "x" } elseif ($StandalonePath) { "F" } else { $null }
 #   15.3 — multiple instances maintain independent state
 #   16.3 — no dropout during rapid parameter automation (pluginval param stress)
 #   16.5 — no crash on rapid bypass toggling (pluginval param stress)
-#   16.7 — silence when no sample loaded (pluginval default-state output check)
-foreach ($id in @("1.1", "15.1", "15.2", "15.3", "16.3", "16.5", "16.7")) {
+foreach ($id in @("1.1", "15.1", "15.2", "15.3", "16.3", "16.5")) {
     [string[]]$lines = Set-TestResult -Lines $lines -TestId $id -Vst3 $pv
 }
 
@@ -242,7 +241,7 @@ Write-Ok "TESTING.md updated"
 
 # ── step 7: summary ──────────────────────────────────────────────────────────
 
-$pvTestIds = @("1.1 (VST3)", "15.1", "15.2", "15.3", "16.3", "16.5", "16.7")
+$pvTestIds = @("1.1 (VST3)", "15.1", "15.2", "15.3", "16.3", "16.5")
 $saTestIds = @("1.1 (SA)", "1.3")
 $autoCount = $pvTestIds.Count + $(if ($sa) { $saTestIds.Count } else { 0 })
 
@@ -260,8 +259,8 @@ if ($sa) {
     foreach ($id in $saTestIds) { Write-Host "    $id — Win (Standalone): [$sa]" }
 }
 Write-Host ""
-Write-Host "  Remaining: ~$(109 - $autoCount) tests require human listening / visual check."
-Write-Host "  Open TESTING.md and work through sections 2–16 manually."
+Write-Host "  Remaining: ~$(119 - $autoCount) tests require human listening / visual check."
+Write-Host "  Open TESTING.md and work through sections 2–17 manually."
 Write-Host ""
 Write-Host "  Logs: $tempDir"
 Write-Host ""

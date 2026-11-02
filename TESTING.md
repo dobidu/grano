@@ -13,7 +13,7 @@
 
 Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below: `> Failure: <short description>`. Skipped tests: `[S]` with a note.
 
-**Automated pre-pass (macOS).** Run `scripts/macos-test.sh --mark` first. It installs the release, runs `auval`, `pluginval` (strictness 10) and a Standalone launch, builds the tests and runs headless engine checks (formats, parameter extremes, state, CPU, memory, a 30-minute offline soak). It marks the tests it fully covers, fills the CPU/RAM fields, and writes `qa-results/macos-<date>/manual-checklist.md`: the remaining tests, with notes where the engine side is already verified. Options: `--tag <release>`, `--local`, `--soak-min <n>`, `--no-install`. Windows: `scripts/windows-test.ps1` (pluginval + Standalone only).
+**Automated pre-pass (macOS).** Run `Scripts/macos-test.sh --mark` first. It installs the release, runs `auval`, `pluginval` (strictness 10) and a Standalone launch, builds the tests and runs headless engine checks (formats, parameter extremes, state, CPU, memory, a 30-minute offline soak). It marks the tests it fully covers, fills the CPU/RAM fields, and writes `qa-results/macos-<date>/manual-checklist.md`: the remaining tests, with notes where the engine side is already verified. Options: `--tag <release>`, `--local`, `--soak-min <n>`, `--no-install`. Windows: `Scripts/windows-test.ps1` (pluginval + Standalone only).
 
 ---
 
