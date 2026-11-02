@@ -62,6 +62,7 @@ add_executable(GranoTests
     test_spectral.cpp
     test_multisample.cpp
     test_ui_format.cpp
+    test_qa.cpp
 )
 
 target_include_directories(GranoTests

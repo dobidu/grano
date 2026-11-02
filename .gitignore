@@ -108,3 +108,6 @@ DEMO_SCRIPT.md
 
 # impeccable design tooling (local)
 .impeccable/
+
+# Acceptance-test run output (scripts/macos-test.sh)
+qa-results/

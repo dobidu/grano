@@ -13,6 +13,8 @@
 
 Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below: `> Failure: <short description>`. Skipped tests: `[S]` with a note.
 
+**Automated pre-pass (macOS).** Run `scripts/macos-test.sh --mark` first. It installs the release, runs `auval`, `pluginval` (strictness 10) and a Standalone launch, builds the tests and runs headless engine checks (formats, parameter extremes, state, CPU, memory, a 30-minute offline soak). It marks the tests it fully covers, fills the CPU/RAM fields, and writes `qa-results/macos-<date>/manual-checklist.md`: the remaining tests, with notes where the engine side is already verified. Options: `--tag <release>`, `--local`, `--soak-min <n>`, `--no-install`. Windows: `scripts/windows-test.ps1` (pluginval + Standalone only).
+
 ---
 
 ## 1. First Launch
@@ -1244,8 +1246,8 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-### 16.2 CPU at worst case (1000 grains, Sub-grain Depth 2, Feedback on, Spectral on)
-**Setup:** Sample loaded. Maximum Density, Sub-grain Depth = 2, Feedback on (Gain = 0.5), Spectral on. All modules enabled.  
+### 16.2 CPU at worst case (max density and grain size, Sub-grain Depth 2, Feedback on, Spectral on)
+**Setup:** Sample loaded. Density = 100 g/s, Grain Size = 500ms, Sub-grain Depth = 2, Feedback on (Gain = 0.5), Spectral on. All modules enabled.  
 **Steps:**
 1. Run for 30 seconds.
 2. Monitor CPU.
