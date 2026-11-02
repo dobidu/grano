@@ -21,6 +21,9 @@
 #if JUCE_MAC
  #include <mach/mach.h>
 #elif JUCE_WINDOWS
+ #ifndef NOMINMAX
+  #define NOMINMAX   // keep std::min/std::max usable
+ #endif
  #include <windows.h>
  #include <psapi.h>
  #pragma comment(lib, "psapi.lib")
