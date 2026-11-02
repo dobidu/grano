@@ -123,6 +123,36 @@ void GranularEngine::addActive(Grain* g) noexcept
         pool_.release(g); // active list full — drop
 }
 
+bool GranularEngine::computeNoSource() const noexcept
+{
+    // Mirrors scheduleGrain's source priority without consuming the RNG, so
+    // the monitor's No Source state stays current while nothing triggers
+    // (e.g. Sync with the transport stopped).
+    const bool spectralOn = spectralSource_ != nullptr &&
+        pSpectralEnabled_ != nullptr &&
+        pSpectralEnabled_->load(std::memory_order_relaxed) > 0.5f;
+    if (spectralOn)
+        return spectralSource_->getReadPointer() == nullptr ||
+               spectralSource_->getNumSamples() <= 1;
+
+    const bool feedbackOn = feedbackSource_ != nullptr &&
+        pFeedbackEnabled_ != nullptr &&
+        pFeedbackEnabled_->load(std::memory_order_relaxed) > 0.5f;
+    if (feedbackOn)
+        return feedbackSource_->getReadPointer() == nullptr ||
+               feedbackSource_->getNumSamples() <= 1;
+
+    if (bankSource_ == nullptr)
+        return true;
+    for (int s = 0; s < MultiSampleBank::kNumSlots; ++s)
+    {
+        const float w = pSlotWeight_[s] ? pSlotWeight_[s]->load(std::memory_order_relaxed) : 1.0f;
+        if (w > 0.f && bankSource_->getNumSamples(s) > 1)
+            return false;
+    }
+    return true;
+}
+
 void GranularEngine::scheduleGrain(int offset) noexcept
 {
     // Source priority: Spectral > Feedback > SampleBuffer > 440 Hz sine.
@@ -162,9 +192,7 @@ void GranularEngine::scheduleGrain(int offset) noexcept
         srcLen  = len;
     }
 
-    const bool noSource = srcData == nullptr || srcLen <= 1;
-    noSourceActive_.store(noSource, std::memory_order_relaxed);
-    if (noSource)
+    if (srcData == nullptr || srcLen <= 1)
     {
         const bool silent = pNoSourceMode_ != nullptr &&
             pNoSourceMode_->load(std::memory_order_relaxed) > 0.5f;
@@ -331,6 +359,8 @@ void GranularEngine::processBlock(juce::AudioBuffer<float>& buffer) noexcept
             pool_.release(activeGrains_[(size_t)i]);
         activeGrainCount_ = 0;
     }
+
+    noSourceActive_.store(computeNoSource(), std::memory_order_relaxed);
 
     // Loop sweep clock: rising edge restarts the sweep.
     const bool loopOn = pLoop_ != nullptr &&

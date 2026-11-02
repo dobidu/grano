@@ -192,6 +192,7 @@ private:
     double nextIntervalSamples(int mode) noexcept;
     // Builds one grain (+ sub-grains) starting `offset` samples into the block.
     void scheduleGrain(int offset) noexcept;
+    bool computeNoSource() const noexcept;
     void addActive(Grain* g) noexcept;
 
 

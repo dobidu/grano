@@ -3,6 +3,7 @@
 
 #include "Engine/GranularEngine.h"
 #include "Engine/MultiSampleBank.h"
+#include "Modules/Pattern.h"
 
 // Audio output smoke tests — verify engine produces sound without NaN/Inf/clipping.
 // Uses GranularEngine's built-in testSample_ (440 Hz sine) — no file I/O needed.
@@ -196,5 +197,47 @@ TEST_CASE("No-source mode: a loaded, weighted slot clears the flag", "[audio][sm
         out.clear();
         engine.processBlock(out);
     }
+    REQUIRE(engine.isNoSourceActive());
+}
+
+TEST_CASE("No-source flag updates while no grains are scheduled", "[audio][smoke][nosource]")
+{
+    // Sync trigger with the transport stopped: the scheduler fires nothing, but
+    // the monitor's No Source state must still follow the slot weights.
+    std::atomic<float> patEnabled{ 1.0f }, trigMode{ 1.0f }, syncDiv{ 2.0f },
+        euclidPulses{ 4.0f }, euclidSteps{ 16.0f }, euclidRot{ 0.0f },
+        transSens{ 0.5f }, probability{ 1.0f }, reverseProb{ 0.0f },
+        quantScale{ 0.0f }, spray{ 0.0f };
+    Pattern pattern;
+    pattern.setParamPointers(&patEnabled, &trigMode, &syncDiv, &euclidPulses,
+                             &euclidSteps, &euclidRot, &transSens, &probability,
+                             &reverseProb, &quantScale, &spray);
+    pattern.prepare(kSR);
+
+    MultiSampleBank bank;
+    std::atomic<float> w0{ 0.0f }, w1{ 0.0f }, w2{ 0.0f }, w3{ 0.0f };
+
+    GranularEngine engine;
+    engine.setBank(&bank);
+    engine.setBankParamPointers(&w0, &w1, &w2, &w3);
+    engine.setPatternSource(&pattern);
+    engine.prepare(kSR, kBlock);
+    engine.setTransport(120.0, false, true, 0.0);
+
+    const int len = (int)kSR;
+    auto buf = std::make_unique<juce::AudioBuffer<float>>(1, len + 2);
+    buf->clear();
+    bank.getSlot(0).setPending(std::move(buf), len);
+
+    juce::AudioBuffer<float> out(2, kBlock);
+    engine.processBlock(out);
+    REQUIRE(engine.isNoSourceActive());       // loaded but weight 0
+
+    w0 = 1.0f;
+    engine.processBlock(out);
+    REQUIRE_FALSE(engine.isNoSourceActive()); // one block, no grain needed
+
+    w0 = 0.0f;
+    engine.processBlock(out);
     REQUIRE(engine.isNoSourceActive());
 }
