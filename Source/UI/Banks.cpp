@@ -3,6 +3,7 @@
 #include "../Parameters.h"
 #include "../Engine/EnvelopeShapes.h"
 #include "../Modules/Pattern.h"
+#include "../Modulation/ModMatrix.h"
 
 using namespace Theme;
 using namespace Console;
@@ -431,13 +432,20 @@ public:
         source_.key(0).setTooltip("Mod " + juce::String(slot) + ": route from LFO 1. Click again to unset.");
         source_.key(1).setTooltip("Mod " + juce::String(slot) + ": route from LFO 2. Click again to unset.");
         addAndMakeVisible(source_);
+        // Reserved destinations stay visible (old projects may use them) but
+        // are greyed out in the menu so new routes can't silently do nothing.
+        for (int i = 1; i < ParamFormat::kNumModDests; ++i)
+            if (!ParamFormat::modDestActive(i, 1))
+                dest_.setItemEnabled(i + 1, false);
         addAndMakeVisible(dest_);
         addAndMakeVisible(amount_);
         refresh();
     }
     void refresh()
     {
-        const bool dead = src_.load() < 0.5f || dst_.load() < 0.5f;
+        // Unset, or routed to a reserved destination: the route does nothing.
+        const int src = juce::roundToInt(src_.load()), dst = juce::roundToInt(dst_.load());
+        const bool dead = src < 1 || dst < 1 || !ParamFormat::modDestActive(dst, src);
         dest_.setAlpha(dead ? 0.45f : 1.0f);
         amount_.setAlpha(dead ? 0.45f : 1.0f);
     }

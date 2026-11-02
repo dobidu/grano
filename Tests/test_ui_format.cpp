@@ -6,6 +6,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "UI/ParamFormat.h"
+#include "Modulation/ModMatrix.h"
 #include "UI/Console.h"
 #include "UI/Monitor.h"
 #include "UI/Header.h"
@@ -224,8 +225,8 @@ TEST_CASE("Editor screenshots", "[.][screenshot]")
             { "lfo2Rate", 6.5f }, { "lfo2Waveform", 5 }, { "lfo2Depth", 0.5f }, { "lfo2Sync", 1 },
             { "slot1Source", 1 }, { "slot1Dest", 3 }, { "slot1Amount", 0.35f }, { "slot2Source", 2 }, { "slot2Dest", 5 },
             { "slot2Amount", -0.5f }, { "slot3Source", 1 }, { "slot3Dest", 1 }, { "slot3Amount", 0.4f },
-            { "slot4Source", 2 }, { "slot4Dest", 18 }, { "slot4Amount", 0.6f }, { "slot5Source", 1 }, { "slot5Dest", 6 },
-            { "slot5Amount", 0.8f }, { "slot6Source", 2 }, { "slot6Dest", 15 }, { "slot6Amount", 0.25f } };
+            { "slot4Source", 2 }, { "slot4Dest", 2 }, { "slot4Amount", 0.6f }, { "slot5Source", 1 }, { "slot5Dest", 6 },
+            { "slot5Amount", 0.8f }, { "slot6Source", 2 }, { "slot6Dest", 4 }, { "slot6Amount", 0.25f } };
         for (auto& [id, val] : v)
             if (auto* p = a.getParameter(id))
                 p->setValueNotifyingHost(p->convertTo0to1(val));
@@ -252,4 +253,17 @@ TEST_CASE("Editor screenshots", "[.][screenshot]")
         set("positionJitter", 0.55f); set("density", 60);
         shoot(proc, "grano-hero.png");
     }
+}
+
+TEST_CASE("Only engine-consumed mod destinations count as active", "[ui]")
+{
+    // Core engine destinations 1..7 are live; LFO 2 Rate only as LFO1 cross-mod.
+    for (int i = 1; i <= 7; ++i)
+        CHECK(ParamFormat::modDestActive(i, 1));
+    CHECK_FALSE(ParamFormat::modDestActive(0, 1));
+    CHECK(ParamFormat::modDestActive(ModMatrix::kLfo2Rate, 1));
+    CHECK_FALSE(ParamFormat::modDestActive(ModMatrix::kLfo2Rate, 2));
+    for (int i = ModMatrix::kWowDepth; i < ParamFormat::kNumModDests; ++i)
+        if (i != ModMatrix::kLfo2Rate)
+            CHECK_FALSE(ParamFormat::modDestActive(i, 1));
 }

@@ -30,5 +30,10 @@ namespace ParamFormat
     // Mod matrix destination index (Parameters.cpp kModDests order) → the
     // parameter ID it modulates; empty for 0 ("None") or out of range.
     juce::String modDestParamID(int destIndex);
+
+    // True when the engine consumes this destination in v1.0: the core engine
+    // parameters, plus LFO 2 Rate when the route's source is LFO 1 (cross-mod).
+    // The other destinations are reserved post-v1.0 and have no effect.
+    bool modDestActive(int destIndex, int source = 1);
     inline constexpr int kNumModDests = 29;
 }

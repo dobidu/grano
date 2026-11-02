@@ -821,13 +821,14 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 
 ---
 
-### 8.4 Verify all 29 destinations are selectable
+### 8.4 Destination menu: 29 entries, reserved ones greyed out
 **Setup:** Any single matrix slot.  
 **Steps:**
 1. Click the destination select of any MOD MATRIX row.
 2. Count/verify all destination options appear.
+3. Set a row's source to L1 and, in a project saved with beta.4 or earlier that routes to a module destination (e.g. Verb Mix), open it and look at that row.
 
-**Expected result:** Exactly 29 destinations listed. No blank entries, no duplicates. All parameter names are legible.  
+**Expected result:** Exactly 29 entries (None + 28), no blanks, no duplicates, all legible. Selectable: None, Grain Size, Density, Position, Pos Jitter, Pitch Shift, Stereo Spread, Master Vol, LFO2 Rate. The other 20 are greyed out and cannot be picked (reserved post-v1.0). Step 3: the old route still shows its destination, but the row is dimmed like an empty row and the target control shows no modulation mark.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 

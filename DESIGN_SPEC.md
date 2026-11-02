@@ -125,6 +125,10 @@ tooltip + status hint from `ParamFormat::hint`.
 | **ChoiceSelect** | strip-styled ComboBox with amber chevron | sync division, quantize scale, matrix destination |
 | **Bank** | plate + console tape (title, module edge, optional On key); body at 38 % alpha and tape title struck through when off | every module |
 
+Matrix destination menu: reserved destinations (no effect in v1.0,
+`ParamFormat::modDestActive`) are disabled items; a row routed to one dims
+like an unset row.
+
 Modulation marks: a target of an active matrix route gets a 3 px blue
 underline and a square marker on its strip, plus a range bracket (faders) or
 arc (encoders) sized by |amount| × LFO depth.

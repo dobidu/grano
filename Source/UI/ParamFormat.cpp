@@ -1,4 +1,5 @@
 #include "ParamFormat.h"
+#include "../Modulation/ModMatrix.h"
 #include <cmath>
 #include <map>
 
@@ -241,12 +242,19 @@ juce::String ParamFormat::hint(const juce::String& id)
     {
         const auto m = "Mod " + juce::String(slot);
         if (part == "Source") return m + ": route from LFO 1 or LFO 2. Click the lit key again to unset.";
-        if (part == "Dest")   return m + " destination: the parameter this route modulates.";
+        if (part == "Dest")   return m + " destination: the parameter this route modulates. Greyed-out entries are reserved and have no effect in v1.0; a row routed to one is dimmed.";
         return m + " amount: bipolar depth, drag left for negative.";
     }
     if (const int s = weightSlot(id); s >= 0)
         return "Slot " + juce::String(s + 1) + " Weight: how often grains pick this sample. Weights are relative.";
     return fullName(id);
+}
+
+bool ParamFormat::modDestActive(int destIndex, int source)
+{
+    if (destIndex >= ModMatrix::kGrainSize && destIndex <= ModMatrix::kMasterVol)
+        return true;
+    return destIndex == ModMatrix::kLfo2Rate && source == 1;
 }
 
 juce::String ParamFormat::modDestParamID(int destIndex)

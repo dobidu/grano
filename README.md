@@ -642,7 +642,7 @@ Eight routing slots, each with three settings:
 | **Dest** | Any automatable parameter | Modulation destination. |
 | **Amount** | −100% to +100% | Modulation depth. Negative inverts polarity. |
 
-Destinations active in v1.0: **Grain Size, Density, Position, Position Jitter, Pitch Shift, Stereo Spread, Master Volume**, plus the LFO 1 → LFO 2 Rate cross-mod. The remaining module and LFO destinations appear in the menu but are reserved for a post-v1.0 release — routing to them currently has no effect.
+Destinations active in v1.0: **Grain Size, Density, Position, Position Jitter, Pitch Shift, Stereo Spread, Master Volume**, plus the LFO 1 → LFO 2 Rate cross-mod. The remaining module and LFO destinations are reserved for a post-v1.0 release: they are greyed out in the menu, and a route to one (from an older project) is dimmed and shows no modulation mark, because it has no effect.
 
 ### Snapshots A/B/C/D
 

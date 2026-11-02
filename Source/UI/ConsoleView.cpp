@@ -299,8 +299,8 @@ void ConsoleView::refreshModulation()
         const int src  = juce::roundToInt(apvts.getRawParameterValue(slotParamID(i, "Source"))->load());
         const int dest = juce::roundToInt(apvts.getRawParameterValue(slotParamID(i, "Dest"))->load());
         const float amt = apvts.getRawParameterValue(slotParamID(i, "Amount"))->load();
-        if (src <= 0 || dest <= 0 || amt == 0.0f)
-            continue;
+        if (src <= 0 || dest <= 0 || amt == 0.0f || !ParamFormat::modDestActive(dest, src))
+            continue;   // reserved destinations get no mark: they change nothing
         const float lfoDepth = apvts.getRawParameterValue(src == 1 ? ParamIDs::lfo1Depth : ParamIDs::lfo2Depth)->load();
         depth[ParamFormat::modDestParamID(dest)] += std::abs(amt) * lfoDepth * 0.5f;
     }

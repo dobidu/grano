@@ -13,6 +13,10 @@
   from beta.1 (where the loop faded out within seconds).
 - With Feedback on and no sample loaded, the No Source setting now applies
   (test tone or silence), as it does with Feedback off.
+- **Reserved mod destinations are marked.** The 20 module and LFO destinations
+  that have no effect yet are greyed out in the matrix menu. A route to one,
+  kept from an older project, is dimmed and no longer draws a modulation mark
+  on its target.
 
 ---
 

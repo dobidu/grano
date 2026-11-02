@@ -474,7 +474,7 @@ TEST_CASE("QA 7.1-7.12 every LFO waveform modulating grain size", "[.][qa][pre]"
     }
 }
 
-TEST_CASE("QA 8.4 matrix lists 29 destinations", "[.][qa][auto]")
+TEST_CASE("QA 8.4 matrix lists 29 destinations", "[.][qa][pre]")
 {
     Rig r;
     auto* p = dynamic_cast<juce::AudioParameterChoice*>(r.param(ParamIDs::slot1Dest));
