@@ -1315,8 +1315,11 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 4. In the monitor's **No Source** selector, click **Silence**. Listen. Then click **Test tone**.
 5. Save and reopen the project.
 6. Ctrl/Cmd-click snapshot **A** to store. Set No Source to **Silence**, then click **A** to recall.
+7. Set PATTERN Trigger to **Sync** and stop the host transport. Move slot 1's weight between 0 and above 0 a few times, watching the monitor.
+8. Repeat step 7 with Trigger **Euclid**.
+9. Set Trigger back to **Free**. Clear slot 1 (no sample loaded) and set No Source to **Silence**. Turn **Feedback** on, then off. Turn **Spectral** on, then off.
 
-**Expected result:** Steps 1 and 3: grains of a 440 Hz sine (the built-in test tone), meter moving; the No Source selector (Test tone lit) replaces the grain count. Step 2: the sample plays, the selector disappears. Step 4: Silence = no output, meter idle; Test tone brings the sine back. Step 5: the chosen mode is restored. Step 6: Silence stays lit after the recall (snapshots do not change No Source). The setting does not appear as an automation lane in the host.  
+**Expected result:** Steps 1 and 3: grains of a 440 Hz sine (the built-in test tone), meter moving; the No Source selector (Test tone lit) replaces the grain count. Step 2: the sample plays, the selector disappears. Step 4: Silence = no output, meter idle; Test tone brings the sine back. Step 5: the chosen mode is restored. Step 6: Silence stays lit after the recall (snapshots do not change No Source). Steps 7–8: with nothing playing, the selector appears the moment the weight reaches 0 and disappears the moment it rises above 0 (no stale state while no grains fire). Step 9: the selector reacts to each source; it hides once Feedback or Spectral actually has audio (it may stay up briefly while that source fills) and returns when the source is turned off. The setting does not appear as an automation lane in the host.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
