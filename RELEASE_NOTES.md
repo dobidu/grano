@@ -1,5 +1,21 @@
 # Grano — Release Notes
 
+## v1.0.0-beta.5 (unreleased)
+
+### Fixes
+
+- **Feedback works again.** Since beta.2, switching Feedback on (or loading a
+  project or preset with it on) went silent: the engine granulated only the
+  feedback buffer, which starts empty, so nothing ever entered the loop. Now
+  each new grain reads the feedback buffer with probability = Feedback Gain and
+  the sample otherwise. The sample keeps feeding the loop, so it sustains at
+  any gain, and Gain 0 means no recycling. **Feedback patches sound different**
+  from beta.1 (where the loop faded out within seconds).
+- With Feedback on and no sample loaded, the No Source setting now applies
+  (test tone or silence), as it does with Feedback off.
+
+---
+
 ## v1.0.0-beta.4 (2026-11-02)
 
 A small release on top of beta.3: you can now choose what Grano plays when it

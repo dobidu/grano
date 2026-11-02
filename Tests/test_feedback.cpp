@@ -91,3 +91,84 @@ TEST_CASE("FeedbackPath scrubs non-finite input and soft-clips", "[feedback]")
         REQUIRE(std::abs(fb.getReadPointer()[i]) <= 1.0f);
     }
 }
+
+// ── Engine: feedback is blended with the bank (beta.4 fix) ────────────────────
+
+#include "Engine/GranularEngine.h"
+#include "Engine/MultiSampleBank.h"
+#include <atomic>
+#include <memory>
+
+namespace
+{
+struct FeedbackRig
+{
+    static constexpr double kSR = 48000.0;
+    static constexpr int    kBlock = 512;
+
+    MultiSampleBank bank;
+    FeedbackPath    ring;
+    GranularEngine  engine;
+    std::atomic<float> w0{ 1.0f }, w1{ 0.0f }, w2{ 0.0f }, w3{ 0.0f };
+    std::atomic<float> fbOn{ 1.0f }, fbGain{ 0.5f }, fbDamp{ 0.0f };
+    std::atomic<float> noSource{ 1.0f };   // Silence: the test tone can't mask a dead loop
+
+    explicit FeedbackRig(bool withSample)
+    {
+        engine.setBank(&bank);
+        engine.setBankParamPointers(&w0, &w1, &w2, &w3);
+        engine.setFeedbackSource(&ring);
+        engine.setFeedbackParamPointers(&fbOn, &fbGain, &fbDamp);
+        engine.setNoSourceModePointer(&noSource);
+        engine.prepare(kSR, kBlock);
+        ring.prepare(kSR);
+        if (withSample)
+        {
+            const int len = (int)kSR;
+            auto buf = std::make_unique<juce::AudioBuffer<float>>(1, len + 2);
+            buf->clear();
+            for (int i = 0; i < len; ++i)
+                buf->setSample(0, i, 0.5f * std::sin(0.05f * (float)i));
+            bank.getSlot(0).setPending(std::move(buf), len);
+        }
+    }
+
+    // Render like the processor: engine, then the output feeds the ring.
+    double rms(double seconds)
+    {
+        juce::AudioBuffer<float> out(2, kBlock);
+        double sum = 0; long long n = 0;
+        for (int b = 0; b < (int)(seconds * kSR / kBlock); ++b)
+        {
+            out.clear();
+            engine.processBlock(out);
+            ring.process(out.getReadPointer(0), out.getReadPointer(1), kBlock,
+                         fbGain.load(), fbDamp.load());
+            for (int i = 0; i < kBlock; ++i) { const float v = out.getSample(0, i); sum += (double)v * v; ++n; }
+        }
+        return std::sqrt(sum / (double)std::max(1LL, n));
+    }
+};
+} // namespace
+
+TEST_CASE("Feedback on from a cold start keeps sounding", "[feedback][GranularEngine]")
+{
+    // Before beta.4 the engine read only the (empty) ring with Feedback on:
+    // silence forever. Now grains blend ring and bank by Feedback Gain.
+    for (float gain : { 0.0f, 0.5f, 0.95f })
+    {
+        INFO("gain " << gain);
+        FeedbackRig rig(true);
+        rig.fbGain = gain;
+        (void)rig.rms(1.0);
+        REQUIRE(rig.rms(10.0) > 1e-3);
+        REQUIRE_FALSE(rig.engine.isNoSourceActive());
+    }
+}
+
+TEST_CASE("Feedback on without a sample is a no-source state", "[feedback][GranularEngine]")
+{
+    FeedbackRig rig(false);
+    REQUIRE(rig.rms(2.0) == 0.0);          // Silence mode, nothing to recycle
+    REQUIRE(rig.engine.isNoSourceActive()); // the No Source selector shows
+}

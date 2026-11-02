@@ -56,7 +56,7 @@ The design goes beyond a standard granular engine with:
 
 - **Sub-grain recursion** — each grain can spawn child grains of itself, recursively, creating fractal-density cloud structures no conventional granular plugin produces.
 - **Six stochastic timing distributions** — Uniform, Gaussian, Poisson, Exponential, Pareto, 1/f (fractal). The inter-grain interval is sampled from the chosen distribution, giving you everything from metronomic precision to heavy-tailed bursts.
-- **Internal feedback path** — the engine's own audio output is re-injected as a grain source. Sustained tones accumulate, degrade, and self-modulate over time.
+- **Internal feedback path** — the engine's own audio output is re-injected as a grain source, blended with the sample. Sustained tones accumulate, degrade, and self-modulate over time.
 - **Spectral processor** — Freeze and Blur modes transform the loaded sample in the frequency domain before granulation begins. Freeze holds the spectrum as a stationary texture; Blur smears phases to create evolving shimmer textures.
 - **Two LFOs** — rates from 0.01 Hz up to 8 kHz, routable to the core engine parameters via an 8-slot modulation matrix. LFOs are evaluated every 32 samples (independent of the host buffer size), so rates above a few hundred Hz read as textural randomization rather than true per-sample FM.
 - **Four parameter snapshots** — instant morph between four complete states during performance.
@@ -175,8 +175,8 @@ Position Jitter span; the amber band is one grain length. Orange dots are the
 grains playing right now, with a short trace of how far each has read. Click or
 drag on the monitor to set Position.
 
-When no slot can play (nothing loaded, or every weight at 0, with Feedback and
-Spectral off), a **No Source** selector replaces the grain count at the bottom
+When no slot can play (nothing loaded, or every weight at 0, with Spectral
+off), a **No Source** selector replaces the grain count at the bottom
 of the monitor: **Test tone** plays a 440 Hz sine, **Silence** plays nothing.
 
 ![The No Source selector in an empty monitor](docs/images/monitor-no-source.png)
@@ -463,11 +463,11 @@ The practical takeaway: use `density` to control overlap and articulation, `grai
 
 ### Source priority explained
 
-Grano has four possible grain sources, applied in strict priority order: **Spectral > Feedback > Sample > Sine** (the sine can be replaced by silence; see No Source).
+Grano has four possible grain sources: **Spectral > (Feedback blended with Sample) > Sample > Sine** (the sine can be replaced by silence; see No Source).
 
 When `spectralEnabled` is on, the spectral processor runs a 2048-point FFT on the loaded sample and produces a transformed buffer (Freeze or Blur). The engine takes its grain read positions from that transformed buffer. Nothing else matters as a source — not the feedback signal, not the raw sample.
 
-When `spectralEnabled` is off but `feedbackEnabled` is on, the engine reads from the internal feedback buffer: the captured audio output of the previous block, re-injected as source material. The engine granulates its own recent output. The loaded sample contributes nothing to grain content in this state (though its presence affects the feedback signal's initial history).
+When `spectralEnabled` is off but `feedbackEnabled` is on, each new grain picks its source by chance: with probability equal to `feedbackGain` it reads the internal feedback buffer (the engine's own recent output), otherwise it reads the loaded sample. At Gain 0.5 half the grains recycle the output; at 0.95 almost all do, while the remaining fresh sample grains keep the loop alive. The feedback buffer starts empty, so the texture builds up over the first seconds.
 
 When both Spectral and Feedback are off, the engine reads directly from the loaded `SampleBuffer`. This is the standard operation mode.
 
@@ -702,10 +702,10 @@ The audio output of the engine is captured after each audio block and re-injecte
 
 | Parameter | Effect |
 |-----------|--------|
-| **Feedback Gain** | How much of the previous output is fed back. Hard-clamped to 0.95 to prevent runaway divergence. At 0.95, sustained tones accumulate over many seconds. |
+| **Feedback Gain** | Share of new grains that read the feedback buffer (the rest read the sample), and the level written back into it. Hard-clamped to 0.95. At 0.95, sustained tones accumulate over many seconds. |
 | **Feedback Damp** | Low-pass filter on the feedback signal before re-injection. 0% = no filtering, 100% = heavy LP filter (retains only low frequencies). |
 
-**Source priority:** when Feedback is enabled, it takes precedence over the loaded SampleBuffer as the grain source. The engine granulates its own recent output instead of the original sample. Enable MOTION and COLOR after enabling Feedback for evolving, self-modifying textures.
+**Source blend:** with Feedback on, each new grain reads the feedback buffer with probability = Feedback Gain and the loaded sample otherwise, so the sample keeps feeding fresh material into the loop. Feedback Gain therefore sets both how much of the texture is recycled and how strongly the buffer is written. Enable MOTION and COLOR after enabling Feedback for evolving, self-modifying textures.
 
 **Caution:** Feedback Gain near 0.95 with no damping on a loud source can produce sustained loud output. Always start with low Gain and increase gradually.
 
@@ -734,7 +734,7 @@ The spectral processor applies a 2048-point FFT transform to the loaded sample b
 |---------|----------------------|
 | Default (200 grains, modules off) | ~8% |
 | 500 grains, all modules on | ~20% |
-| 1000 grains, Sub-grain depth 2, Feedback + Spectral on | ~35% |
+| Max density and grain size, Sub-grain depth 2, Feedback + Spectral on | ~35% |
 
 Grain scheduling and rendering run on the audio thread on a sample-accurate clock, so offline bounces sound exactly like realtime playback at any buffer size. Increasing Density, Grain Size or Sub-grain Depth increases the number of simultaneously rendered grains (capped at 256) and therefore audio-thread CPU. Grain level is normalised by the expected overlap, so dense settings don't get proportionally louder.
 
@@ -951,7 +951,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 2
 **No sound after loading a sample:**
 - Check Master Volume is not at −60 dB.
 - Check the slot's weight fader is above 0. With every weight at 0 and **No Source** set to Silence, Grano is silent by design.
-- With no sample loaded, turn **Feedback** and **Spectral** off. Either one replaces the slots as the grain source, and with nothing loaded it has no audio to play.
+- With no sample loaded, turn **Spectral** off: it replaces the slots as the grain source, and with nothing loaded it has no audio to play.
 - Confirm the sample format is supported (WAV, AIFF, FLAC, OGG, MP3). Re-save as WAV if unsure.
 - Verify the sample has non-zero length. A corrupt file may load silently.
 

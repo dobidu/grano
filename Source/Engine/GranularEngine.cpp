@@ -135,13 +135,8 @@ bool GranularEngine::computeNoSource() const noexcept
         return spectralSource_->getReadPointer() == nullptr ||
                spectralSource_->getNumSamples() <= 1;
 
-    const bool feedbackOn = feedbackSource_ != nullptr &&
-        pFeedbackEnabled_ != nullptr &&
-        pFeedbackEnabled_->load(std::memory_order_relaxed) > 0.5f;
-    if (feedbackOn)
-        return feedbackSource_->getReadPointer() == nullptr ||
-               feedbackSource_->getNumSamples() <= 1;
-
+    // Feedback is blended with the bank (scheduleGrain), so it never
+    // replaces the slots: the bank alone decides.
     if (bankSource_ == nullptr)
         return true;
     for (int s = 0; s < MultiSampleBank::kNumSlots; ++s)
@@ -155,7 +150,10 @@ bool GranularEngine::computeNoSource() const noexcept
 
 void GranularEngine::scheduleGrain(int offset) noexcept
 {
-    // Source priority: Spectral > Feedback > SampleBuffer > 440 Hz sine.
+    // Source priority: Spectral > (Feedback blended with the bank) > bank > 440 Hz sine.
+    // With Feedback on, each grain reads the feedback ring with probability
+    // = Feedback Gain and the bank otherwise, so fresh sample material keeps
+    // the loop alive (an empty ring alone would stay silent forever).
     const float* srcData = nullptr;
     int          srcLen  = 0;
     int          wrapLen = 0;
@@ -168,13 +166,17 @@ void GranularEngine::scheduleGrain(int offset) noexcept
         feedbackSource_ != nullptr &&
         pFeedbackEnabled_ != nullptr &&
         pFeedbackEnabled_->load(std::memory_order_relaxed) > 0.5f;
+    const float feedbackShare = (feedbackOn && pFeedbackGain_ != nullptr)
+        ? juce::jlimit(0.0f, 1.0f, pFeedbackGain_->load(std::memory_order_relaxed))
+        : 0.0f;
+    const bool fromFeedback = feedbackOn && grainRng_.nextFloat() < feedbackShare;
 
     if (spectralOn)
     {
         srcData = spectralSource_->getReadPointer();
         srcLen  = spectralSource_->getNumSamples();
     }
-    else if (feedbackOn)
+    else if (fromFeedback)
     {
         srcData = feedbackSource_->getReadPointer();
         srcLen  = feedbackSource_->getNumSamples();

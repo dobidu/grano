@@ -1018,7 +1018,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 1. Enable Feedback.
 2. Set Feedback Gain = 0.5.
 
-**Expected result:** Audible feedback loop develops. Output becomes richer/thicker due to recycled signal feeding back into the granular engine.  
+**Expected result:** Sound continues without interruption and a feedback loop builds up over a few seconds: the output becomes richer/thicker as recycled grains mix with fresh sample grains. It must not fade to silence.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 
@@ -1321,7 +1321,7 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 8. Repeat step 7 with Trigger **Euclid**.
 9. Set Trigger back to **Free**. Clear slot 1 (no sample loaded) and set No Source to **Silence**. Turn **Feedback** on, then off. Turn **Spectral** on, then off.
 
-**Expected result:** Steps 1 and 3: grains of a 440 Hz sine (the built-in test tone), meter moving; the No Source selector (Test tone lit) replaces the grain count. Step 2: the sample plays, the selector disappears. Step 4: Silence = no output, meter idle; Test tone brings the sine back. Step 5: the chosen mode is restored. Step 6: Silence stays lit after the recall (snapshots do not change No Source). Steps 7–8: with nothing playing, the selector appears the moment the weight reaches 0 and disappears the moment it rises above 0 (no stale state while no grains fire). Step 9: turning Feedback or Spectral on hides the selector immediately, because that source replaces the slots even when it holds no audio (output stays silent: there is nothing to feed back or analyse, and no test tone in either No Source mode); turning it off brings the selector back. The setting does not appear as an automation lane in the host.  
+**Expected result:** Steps 1 and 3: grains of a 440 Hz sine (the built-in test tone), meter moving; the No Source selector (Test tone lit) replaces the grain count. Step 2: the sample plays, the selector disappears. Step 4: Silence = no output, meter idle; Test tone brings the sine back. Step 5: the chosen mode is restored. Step 6: Silence stays lit after the recall (snapshots do not change No Source). Steps 7–8: with nothing playing, the selector appears the moment the weight reaches 0 and disappears the moment it rises above 0 (no stale state while no grains fire). Step 9: Feedback on leaves the selector up (Feedback blends with the slots, it does not replace them; output stays silent in Silence mode). Spectral on hides the selector immediately, because it replaces the slots even when it holds no audio (silent in either mode); turning it off brings the selector back. The setting does not appear as an automation lane in the host.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 

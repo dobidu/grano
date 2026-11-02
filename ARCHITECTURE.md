@@ -161,7 +161,7 @@ processBlock: sample clock reaches the next event (offset k in the block)
         ↓
 Pattern fire gate (probability / Euclidean step at PPQ index / transient)
         ↓
-Pick source (Spectral > Feedback ring > bank slot > 440 Hz sine),
+Pick source (Spectral > Feedback ring with p = gain, else bank slot > 440 Hz sine),
 position (+ loop sweep + mod + jitter), pitch (scale-quantized, then + Motion),
 pan = spread · rand(-1..1), envelope, gain = 1/sqrt(expected overlap)
         ↓
@@ -323,7 +323,7 @@ or state restore) — it is a **one-shot source transformation**, not a streamin
 3. One IFFT back to time domain (JUCE normalises by 1/N internally — no manual
    division; see STATE.md decision) into a 2048-sample output buffer.
 4. While spectral is enabled, the engine granulates this 2048-sample buffer instead
-   of the sample bank (source priority: Spectral > Feedback > bank > sine).
+   of the sample bank (source: Spectral > Feedback ring blended with the bank by gain > bank > sine).
 5. After a load, the FFT waits (30 Hz retry) until slot 0's live load generation
    matches the new file, so it never transforms the previous sample.
 
