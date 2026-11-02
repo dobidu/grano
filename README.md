@@ -224,7 +224,7 @@ Click or drag on the monitor to set **Position**. The command line at the top sp
 
 Supported formats: WAV, AIFF, FLAC, OGG, MP3.
 
-Once loaded, the waveform appears in the monitor. The engine starts granulating immediately. If no sample is loaded (or every loaded slot's weight is at 0), Grano has no grain source. What happens then is set by **No Source**, shown at the bottom of the monitor whenever it applies: **Test tone** (default) plays an internal 440 Hz sine so you can still hear the engine parameters in action; **Silence** plays nothing. The setting is saved with your project and is not automatable.
+Once loaded, the waveform appears in the monitor. The engine starts granulating immediately. If no sample is loaded (or every loaded slot's weight is at 0), Grano has no grain source. What happens then is set by **No Source**, shown at the bottom of the monitor whenever it applies: **Test tone** (default) plays an internal 440 Hz sine so you can still hear the engine parameters in action; **Silence** plays nothing. The setting is saved with your project, is not automatable, and is left unchanged by snapshot recall.
 
 ---
 

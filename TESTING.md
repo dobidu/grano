@@ -1314,8 +1314,9 @@ Mark each result `[x]` (pass) or `[F]` (fail). For any `[F]` add one line below:
 3. Drag slot 1's weight fader to 0 (all slot weights 0). Listen.
 4. In the monitor's **No Source** selector, click **Silence**. Listen. Then click **Test tone**.
 5. Save and reopen the project.
+6. Ctrl/Cmd-click snapshot **A** to store. Set No Source to **Silence**, then click **A** to recall.
 
-**Expected result:** Steps 1 and 3: grains of a 440 Hz sine (the built-in test tone), meter moving; the No Source selector (Test tone lit) replaces the grain count. Step 2: the sample plays, the selector disappears. Step 4: Silence = no output, meter idle; Test tone brings the sine back. Step 5: the chosen mode is restored. The setting does not appear as an automation lane in the host.  
+**Expected result:** Steps 1 and 3: grains of a 440 Hz sine (the built-in test tone), meter moving; the No Source selector (Test tone lit) replaces the grain count. Step 2: the sample plays, the selector disappears. Step 4: Silence = no output, meter idle; Test tone brings the sine back. Step 5: the chosen mode is restored. Step 6: Silence stays lit after the recall (snapshots do not change No Source). The setting does not appear as an automation lane in the host.  
 **Win (VST3/DAW):** `[ ]` &nbsp;&nbsp; **Win (Standalone):** `[ ]`  
 **macOS (VST3):** `[ ]` &nbsp;&nbsp; **macOS (AU):** `[ ]` &nbsp;&nbsp; **macOS (Standalone):** `[ ]`
 

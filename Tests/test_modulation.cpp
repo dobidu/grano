@@ -387,6 +387,28 @@ TEST_CASE("Snapshots round-trip: save, modify, recall restores value")
     REQUIRE(restored == Catch::Approx(50.0f).margin(0.5f));
 }
 
+TEST_CASE("Snapshots recall keeps the current No Source mode")
+{
+    GranoAudioProcessor proc;
+    auto& apvts = proc.getAPVTS();
+    auto& snaps = proc.getSnapshots();
+    auto* mode = apvts.getParameter(ParamIDs::noSourceMode);
+    auto* size = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::grainSize));
+    REQUIRE(mode != nullptr);
+    REQUIRE(size != nullptr);
+
+    mode->setValueNotifyingHost(0.0f);                 // Test tone
+    size->setValueNotifyingHost(size->convertTo0to1(50.0f));
+    snaps.save(0, apvts.copyState());
+
+    mode->setValueNotifyingHost(1.0f);                 // Silence
+    size->setValueNotifyingHost(size->convertTo0to1(200.0f));
+    snaps.recall(0, apvts);
+
+    REQUIRE(apvts.getRawParameterValue(ParamIDs::grainSize)->load() == Catch::Approx(50.0f).margin(0.5f));
+    REQUIRE(apvts.getRawParameterValue(ParamIDs::noSourceMode)->load() == Catch::Approx(1.0f));
+}
+
 TEST_CASE("Snapshots isOccupied false before save, true after")
 {
     GranoAudioProcessor proc;

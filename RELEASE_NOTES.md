@@ -8,8 +8,8 @@
   weight at 0, with Feedback and Spectral off), you can now choose what Grano
   does: **Test tone** (the 440 Hz sine, as before; the default) or **Silence**.
   The selector appears at the bottom of the monitor whenever it applies. It is
-  saved with the project and is not automatable. Existing projects keep the
-  test tone.
+  saved with the project and is not automatable. Snapshot recall leaves it
+  unchanged. Existing projects keep the test tone.
 
 ---
 

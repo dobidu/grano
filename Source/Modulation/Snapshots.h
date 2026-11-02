@@ -4,6 +4,7 @@
 
 // 4-slot parameter state snapshot (A=0, B=1, C=2, D=3).
 // Message-thread only — never called from audio thread.
+// Recall leaves instance settings (No Source mode) at their current value.
 class Snapshots
 {
 public:

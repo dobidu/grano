@@ -1,4 +1,16 @@
 #include "Snapshots.h"
+#include "../Parameters.h"
+
+namespace
+{
+// Instance settings, not sound: a recall keeps the current value.
+constexpr const char* kNotRecalled[] = { ParamIDs::noSourceMode };
+
+juce::ValueTree findParam(const juce::ValueTree& state, const char* id)
+{
+    return state.getChildWithProperty("id", juce::String(id));
+}
+} // namespace
 
 void Snapshots::save(int slot, const juce::ValueTree& state) noexcept
 {
@@ -20,7 +32,19 @@ void Snapshots::recall(int slot, juce::AudioProcessorValueTreeState& apvts) noex
     const int i = juce::jlimit(0, kNumSlots - 1, slot);
     if (slots_[i].isValid())
     {
-        apvts.replaceState(slots_[i].createCopy());
+        auto next = slots_[i].createCopy();
+        const auto live = apvts.copyState(); // flushes pending parameter values
+        for (const char* id : kNotRecalled)
+        {
+            const auto current = findParam(live, id);
+            if (!current.isValid())
+                continue;
+            if (auto stored = findParam(next, id); stored.isValid())
+                stored.copyPropertiesFrom(current, nullptr);
+            else
+                next.appendChild(current.createCopy(), nullptr);
+        }
+        apvts.replaceState(next);
         live_ = i;
     }
 }
