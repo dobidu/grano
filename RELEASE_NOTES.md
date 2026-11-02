@@ -1,6 +1,9 @@
 # Grano — Release Notes
 
-## v1.0.0-beta.5 (unreleased)
+## v1.0.0-beta.5 (2026-11-02)
+
+A fix release: Feedback was silent since beta.2. **Feedback patches sound
+different** (see below); everything else sounds as in beta.4.
 
 ### Fixes
 

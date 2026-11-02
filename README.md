@@ -992,7 +992,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 2
 
 ## Status
 
-All core features complete. Latest release: **v1.0.0-beta.4** (No Source setting; beta.3 brought the new console editor and correctness fixes). QA and manual acceptance testing (F8) continue toward v1.0.0.
+All core features complete. Latest release: **v1.0.0-beta.5** (Feedback fix; beta.4 added the No Source setting, beta.3 the new console editor). QA and manual acceptance testing (F8) continue toward v1.0.0.
 
 | Phase | Status |
 |-------|--------|
@@ -1004,7 +1004,7 @@ All core features complete. Latest release: **v1.0.0-beta.4** (No Source setting
 | F5 LFOs + Modulation Matrix + Snapshots | ✅ Complete |
 | F6 UI Polish + Advanced Engine | ✅ Complete |
 | F7 Release | ✅ Complete (v1.0.0-beta.1 tagged) |
-| F8 QA + Manual Acceptance | 🔄 In progress (beta.2, beta.3, beta.4 released) |
+| F8 QA + Manual Acceptance | 🔄 In progress (beta.2 – beta.5 released) |
 
 ---
 
