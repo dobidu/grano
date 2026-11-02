@@ -21,6 +21,14 @@ different** (see below); everything else sounds as in beta.4.
   kept from an older project, is dimmed and no longer draws a modulation mark
   on its target.
 
+### Testing
+
+- 173 unit tests, plus 36 headless QA checks (`[qa]`, hidden from the default
+  run) mapped to TESTING.md test IDs. These checks found the Feedback bug.
+- `Scripts/macos-test.sh` automates the macOS pass: install, `auval`,
+  `pluginval`, Standalone launch, tests and QA checks, and a report with the
+  remaining manual checklist. See README "QA checks".
+
 ---
 
 ## v1.0.0-beta.4 (2026-11-02)

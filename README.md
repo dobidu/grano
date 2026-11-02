@@ -841,6 +841,24 @@ pluginval --strictness-level 10 build/Grano_artefacts/Debug/VST3/Grano.vst3
 auval -v aufx Gran Bidu
 ```
 
+### QA checks
+
+`Tests/test_qa.cpp` holds headless checks named after the TESTING.md test IDs ("QA 2.1 …"). They are hidden from the default `ctest` run and cover formats, parameter extremes, state save/restore, CPU, memory and a long offline soak.
+
+```bash
+# Run all QA checks (metrics go to $GRANO_QA_DIR/metrics.txt)
+GRANO_QA_DIR=qa-out GRANO_QA_SOAK_MIN=5 build/Tests/GranoTests "[qa]"
+```
+
+Tags: `[auto]` means the check fully covers the TESTING.md expectation; `[pre]` means it verifies the engine side and the manual step remains.
+
+Platform runners:
+
+| Script | What it does |
+|--------|--------------|
+| `Scripts/macos-test.sh` | Installs a release (or `--local` build), runs `auval`, `pluginval` at strictness 10 on VST3 and AU, launches the Standalone, builds and runs all tests and QA checks, then writes `qa-results/macos-<date>/report.md` and `manual-checklist.md`. `--mark` ticks covered tests and fills the CPU/RAM fields in TESTING.md. |
+| `Scripts/windows-test.ps1` | Downloads a CI build, runs `pluginval` and a Standalone launch. |
+
 ---
 
 ## Parameter reference
