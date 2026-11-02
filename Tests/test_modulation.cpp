@@ -174,7 +174,7 @@ TEST_CASE("Lfo null param pointers do not crash")
 
 // ─── AC-8: APVTS param count (updated for 05-02) ─────────────────────────────
 
-TEST_CASE("APVTS contains 79 parameters after F6e envelopeShape param added")
+TEST_CASE("APVTS contains 80 parameters (F6e envelopeShape, beta.4 noSourceMode)")
 {
     GranoAudioProcessor proc;
     auto& apvts = proc.getAPVTS();
@@ -213,8 +213,8 @@ TEST_CASE("APVTS contains 79 parameters after F6e envelopeShape param added")
     REQUIRE(apvts.getParameter(ParamIDs::envelopeShape) != nullptr);
     REQUIRE(apvts.getRawParameterValue(ParamIDs::envelopeShape)->load(std::memory_order_relaxed) == 0.0f);
 
-    // Total count = 79 (78 prev + 1 F6e)
-    REQUIRE((int)proc.getParameters().size() == 79);
+    // Total count = 80 (78 + F6e envelopeShape + noSourceMode)
+    REQUIRE((int)proc.getParameters().size() == 80);
 }
 
 // ─── ModMatrix ────────────────────────────────────────────────────────────────

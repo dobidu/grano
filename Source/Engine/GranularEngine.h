@@ -30,7 +30,7 @@
 //   no blocking calls. All storage is pre-allocated.
 //
 // Source data: MultiSampleBank set via setBank(); falls back to an internal
-//   440 Hz sine if nothing is loaded.
+//   440 Hz sine (or silence, per noSourceMode) if no source is available.
 class GranularEngine
 {
 public:
@@ -83,6 +83,17 @@ public:
     {
         return loopSweepFrac_.load(std::memory_order_relaxed);
     }
+
+    // UI: true while grains have no real source (no playable slot and no
+    // Feedback / Spectral source), i.e. the no-source mode is in effect.
+    bool isNoSourceActive() const noexcept
+    {
+        return noSourceActive_.load(std::memory_order_relaxed);
+    }
+
+    // No-source mode param (0 = 440 Hz test tone, 1 = silence). Optional;
+    // null means test tone.
+    void setNoSourceModePointer(std::atomic<float>* p) noexcept { pNoSourceMode_ = p; }
 
     // Set the multi-sample bank as the grain source. Call before prepareToPlay.
     void setBank(MultiSampleBank* b) noexcept { bankSource_ = b; }
@@ -256,6 +267,9 @@ private:
     double loopTimeSec_{ 0.0 };
     bool   prevLoopOn_ { false };
     std::atomic<float> loopSweepFrac_{ 0.0f };
+
+    std::atomic<float>* pNoSourceMode_{ nullptr };
+    std::atomic<bool>   noSourceActive_{ false };
 
     std::atomic<long long> spawnCount_{ 0 };
 

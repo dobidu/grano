@@ -197,6 +197,11 @@ TEST_CASE("Editor screenshots", "[.][screenshot]")
         shoot(proc, "grano-default.png");
     }
     {
+        GranoAudioProcessor proc;          // nothing loaded: No Source selector
+        proc.prepareToPlay(48000.0, 512);
+        shoot(proc, "grano-empty.png");
+    }
+    {
         GranoAudioProcessor proc;
         proc.prepareToPlay(48000.0, 512);
         proc.loadSampleFile(writeWav("field-rain.wav", 115680, 2, 0.013f), 0);

@@ -32,6 +32,7 @@ GranoAudioProcessor::GranoAudioProcessor()
     pFeedbackGain_    = apvts_.getRawParameterValue(ParamIDs::feedbackGain);
     pFeedbackDamp_    = apvts_.getRawParameterValue(ParamIDs::feedbackDamp);
     engine_.setFeedbackParamPointers(pFeedbackEnabled_, pFeedbackGain_, pFeedbackDamp_);
+    engine_.setNoSourceModePointer(apvts_.getRawParameterValue(ParamIDs::noSourceMode));
     engine_.setSpectralSource(&spectralProcessor_);
     engine_.setSpectralParamPointers(
         apvts_.getRawParameterValue(ParamIDs::spectralEnabled),

@@ -237,6 +237,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::ParameterID{ ParamIDs::envelopeShape, 1 }, "Envelope Shape",
         juce::NormalisableRange<float>{ 0.0f, 4.0f, 1.0f }, 0.0f));
 
+    // No-source fallback (0 = Test tone, 1 = Silence). Default keeps the
+    // pre-beta.4 behaviour. A setting, not a performance control.
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ ParamIDs::noSourceMode, 1 }, "No Source",
+        juce::StringArray{ "Test tone", "Silence" }, 0,
+        juce::AudioParameterChoiceAttributes().withAutomatable(false)));
+
     // F5 — ModMatrix slots (8 × 3 = 24 params)
     const juce::StringArray kModSources{ "None", "LFO1", "LFO2" };
     const juce::StringArray kModDests{

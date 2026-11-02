@@ -17,8 +17,13 @@ Monitor::Monitor(juce::AudioFormatManager& fm, juce::AudioProcessorValueTreeStat
       grainSize_(apvts.getRawParameterValue(ParamIDs::grainSize)),
       jitter_   (apvts.getRawParameterValue(ParamIDs::positionJitter)),
       loop_     (apvts.getRawParameterValue(ParamIDs::loop)),
-      pitch_    (apvts.getRawParameterValue(ParamIDs::pitchShift))
+      pitch_    (apvts.getRawParameterValue(ParamIDs::pitchShift)),
+      noSourceKeys_(*apvts.getParameter(ParamIDs::noSourceMode),
+                    juce::StringArray{ "Test tone", "Silence" }, C::tape, 2)
 {
+    noSourceKeys_.setGap(4);
+    noSourceKeys_.setVisible(false);
+    addChildComponent(noSourceKeys_);
     setTitle("Monitor");
     setDescription("Waveform of the selected slot. Click or drag to set Position.");
     setTooltip("Click or drag on the waveform to set Position. Drop an audio file to load it into the selected slot.");
@@ -57,7 +62,20 @@ void Monitor::setDragHighlight(bool b)
 void Monitor::tick()
 {
     grainCount_ = engine_.getGrainSnapshots(snaps_.data(), GranularEngine::MaxActiveGrains);
+    const bool noSource = engine_.isNoSourceActive();
+    if (noSource != noSource_)
+    {
+        noSource_ = noSource;
+        noSourceKeys_.setVisible(noSource);
+    }
     repaint();
+}
+
+void Monitor::resized()
+{
+    // Bottom centre, where the grain count sits; label drawn to its left.
+    const int w = 196, h = 22;
+    noSourceKeys_.setBounds(getWidth() / 2 - w / 2 + 52, getHeight() - h - 5, w, h);
 }
 
 juce::Rectangle<float> Monitor::band() const
@@ -180,15 +198,28 @@ void Monitor::paint(juce::Graphics& g)
         g.drawText("0.00 s", juce::Rectangle<float>(12.0f, b.getBottom() - 22.0f, 120.0f, 14.0f), juce::Justification::centredLeft, false);
         g.drawText(juce::String(dur, 2) + " s", juce::Rectangle<float>(W - 132.0f, b.getBottom() - 22.0f, 120.0f, 14.0f),
                    juce::Justification::centredRight, false);
-        g.setColour(C::lcd);
-        g.drawText(juce::String(grainCount_) + (grainCount_ == 1 ? " grain" : " grains"),
-                   juce::Rectangle<float>(W * 0.5f - 80.0f, b.getBottom() - 22.0f, 160.0f, 14.0f), juce::Justification::centred, false);
+        if (!noSource_)
+        {
+            g.setColour(C::lcd);
+            g.drawText(juce::String(grainCount_) + (grainCount_ == 1 ? " grain" : " grains"),
+                       juce::Rectangle<float>(W * 0.5f - 80.0f, b.getBottom() - 22.0f, 160.0f, 14.0f), juce::Justification::centred, false);
+        }
     }
     else
     {
         g.setColour(C::silkDim);
         g.setFont(font(Face::silkBold, 14.0f, 0.16f));
         g.drawText("DROP A SAMPLE TO START", b, juce::Justification::centred, false);
+    }
+
+    if (noSource_)
+    {
+        // "NO SOURCE" label left of the Test tone / Silence keys.
+        const auto k = noSourceKeys_.getBounds().toFloat();
+        g.setColour(C::silkDim);
+        g.setFont(font(Face::silk, 13.0f, 0.12f));
+        g.drawText("NO SOURCE", juce::Rectangle<float>(k.getX() - 104.0f, k.getY(), 96.0f, k.getHeight()),
+                   juce::Justification::centredRight, false);
     }
 
     if (dragHighlight_)

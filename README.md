@@ -175,6 +175,10 @@ Position Jitter span; the amber band is one grain length. Orange dots are the
 grains playing right now, with a short trace of how far each has read. Click or
 drag on the monitor to set Position.
 
+When no slot can play (nothing loaded, or every weight at 0, with Feedback and
+Spectral off), a **No Source** selector replaces the grain count at the bottom
+of the monitor: **Test tone** plays a 440 Hz sine, **Silence** plays nothing.
+
 Each slot strip has a number key (lit = shown in the monitor), the filename
 (click to load), a weight fader and a clear key. A failed load shows
 "load failed" in red; hover for the reason.
@@ -220,7 +224,7 @@ Click or drag on the monitor to set **Position**. The command line at the top sp
 
 Supported formats: WAV, AIFF, FLAC, OGG, MP3.
 
-Once loaded, the waveform appears in the monitor. The engine starts granulating immediately. If no sample is loaded (or every loaded slot's weight is at 0), Grano falls back to an internal 440 Hz sine tone so you can still hear the engine parameters in action.
+Once loaded, the waveform appears in the monitor. The engine starts granulating immediately. If no sample is loaded (or every loaded slot's weight is at 0), Grano has no grain source. What happens then is set by **No Source**, shown at the bottom of the monitor whenever it applies: **Test tone** (default) plays an internal 440 Hz sine so you can still hear the engine parameters in action; **Silence** plays nothing. The setting is saved with your project and is not automatable.
 
 ---
 
@@ -457,7 +461,7 @@ The practical takeaway: use `density` to control overlap and articulation, `grai
 
 ### Source priority explained
 
-Grano has four possible grain sources, applied in strict priority order: **Spectral > Feedback > Sample > Sine**.
+Grano has four possible grain sources, applied in strict priority order: **Spectral > Feedback > Sample > Sine** (the sine can be replaced by silence; see No Source).
 
 When `spectralEnabled` is on, the spectral processor runs a 2048-point FFT on the loaded sample and produces a transformed buffer (Freeze or Blur). The engine takes its grain read positions from that transformed buffer. Nothing else matters as a source — not the feedback signal, not the raw sample.
 
@@ -465,7 +469,7 @@ When `spectralEnabled` is off but `feedbackEnabled` is on, the engine reads from
 
 When both Spectral and Feedback are off, the engine reads directly from the loaded `SampleBuffer`. This is the standard operation mode.
 
-When no sample has been loaded at all, the engine falls back to an internal 440 Hz sine tone so the plugin produces output even without user content.
+When no slot is loaded with a weight above 0, the engine has no source: it plays an internal 440 Hz sine tone, or nothing if **No Source** is set to Silence.
 
 The practical implication: enabling Spectral while Feedback is also on does not create a combined source — Spectral wins unconditionally. To hear feedback-derived content, `spectralEnabled` must be off. To move between source types deliberately, use Snapshots to store configurations with different source combinations active.
 
@@ -526,7 +530,7 @@ LFO 1 at 0.07 Hz modulates LFO 2's rate between roughly 0.25 Hz and 0.75 Hz on a
 
 ### Snapshot performance technique
 
-Snapshots A, B, C, and D each store a complete state of all 79 parameters. The intended live use is to prepare two or more contrasting configurations and switch between them at performance time with a single click or MIDI trigger.
+Snapshots A, B, C, and D each store a complete state of all 80 parameters. The intended live use is to prepare two or more contrasting configurations and switch between them at performance time with a single click or MIDI trigger.
 
 **Setting up an A/B contrast for live switching:**
 
@@ -839,7 +843,7 @@ auval -v aufx Gran Bidu
 
 ## Parameter reference
 
-Complete list of all 79 automatable parameters.
+Complete list of all 80 parameters (79 automatable, plus the No Source setting).
 
 ### Granular engine
 
@@ -915,6 +919,7 @@ Complete list of all 79 automatable parameters.
 | `subGrainDepth` | Sub-grain Depth | Int 0–2 | 0 |
 | `stochasticDist` | Stochastic Distribution | Choice (Uniform / Gaussian / Poisson / Exponential / Pareto / 1/f) | Uniform |
 | `envelopeShape` | Envelope Shape | Int 0–4 (0=Hann 1=Tukey 2=Gaussian 3=Triangle 4=Rectangle) | 0 |
+| `noSourceMode` | No Source | Choice (Test tone / Silence), not automatable | Test tone |
 | `feedbackEnabled` | Feedback | Bool | Off |
 | `feedbackGain` | Feedback Gain | 0–0.95 | 0.5 |
 | `feedbackDamp` | Feedback Damp | 0–1 | 0.3 |
@@ -943,6 +948,7 @@ Each slot: `slotNSource` (Choice: None/LFO1/LFO2), `slotNDest` (Choice: None + 2
 
 **No sound after loading a sample:**
 - Check Master Volume is not at −60 dB.
+- Check the slot's weight fader is above 0. With every weight at 0 and **No Source** set to Silence, Grano is silent by design.
 - Confirm the sample format is supported (WAV, AIFF, FLAC, OGG, MP3). Re-save as WAV if unsure.
 - Verify the sample has non-zero length. A corrupt file may load silently.
 

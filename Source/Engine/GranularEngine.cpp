@@ -162,10 +162,14 @@ void GranularEngine::scheduleGrain(int offset) noexcept
         srcLen  = len;
     }
 
-    if (srcData == nullptr || srcLen <= 1)
+    const bool noSource = srcData == nullptr || srcLen <= 1;
+    noSourceActive_.store(noSource, std::memory_order_relaxed);
+    if (noSource)
     {
-        if (!sampleReady_)
-            return;
+        const bool silent = pNoSourceMode_ != nullptr &&
+            pNoSourceMode_->load(std::memory_order_relaxed) > 0.5f;
+        if (silent || !sampleReady_)
+            return; // no grain: silence
         srcData = testSample_.data();
         srcLen  = static_cast<int>(sampleRate_); // 1 second of 440 Hz sine
     }

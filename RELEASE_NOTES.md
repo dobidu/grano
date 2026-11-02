@@ -1,5 +1,18 @@
 # Grano — Release Notes
 
+## v1.0.0-beta.4 (unreleased)
+
+### New
+
+- **No Source setting.** When no slot can play (nothing loaded, or every slot
+  weight at 0, with Feedback and Spectral off), you can now choose what Grano
+  does: **Test tone** (the 440 Hz sine, as before; the default) or **Silence**.
+  The selector appears at the bottom of the monitor whenever it applies. It is
+  saved with the project and is not automatable. Existing projects keep the
+  test tone.
+
+---
+
 ## v1.0.0-beta.3 (2026-11-01)
 
 A new editor and a correctness release. A full code review (08-08) found that

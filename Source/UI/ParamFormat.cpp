@@ -103,6 +103,7 @@ juce::String ParamFormat::valueText(const juce::String& id, float v)
     if (id == "stochasticDist")
         return choice({ "Uniform", "Gaussian", "Poisson", "Exponential", "Pareto", "1/f" }, v);
     if (id == "spectralMode")   return choice({ "Freeze", "Blur" }, v);
+    if (id == "noSourceMode")   return choice({ "Test tone", "Silence" }, v);
     if (id == "envelopeShape")  return choice({ "Hann", "Tukey", "Gaussian", "Triangle", "Rectangle" }, v);
     if (id == "triggerMode")    return choice({ "Free", "Sync", "Euclid", "Audio" }, v);
     if (id == "syncDivision")
@@ -160,6 +161,7 @@ juce::String ParamFormat::fullName(const juce::String& id)
         { "feedbackEnabled", "Feedback" }, { "feedbackGain", "Feedback Gain" }, { "feedbackDamp", "Feedback Damp" },
         { "spectralEnabled", "Spectral" }, { "spectralMode", "Spectral Mode" }, { "spectralBlurAmount", "Spectral Blur" },
         { "envelopeShape", "Envelope Shape" },
+        { "noSourceMode", "No Source" },
     };
     if (auto it = names.find(id); it != names.end())
         return it->second;
@@ -220,6 +222,7 @@ juce::String ParamFormat::hint(const juce::String& id)
         { "spectralMode", "Spectral Mode: Freeze = sustained texture, Blur = phase smear by Blur amount." },
         { "spectralBlurAmount", "Spectral Blur: phase smear of the source spectrum. 0 % = dry." },
         { "envelopeShape", "Envelope Shape: grain amplitude window." },
+        { "noSourceMode", "No Source: what plays when no slot is loaded with weight above 0 (and Feedback / Spectral are off). Test tone = 440 Hz sine, Silence = nothing." },
     };
     if (auto it = hints.find(id); it != hints.end())
         return it->second;

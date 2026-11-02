@@ -2,6 +2,7 @@
 #include <cmath>
 
 #include "Engine/GranularEngine.h"
+#include "Engine/MultiSampleBank.h"
 
 // Audio output smoke tests — verify engine produces sound without NaN/Inf/clipping.
 // Uses GranularEngine's built-in testSample_ (440 Hz sine) — no file I/O needed.
@@ -120,4 +121,80 @@ TEST_CASE("GranularEngine output is silent before prepare", "[audio][smoke]")
     // should at minimum not crash. Test only that no exception is thrown.
     // (Actual behavior depends on implementation guard.)
     SUCCEED("no crash before prepare");
+}
+
+// No-source mode: with no grain source, the engine plays the 440 Hz test tone
+// (mode 0, default) or nothing (mode 1), and reports the no-source state.
+static float runNoSource(float mode, bool& activeOut)
+{
+    GranularEngine engine;
+    std::atomic<float> noSourceMode{ mode };
+    engine.setNoSourceModePointer(&noSourceMode);
+    engine.prepare(kSR, kBlock);
+
+    juce::AudioBuffer<float> out(2, kBlock);
+    float maxRMS = 0.0f;
+    for (int i = 0; i < kRunBlocks; ++i)
+    {
+        out.clear();
+        engine.processBlock(out);
+        REQUIRE(allFinite(out));
+        maxRMS = std::max(maxRMS, computeRMS(out));
+    }
+    activeOut = engine.isNoSourceActive();
+    return maxRMS;
+}
+
+TEST_CASE("No-source mode: test tone vs silence", "[audio][smoke][nosource]")
+{
+    bool active = false;
+
+    SECTION("Test tone (default) is audible and flagged")
+    {
+        REQUIRE(runNoSource(0.0f, active) > 1e-4f);
+        REQUIRE(active);
+    }
+    SECTION("Silence produces exact zeros and is flagged")
+    {
+        REQUIRE(runNoSource(1.0f, active) == 0.0f);
+        REQUIRE(active);
+    }
+}
+
+TEST_CASE("No-source mode: a loaded, weighted slot clears the flag", "[audio][smoke][nosource]")
+{
+    MultiSampleBank bank;
+    std::atomic<float> w0{ 1.0f }, w1{ 0.0f }, w2{ 0.0f }, w3{ 0.0f };
+    std::atomic<float> noSourceMode{ 1.0f };   // silence when no source
+
+    GranularEngine engine;
+    engine.setBank(&bank);
+    engine.setBankParamPointers(&w0, &w1, &w2, &w3);
+    engine.setNoSourceModePointer(&noSourceMode);
+    engine.prepare(kSR, kBlock);
+
+    const int len = (int)kSR;
+    auto buf = std::make_unique<juce::AudioBuffer<float>>(1, len + 2);
+    for (int i = 0; i < len + 2; ++i)
+        buf->setSample(0, i, 0.5f * std::sin(0.05f * (float)i));
+    bank.getSlot(0).setPending(std::move(buf), len);
+
+    juce::AudioBuffer<float> out(2, kBlock);
+    float maxRMS = 0.0f;
+    for (int i = 0; i < kRunBlocks; ++i)
+    {
+        out.clear();
+        engine.processBlock(out);
+        maxRMS = std::max(maxRMS, computeRMS(out));
+    }
+    REQUIRE(maxRMS > 1e-4f);                  // sample plays despite Silence mode
+    REQUIRE_FALSE(engine.isNoSourceActive());
+
+    w0 = 0.0f;                                // all weights 0 → no source again
+    for (int i = 0; i < kRunBlocks * 4; ++i)
+    {
+        out.clear();
+        engine.processBlock(out);
+    }
+    REQUIRE(engine.isNoSourceActive());
 }

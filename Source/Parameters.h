@@ -78,6 +78,11 @@ namespace ParamIDs {
     // F6e — Envelope shape selector (0=Hann 1=Tukey 2=Gaussian 3=Triangle 4=Rectangle)
     inline constexpr const char* envelopeShape = "envelopeShape";
 
+    // What plays when no grain source is available (no slot loaded with
+    // weight > 0 and Feedback / Spectral not supplying one): 0 = 440 Hz test
+    // tone, 1 = silence. Not automatable; saved with the plugin state.
+    inline constexpr const char* noSourceMode = "noSourceMode";
+
     // F5 — ModMatrix slots (8 slots × 3 params)
     inline constexpr const char* slot1Source = "slot1Source";
     inline constexpr const char* slot1Dest   = "slot1Dest";

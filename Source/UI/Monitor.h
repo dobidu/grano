@@ -1,6 +1,7 @@
 #pragma once
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "../Engine/GranularEngine.h"
+#include "Console.h"
 
 // Monitor — the waveform well across the top of the console.
 //
@@ -9,6 +10,8 @@
 // and grain-size shadow, and live grains from the engine snapshot (heads sized
 // and warmed by envelope amplitude). Click / drag sets Position as one host
 // gesture. Files dropped on the editor load into the selected slot.
+// While the engine has no grain source, a No Source selector (Test tone /
+// Silence) replaces the grain count at the bottom.
 
 class Monitor : public juce::Component,
                 public juce::SettableTooltipClient
@@ -26,6 +29,7 @@ public:
     int  getGrainCount() const noexcept { return grainCount_; }
 
     void paint(juce::Graphics&) override;
+    void resized() override;
     void mouseDown(const juce::MouseEvent&) override;
     void mouseDrag(const juce::MouseEvent&) override;
     void mouseUp(const juce::MouseEvent&) override;
@@ -52,6 +56,8 @@ private:
 
     std::array<GranularEngine::GrainSnapshot, GranularEngine::MaxActiveGrains> snaps_{};
     int grainCount_ { 0 };
+    bool noSource_ { false };
+    Console::ChoiceKeys noSourceKeys_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Monitor)
 };

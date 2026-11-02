@@ -153,7 +153,10 @@ from the engine snapshot: head radius 2–4.6 px and colour warmed by envelope
 amplitude, with a short read trace. Filename, duration · rate · channels,
 time axis and grain count. Click/drag sets Position as one gesture. Drag a
 file over the editor: amber outline; drop loads into the selected slot.
-Empty: "DROP A SAMPLE TO START".
+Empty: "DROP A SAMPLE TO START". While the engine reports no grain source
+(`GranularEngine::isNoSourceActive`), a **NO SOURCE** label and two tape keys
+(Test tone / Silence, `noSourceMode`) replace the grain count at the bottom
+centre.
 
 ## Slot strips
 
