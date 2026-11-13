@@ -183,6 +183,13 @@ private:
     std::array<juce::File, MultiSampleBank::kNumSlots> slotFiles_{};
     std::array<SlotInfo,   MultiSampleBank::kNumSlots> slotInfo_{};
     std::atomic<juce::uint32> slotStateGen_{ 0 };
+    // True while setStateInformation runs: the host is setting the state, so
+    // slot loads/unloads must not report it back as a change.
+    bool restoringState_{ false };
+    // Message thread: tell the host the non-parameter state (sample paths)
+    // changed, so it re-reads getStateInformation instead of keeping a stale
+    // copy it may restore later (which would empty the slot).
+    void notifyNonParameterStateChanged();
 
     // Editor telemetry (not parameters): output peaks, block load.
     std::array<std::atomic<float>, 2> outputPeak_{};

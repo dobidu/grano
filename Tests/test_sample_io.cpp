@@ -439,3 +439,66 @@ TEST_CASE("Restoring a state without samples/snapshots clears stale ones", "[Sta
     proc.releaseResources();
     f1.deleteFile();
 }
+
+// Sample paths live outside APVTS. Without telling the host, it keeps a stale
+// state (no path) and may restore it later, emptying the slot while the editor
+// shows "click to load". Load/unload must mark the state dirty; a restore must not.
+namespace
+{
+    struct StateChangeCounter : juce::AudioProcessorListener
+    {
+        int nonParam = 0;
+        void audioProcessorParameterChanged(juce::AudioProcessor*, int, float) override {}
+        void audioProcessorChanged(juce::AudioProcessor*, const ChangeDetails& d) override
+        {
+            if (d.nonParameterStateChanged) ++nonParam;
+        }
+    };
+}
+
+TEST_CASE("Slot load/unload notifies the host of a state change", "[State][MultiSampleBank]")
+{
+    const auto f0 = writeTestWav("grano_notify_slot0.wav", 500);
+    GranoAudioProcessor proc;
+    StateChangeCounter counter;
+    proc.addListener(&counter);
+
+    proc.loadSampleFile(f0, 0);
+    CHECK(counter.nonParam == 1);
+
+    proc.unloadSlot(0);
+    CHECK(counter.nonParam == 2);
+
+    proc.unloadSlot(0);                 // already empty: nothing changed
+    CHECK(counter.nonParam == 2);
+
+    proc.loadSampleFile(juce::File("/nonexistent/grano.wav"), 1); // failed load
+    CHECK(counter.nonParam == 2);
+
+    proc.removeListener(&counter);
+    f0.deleteFile();
+}
+
+TEST_CASE("State restore does not echo a change and keeps an already-loaded slot", "[State][MultiSampleBank]")
+{
+    const auto f0 = writeTestWav("grano_restore_same.wav", 500);
+    GranoAudioProcessor proc;
+    proc.loadSampleFile(f0, 0);
+    (void)proc.getSampleBank().trySwapAll();
+    const auto gen = proc.getSampleBank().getCurrentGeneration(0);
+
+    juce::MemoryBlock state;
+    proc.getStateInformation(state);
+
+    StateChangeCounter counter;
+    proc.addListener(&counter);
+    proc.setStateInformation(state.getData(), (int)state.getSize());
+    (void)proc.getSampleBank().trySwapAll();
+    proc.removeListener(&counter);
+
+    CHECK(counter.nonParam == 0);
+    CHECK(proc.getSampleBank().getCurrentGeneration(0) == gen); // not reloaded
+    CHECK(proc.getSampleBank().getNumSamples(0) == 500);
+    CHECK(proc.getSlotInfo(0).numFrames == 500);
+    f0.deleteFile();
+}

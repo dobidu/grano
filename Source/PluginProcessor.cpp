@@ -282,6 +282,13 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
         spectralWaitGen_ = gen;
         spectralDirty_.store(true, std::memory_order_release);
     }
+    notifyNonParameterStateChanged();
+}
+
+void GranoAudioProcessor::notifyNonParameterStateChanged()
+{
+    if (!restoringState_)
+        updateHostDisplay(ChangeDetails().withNonParameterStateChanged(true));
 }
 
 void GranoAudioProcessor::unloadSlot(int slot)
@@ -299,6 +306,8 @@ void GranoAudioProcessor::unloadSlot(int slot)
         if (slot == 0)
             spectralProcessor_.clear();
     }
+    if (hadSample)
+        notifyNonParameterStateChanged();
 }
 
 void GranoAudioProcessor::applyPendingSpectralUpdate()
@@ -364,6 +373,7 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
     if (auto xml = getXmlFromBinary(data, sizeInBytes))
     {
         auto tree = juce::ValueTree::fromXml(*xml);
+        const juce::ScopedValueSetter<bool> restoring(restoringState_, true);
         if (tree.hasType("GranoCombinedState"))
         {
             if (auto apvtsChild = tree.getChildWithName(apvts_.state.getType()); apvtsChild.isValid())
@@ -388,7 +398,13 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                     if (slot < 0 || slot >= MultiSampleBank::kNumSlots || path.isEmpty())
                         continue;
                     const juce::File f(path);
-                    if (f.existsAsFile())
+                    if (slotFiles_[(size_t)slot] == f && slotInfo_[(size_t)slot].numFrames > 0)
+                    {
+                        // Same file already loaded (host re-sent the current
+                        // state): keep it, no reload or audible restart.
+                        restored[(size_t)slot] = true;
+                    }
+                    else if (f.existsAsFile())
                     {
                         loadSampleFile(f, slot);
                         restored[(size_t)slot] = slotFiles_[(size_t)slot] == f;

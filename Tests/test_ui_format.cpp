@@ -11,6 +11,7 @@
 #include "UI/Monitor.h"
 #include "UI/Header.h"
 #include "UI/ConsoleView.h"
+#include "UI/SlotStrip.h"
 #include <set>
 
 namespace
@@ -266,4 +267,61 @@ TEST_CASE("Only engine-consumed mod destinations count as active", "[ui]")
     for (int i = ModMatrix::kWowDepth; i < ParamFormat::kNumModDests; ++i)
         if (i != ModMatrix::kLfo2Rate)
             CHECK_FALSE(ParamFormat::modDestActive(i, 1));
+}
+
+// Loading a second slot must leave the first slot's strip loaded (name shown,
+// weight + clear live).
+TEST_CASE("Loading a second slot keeps the first slot strip", "[ui][editor][slots]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    auto writeWav = [](const juce::String& name)
+    {
+        auto file = juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile(name);
+        file.deleteFile();
+        juce::AudioBuffer<float> buf(1, 4800);
+        for (int i = 0; i < 4800; ++i) buf.setSample(0, i, 0.3f * std::sin(0.05f * (float)i));
+        juce::WavAudioFormat format;
+        std::unique_ptr<juce::AudioFormatWriter> w(format.createWriterFor(
+            new juce::FileOutputStream(file), 48000.0, 1u, 16, {}, 0));
+        w->writeFromAudioSampleBuffer(buf, 0, 4800);
+        return file;
+    };
+
+    GranoAudioProcessor proc;
+    proc.prepareToPlay(48000.0, 512);
+    std::unique_ptr<juce::AudioProcessorEditor> ed(proc.createEditor());
+    ConsoleView* view = nullptr;
+    std::function<void(juce::Component&)> find = [&](juce::Component& c)
+    {
+        if (auto* v = dynamic_cast<ConsoleView*>(&c)) view = v;
+        for (auto* ch : c.getChildren()) find(*ch);
+    };
+    find(*ed);
+    REQUIRE(view != nullptr);
+
+    std::vector<SlotStrip*> strips;
+    for (auto* ch : view->getChildren())
+        if (auto* s = dynamic_cast<SlotStrip*>(ch)) strips.push_back(s);
+    REQUIRE(strips.size() == 4);
+
+    juce::AudioBuffer<float> io(2, 512);
+    juce::MidiBuffer midi;
+    auto run = [&] { for (int i = 0; i < 6; ++i) { io.clear(); proc.processBlock(io, midi); view->tickTelemetry(); } };
+
+    const auto a = writeWav("slot-a.wav");
+    const auto b = writeWav("slot-b.wav");
+    view->loadIntoShownSlot(a);                 // slot 1
+    run();
+    CHECK(strips[0]->isLoaded());
+
+    auto* showKey = dynamic_cast<juce::Button*>(strips[1]->getChildComponent(0));
+    REQUIRE(showKey != nullptr);
+    showKey->onClick();                         // show slot 2, then load it
+    view->loadIntoShownSlot(b);
+    run();
+
+    CHECK(proc.getSlotInfo(0).numFrames > 0);
+    CHECK(proc.getSlotInfo(1).numFrames > 0);
+    CHECK(strips[0]->isLoaded());
+    CHECK(strips[1]->isLoaded());
 }
