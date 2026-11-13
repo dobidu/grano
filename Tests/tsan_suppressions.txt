@@ -17,3 +17,10 @@ mutex:juce::SharedResourcePointer
 # internal lock ordering; reported as lock-order-inversion. No user frames.
 deadlock:juce::Timer::TimerThread::addTimer
 deadlock:juce::Timer::TimerThread::getTimeUntilFirstTimer
+
+# AudioThumbnailCache's TimeSliceThread: addTimeSliceClient() holds the client
+# list lock then notify() takes the WaitableEvent mutex, while run() waits on
+# that mutex and later takes the list lock. Same JUCE-internal pattern as the
+# TimerThread entry above. Reached via Monitor::setSample (thumbnail source).
+deadlock:juce::TimeSliceThread::addTimeSliceClient
+deadlock:juce::TimeSliceThread::run
