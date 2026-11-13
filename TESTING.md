@@ -6,7 +6,7 @@
 |----------------|-----------------------------|------------------------------|
 | Tester         |                             |                              |
 | Date           |                             |                              |
-| Build          | v1.0.0-beta.5               | v1.0.0-beta.5                |
+| Build          | v1.0.0-beta.6               | v1.0.0-beta.6                |
 | DAW / Host     |                             |                              |
 | OS Version     |                             |                              |
 | Plugin formats | VST3 in DAW, Standalone     | VST3, AU, Standalone         |

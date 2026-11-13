@@ -1,5 +1,31 @@
 # Grano — Release Notes
 
+## v1.0.0-beta.6 (2026-11-13)
+
+A fix release: a loaded sample could lose its slot in a DAW. Sound is unchanged
+from beta.5.
+
+### Fixes
+
+- **Loaded samples stay in their slot.** Grano never told the host that its
+  sample slots had changed, so a host could keep an older copy of the plugin
+  state and restore it later. The slot then emptied: the strip showed "click to
+  load", the test tone started, and the controls went inactive. Seen in
+  Ableton Live 12 after dragging a sample onto the monitor, then closing and
+  reopening the plugin window or cancelling a load into another slot. Loading
+  or clearing a slot now notifies the host, so the saved state stays current
+  (and the project is marked as changed).
+- When a host re-sends a state naming the sample a slot already holds, the
+  slot keeps it instead of reloading (no audible restart).
+
+### Testing
+
+- 176 unit tests (new: host notification on load/clear, restoring the same
+  state does not reload, and a second slot load keeps the first slot strip),
+  plus 36 headless QA checks.
+
+---
+
 ## v1.0.0-beta.5 (2026-11-02)
 
 A fix release: Feedback was silent since beta.2. **Feedback patches sound
