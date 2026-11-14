@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "Utils/DebugLog.h"
 #include "UI/LookAndFeel/GranoTheme.h"
 
 #if JUCE_WINDOWS
@@ -110,6 +111,8 @@ namespace
 GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
     : AudioProcessorEditor(&p), view_(p)
 {
+    GranoLog::write(GranoLog::id(this, 'E') + " editor created for " + p.logId()
+                    + " | slots shown:" + view_.describeShownSlots());
     setLookAndFeel(&laf_);
     addAndMakeVisible(view_);
     tooltips_.setLookAndFeel(&laf_);
@@ -131,6 +134,7 @@ GranoAudioProcessorEditor::GranoAudioProcessorEditor(GranoAudioProcessor& p)
 
 GranoAudioProcessorEditor::~GranoAudioProcessorEditor()
 {
+    GranoLog::write(GranoLog::id(this, 'E') + " editor destroyed");
     stopTimer();
 #if JUCE_WINDOWS
     if (droppedHwnd_ != nullptr)

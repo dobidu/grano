@@ -1,4 +1,5 @@
 #include "ConsoleView.h"
+#include "../Utils/DebugLog.h"
 #include "ParamFormat.h"
 #include "../PluginProcessor.h"
 #include "../Parameters.h"
@@ -269,6 +270,14 @@ void ConsoleView::loadSlot(int slot, const juce::File& f)
     refreshSlots(true);
 }
 
+juce::String ConsoleView::describeShownSlots() const
+{
+    juce::String s;
+    for (int i = 0; i < 4; ++i)
+        s << " [" << (i + 1) << ":" << (slots_[(size_t)i]->isLoaded() ? "loaded" : "empty") << "]";
+    return s;
+}
+
 void ConsoleView::refreshSlots(bool force)
 {
     const auto gen = proc_.getSlotStateGeneration();
@@ -280,7 +289,11 @@ void ConsoleView::refreshSlots(bool force)
     {
         const auto info = proc_.getSlotInfo(i);
         auto& s = *slots_[(size_t)i];
+        const bool wasLoaded = s.isLoaded();
         s.setFile(info.numFrames > 0 ? info.file : juce::File());
+        if (wasLoaded && !s.isLoaded())
+            GranoLog::write(proc_.logId() + " editor: slot " + juce::String(i + 1)
+                            + " strip emptied (slot state gen " + juce::String(gen) + ")");
         if (info.numFrames > 0) ++loaded_;
         s.setShown(i == shownSlot_);
     }

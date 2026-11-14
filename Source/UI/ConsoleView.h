@@ -25,6 +25,8 @@ public:
     // Load a file into the slot shown in the monitor (drag-and-drop).
     void loadIntoShownSlot(const juce::File&);
     void setDragHighlight(bool b) { monitor_.setDragHighlight(b); }
+    // Diagnostics: loaded/empty per slot strip, for the session log.
+    juce::String describeShownSlots() const;
     // Run one telemetry tick by hand (headless tests have no message loop).
     void tickTelemetry() { timerCallback(); }
 

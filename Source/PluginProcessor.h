@@ -97,6 +97,9 @@ public:
 
     const juce::String& getLastLoadError() const noexcept { return lastLoadError_; }
 
+    // Diagnostics: short id of this instance in the session log.
+    juce::String logId() const;
+
     // Message thread: metadata of the sample loaded into a slot (numFrames 0
     // when empty). Lets a reopened editor rebuild the waveform and slot strips.
     struct SlotInfo
@@ -149,6 +152,7 @@ private:
     {
         sampleBank_.processRetiredAll();
         applyPendingSpectralUpdate();
+        checkSlotConsistency();
     }
 
     // May be called from any thread (host automation) — only sets a flag.
@@ -190,6 +194,12 @@ private:
     // changed, so it re-reads getStateInformation instead of keeping a stale
     // copy it may restore later (which would empty the slot).
     void notifyNonParameterStateChanged();
+
+    // Diagnostics (Utils/DebugLog): instance id, slot summary, and a 30 Hz
+    // check that slot info and the bank agree.
+    juce::String describeSlots() const;
+    void checkSlotConsistency();
+    std::array<int, MultiSampleBank::kNumSlots> mismatchTicks_{};
 
     // Editor telemetry (not parameters): output peaks, block load.
     std::array<std::atomic<float>, 2> outputPeak_{};

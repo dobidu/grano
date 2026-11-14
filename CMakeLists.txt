@@ -95,6 +95,8 @@ target_sources(Grano
         Source/Modulation/Lfo.cpp
         Source/Modulation/ModMatrix.cpp
         Source/Modulation/Snapshots.cpp
+        # Host-interaction diagnostics
+        Source/Utils/DebugLog.cpp
 )
 
 # ── Embedded fonts (OFL; licences in Resources/Fonts) ─────────────────────────

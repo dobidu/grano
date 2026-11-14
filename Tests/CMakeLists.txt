@@ -17,6 +17,7 @@ add_executable(GranoTests
     test_sample_io.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginProcessor.cpp
     ${CMAKE_SOURCE_DIR}/Source/PluginEditor.cpp
+    ${CMAKE_SOURCE_DIR}/Source/Utils/DebugLog.cpp
     # F1 engine sources compiled directly (same pattern as plugin sources)
     ${CMAKE_SOURCE_DIR}/Source/Engine/EnvelopeShapes.cpp
     ${CMAKE_SOURCE_DIR}/Source/Engine/GrainPool.cpp

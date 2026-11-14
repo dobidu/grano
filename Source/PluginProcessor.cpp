@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Utils/DebugLog.h"
 
 GranoAudioProcessor::GranoAudioProcessor()
     : AudioProcessor(BusesProperties()
@@ -97,10 +98,48 @@ GranoAudioProcessor::GranoAudioProcessor()
     // Timer requires MessageManager; skip in headless test contexts.
     if (juce::MessageManager::getInstanceWithoutCreating() != nullptr)
         startTimerHz(30);
+    GranoLog::write(logId() + " processor created");
+}
+
+juce::String GranoAudioProcessor::logId() const
+{
+    return GranoLog::id(this, 'P');
+}
+
+juce::String GranoAudioProcessor::describeSlots() const
+{
+    juce::String s;
+    for (int i = 0; i < MultiSampleBank::kNumSlots; ++i)
+    {
+        const auto& f = slotFiles_[(size_t)i];
+        s << " [" << (i + 1) << ":" << (f.getFullPathName().isEmpty() ? juce::String("-") : f.getFileName())
+          << " info=" << slotInfo_[(size_t)i].numFrames << " bank=" << sampleBank_.getNumSamples(i) << "]";
+    }
+    return s;
+}
+
+void GranoAudioProcessor::checkSlotConsistency()
+{
+    // Diagnostics: the strip shows slotInfo_, the engine plays the bank. A
+    // slot whose bank holds audio while its info is empty (or the reverse)
+    // for ~1 s is the "name gone, still playing" state — log each change.
+    for (int i = 0; i < MultiSampleBank::kNumSlots; ++i)
+    {
+        const bool info = slotInfo_[(size_t)i].numFrames > 0;
+        const bool bank = sampleBank_.getNumSamples(i) > 0;
+        auto& n = mismatchTicks_[(size_t)i];
+        n = (info != bank) ? n + 1 : 0;
+        if (n == 30)
+            GranoLog::write(logId() + " MISMATCH slot " + juce::String(i + 1)
+                            + (bank ? ": bank plays audio but slot info is empty"
+                                    : ": slot info set but bank is empty (audio thread not swapping?)")
+                            + " |" + describeSlots());
+    }
 }
 
 GranoAudioProcessor::~GranoAudioProcessor()
 {
+    GranoLog::write(logId() + " processor destroyed");
     apvts_.removeParameterListener(ParamIDs::spectralEnabled, this);
     apvts_.removeParameterListener(ParamIDs::spectralMode, this);
     apvts_.removeParameterListener(ParamIDs::spectralBlurAmount, this);
@@ -110,6 +149,7 @@ GranoAudioProcessor::~GranoAudioProcessor()
 
 void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    GranoLog::write(logId() + " prepareToPlay " + juce::String(sampleRate) + " Hz, " + juce::String(samplesPerBlock));
     loadMeasurer_.reset(sampleRate, samplesPerBlock);
     engine_.prepare(sampleRate, samplesPerBlock);
     feedbackPath_.prepare(sampleRate); // clear stale ring, size to session rate (R-25)
@@ -125,6 +165,7 @@ void GranoAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
 void GranoAudioProcessor::releaseResources()
 {
+    GranoLog::write(logId() + " releaseResources");
     engine_.reset();
     motion_.reset();
     color_.reset();
@@ -232,6 +273,7 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
     if (reader == nullptr)
     {
         lastLoadError_ = "Cannot read: " + file.getFileName();
+        GranoLog::write(logId() + " load slot " + juce::String(slot + 1) + " FAILED (cannot read): " + file.getFullPathName());
         return;
     }
 
@@ -282,6 +324,8 @@ void GranoAudioProcessor::loadSampleFile(const juce::File& file, int slot)
         spectralWaitGen_ = gen;
         spectralDirty_.store(true, std::memory_order_release);
     }
+    GranoLog::write(logId() + " load slot " + juce::String(slot + 1) + " gen " + juce::String(gen) + ": "
+                    + file.getFullPathName() + (restoringState_ ? " (state restore)" : ""));
     notifyNonParameterStateChanged();
 }
 
@@ -297,6 +341,9 @@ void GranoAudioProcessor::unloadSlot(int slot)
         return;
     const bool hadSample = slotFiles_[(size_t)slot].getFullPathName().isNotEmpty()
                            || sampleBank_.getNumSamples(slot) > 0;
+    if (hadSample)
+        GranoLog::write(logId() + " unload slot " + juce::String(slot + 1)
+                        + (restoringState_ ? " (state restore: not in restored state)" : ""));
     slotFiles_[(size_t)slot] = juce::File();
     slotInfo_[(size_t)slot]  = {};
     slotStateGen_.fetch_add(1, std::memory_order_acq_rel);
@@ -366,13 +413,27 @@ void GranoAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
     if (auto xml = combined.createXml())
         copyXmlToBinary(*xml, destData);
+    GranoLog::write(logId() + " getState " + juce::String((int)destData.getSize()) + " bytes"
+                    + (juce::MessageManager::existsAndIsCurrentThread() ? "" : " (NOT message thread)")
+                    + " |" + describeSlots());
 }
 
 void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
+    GranoLog::write(logId() + " setState " + juce::String(sizeInBytes) + " bytes"
+                    + (juce::MessageManager::existsAndIsCurrentThread() ? "" : " (NOT message thread)")
+                    + " | before:" + describeSlots());
     if (auto xml = getXmlFromBinary(data, sizeInBytes))
     {
         auto tree = juce::ValueTree::fromXml(*xml);
+        {
+            juce::String paths;
+            for (const auto& e : tree.getChildWithName("SamplePaths"))
+                paths << " [" << ((int)e.getProperty("index", -1) + 1) << ":"
+                      << e.getProperty("path", juce::String()).toString() << "]";
+            GranoLog::write(logId() + " setState type " + tree.getType().toString()
+                            + " paths:" + (paths.isEmpty() ? juce::String(" none") : paths));
+        }
         const juce::ScopedValueSetter<bool> restoring(restoringState_, true);
         if (tree.hasType("GranoCombinedState"))
         {
@@ -403,6 +464,7 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                         // Same file already loaded (host re-sent the current
                         // state): keep it, no reload or audible restart.
                         restored[(size_t)slot] = true;
+                        GranoLog::write(logId() + " setState slot " + juce::String(slot + 1) + " kept (same file)");
                     }
                     else if (f.existsAsFile())
                     {
@@ -412,6 +474,7 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                     else
                     {
                         lastLoadError_ = "Sample not found: " + f.getFileName();
+                        GranoLog::write(logId() + " setState slot " + juce::String(slot + 1) + " MISSING file: " + path);
                     }
                 }
             }
@@ -430,6 +493,9 @@ void GranoAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         spectralDirty_.store(true, std::memory_order_release);
         applyPendingSpectralUpdate();
     }
+    else
+        GranoLog::write(logId() + " setState: not a Grano state (ignored)");
+    GranoLog::write(logId() + " setState done | after:" + describeSlots());
 }
 
 // Required factory function — JUCE calls this to instantiate the plugin.
